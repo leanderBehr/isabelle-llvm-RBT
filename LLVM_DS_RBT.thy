@@ -1,12 +1,13 @@
 theory LLVM_DS_RBT
-  imports "../isabelle_llvm/thys/ds/LLVM_DS_All"
+  imports
+    "../isabelle_llvm/thys/ds/LLVM_DS_All"
     "HOL-Library.RBT_Impl"
 begin                                     
 
 
 datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
   RBT_NODE
-  (color: "1 word")
+  (color: "8 word")
   (left: "('key,'value) rbt_node ptr")
   (key: 'key) (val: 'value)
   (right: "('key,'value) rbt_node ptr")
@@ -38,7 +39,7 @@ fun from_val_rbt_node where
 | "from_val_rbt_node _ = undefined"
 
 definition "struct_of_rbt_node (_::('a, 'b) rbt_node itself) = 
-    VS_STRUCT [VS_INT 1, VS_PTR, struct_of TYPE('a), struct_of TYPE('b), VS_PTR]"
+    VS_STRUCT [VS_INT 8, VS_PTR, struct_of TYPE('a), struct_of TYPE('b), VS_PTR]"
 
 definition "init_rbt_node \<equiv> RBT_NODE init init init init init"
 
@@ -159,7 +160,7 @@ lemmas [llvm_inline] = rbt_node.color_def rbt_node.left_def rbt_node.key_def
   rbt_node.val_def rbt_node.right_def
 
 
-fun color_assn' :: "color \<Rightarrow> 1 word \<Rightarrow> ll_assn" where
+fun color_assn' :: "color \<Rightarrow> 8 word \<Rightarrow> ll_assn" where
   "color_assn' color.R rep = \<up>(rep=0)"
 | "color_assn' color.B rep = \<up>(rep=1)"
 
@@ -183,6 +184,23 @@ proof(standard+)
     by (cases col; auto)
 qed
 
+definition fb :: "bool \<Rightarrow> 1 word" where "fb = from_bool"
+
+lemma fb_true [simp]: "fb True = 1" 
+  unfolding fb_def
+  by simp
+
+lemma fb_false [simp]: "fb False = 0" 
+  unfolding fb_def
+  by simp
+
+lemma fb_num [simp]: 
+  "fb x = 0 \<longleftrightarrow> \<not>x"
+  "fb x = 1 \<longleftrightarrow> x"
+  unfolding fb_def
+  by simp+
+
+
 
 locale linorder_impl =
   fixes lt_impl :: "('ai::llvm_rep) \<Rightarrow> 'ai \<Rightarrow> 1 word llM"
@@ -191,7 +209,8 @@ locale linorder_impl =
     "llvm_htriple
             (\<upharpoonleft>elem_assn lhs lhsi ** \<upharpoonleft>elem_assn rhs rhsi)
             (lt_impl lhsi rhsi)
-            (\<lambda>r. \<up>(r = from_bool (lhs < rhs)) **
+            (\<lambda>r. 
+              \<up>(r = fb (lhs < rhs)) **
               \<upharpoonleft>elem_assn lhs lhsi **
               \<upharpoonleft>elem_assn rhs rhsi)"
 
@@ -242,7 +261,7 @@ lemma[simp]: "\<upharpoonleft>rbt_assn (rbt.Empty) p = \<up>(p=null)"
   unfolding rbt_assn_def by simp
 
 
-lemma rbt_assn_branch_def [simp]: "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p = (
+lemma rbt_assn_branch_def: "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p = (
   EXS coli lhsi ki vi rhsi. 
     \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
     \<upharpoonleft>color_assn col coli **
@@ -255,16 +274,16 @@ lemma rbt_assn_branch_def [simp]: "\<upharpoonleft>rbt_assn (Branch col lhs k v 
   by simp
 
 
-definition rbt_empty :: "('ki, 'v) rbti llM"
-  where "rbt_empty \<equiv> Mreturn null"
+definition empty :: "('ki, 'v) rbti llM"
+  where "empty \<equiv> Mreturn null"
 
 
-lemma rbt_empty_correct: 
+lemma empty_correct: 
   "llvm_htriple
    \<box>
-   rbt_empty
+   empty
    (\<lambda> r. \<upharpoonleft>rbt_assn rbt.Empty r)"
-  unfolding rbt_empty_def
+  unfolding empty_def
   by vcg
 
 
@@ -292,12 +311,12 @@ partial_function (M) contains :: "
 definition "rbt_contains t k \<equiv> rbt_lookup t k \<noteq> None" 
 
 
-lemma [simp]: "\<upharpoonleft>bool.assn False 0 = \<box>" 
+lemma "\<upharpoonleft>bool.assn False 0 = \<box>" 
   unfolding bool.assn_def
   by (simp add: sep_algebra_simps)
 
 
-lemma [simp]: "\<upharpoonleft>bool.assn True 1 = \<box>" 
+lemma "\<upharpoonleft>bool.assn True 1 = \<box>" 
   unfolding bool.assn_def
   by (simp add: sep_algebra_simps)
 
@@ -310,7 +329,7 @@ lemma contains_correct:
   "llvm_htriple
   (\<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)
   (contains ti ki)
-  (\<lambda>ri. \<upharpoonleft>bool.assn (rbt_contains t k) ri ** \<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)"
+  (\<lambda>ri. \<up>(ri = fb (rbt_contains t k)) ** \<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)"
 proof(induction t arbitrary: ti)
   case Empty
   then show ?case
@@ -322,7 +341,7 @@ proof(induction t arbitrary: ti)
 next
   case (Branch c lhs key val rhs)
   note [vcg_rules] = Branch.IH
-  note [simp] = rbt_contains_def helper
+  note [simp] = rbt_contains_def helper rbt_assn_branch_def
 
   show ?case
     apply (subst contains.simps)
@@ -365,7 +384,8 @@ proof(induction tree arbitrary: treei)
 next
   case (Branch col lhs k v rhs)
 
-  note [vcg_rules] = Branch.IH
+  note [vcg_rules] = Branch.IH 
+  note [simp] = rbt_assn_branch_def
   
   then show ?case
     apply (subst delete.simps)
@@ -380,7 +400,7 @@ partial_function (M) dummy_insert1 :: "
 " where " 
 dummy_insert1 tree k v = do {
   new_node \<leftarrow> ll_balloc;
-  ll_store (RBT_NODE (0::1 word) null k v null) new_node;
+  ll_store (RBT_NODE 0 null k v null) new_node;
   delete tree;
   return new_node
 }"
@@ -394,6 +414,8 @@ lemma dummy_insert1_correct:
 proof(cases tree)
   case Empty
 
+  note [simp] = rbt_assn_branch_def
+
   then show ?thesis
     apply (subst dummy_insert1.simps)
     apply vcg_monadify
@@ -403,7 +425,8 @@ next
   case (Branch col lhs k v rhs)
 
   note [vcg_rules] = delete_rule (*Why?*)
-
+  note [simp] = rbt_assn_branch_def
+ 
   then show ?thesis
     apply (subst dummy_insert1.simps)
     apply vcg_monadify
@@ -417,7 +440,7 @@ partial_function (M) dummy_insert2 :: "
 " where " 
 dummy_insert2 tree k v = do {
   new_node \<leftarrow> ll_balloc;
-  ll_store (RBT_NODE (0::1 word) null k v null) new_node;
+  ll_store (RBT_NODE 0 null k v null) new_node;
   if tree = null
   then return new_node
   else do {
@@ -425,6 +448,14 @@ dummy_insert2 tree k v = do {
     return new_node
   }
 }"
+
+
+ML_val \<open>Basic_VCG.print_solvers @{context}\<close>
+
+
+lemma test: "POSTCOND asf Q = (\<lambda>s. EXTRACT (POSTCOND asf Q s))"
+  unfolding EXTRACT_def
+  by simp
 
 (* how to do this proof? *)
 lemma dummy_insert2_correct:
@@ -435,6 +466,8 @@ lemma dummy_insert2_correct:
 proof(cases tree)
   case Empty
 
+  note [simp] = rbt_assn_branch_def
+
   then show ?thesis
     apply (subst dummy_insert2.simps)
     apply vcg_monadify
@@ -443,11 +476,13 @@ proof(cases tree)
 next
   case (Branch col lhs k v rhs)
 
+  note [simp] = rbt_assn_branch_def[abs_def]
+
   then show ?thesis
     apply (subst dummy_insert2.simps)
     apply vcg_monadify
     apply vcg
-    sorry
+    done
 qed
 
 
@@ -481,13 +516,13 @@ insert tree_p k v = do {
   }
   else do {
     tree \<leftarrow> ll_load tree_p;
-    k_old \<leftarrow> return rbt_node.key tree;  
+    k_old \<leftarrow> return rbt_node.key tree;
 
     k_lt \<leftarrow> lt_impl k k_old;
-    if k_lt = 1 
+    if k_lt = 1
     then do {
       new_lhs \<leftarrow> insert (rbt_node.left tree) k v;
-       new_tree \<leftarrow> ll_insert_value tree new_lhs 1;
+      new_tree \<leftarrow> ll_insert_value tree new_lhs 1;
       ll_store new_tree tree_p;
       return tree_p
     }
@@ -495,25 +530,18 @@ insert tree_p k v = do {
       k_gt \<leftarrow> lt_impl k_old k;
       if k_gt = 1
       then do {
-        new_rhs \<leftarrow> insert (rbt_node.right tree) k v;
-        new_tree \<leftarrow> ll_insert_value tree new_rhs 3;
+        new_rhs \<leftarrow> insert (rbt_node.right tree) k v;       
+        new_tree \<leftarrow> ll_insert_value tree new_rhs 4;
         ll_store new_tree tree_p;
         return tree_p
       }
       else do {
-         return tree_p 
-      }    
+         key_delete k;
+         return tree_p
+      }
     }
   }
 }"
-
-lemma left_insert:
-  "llvm_htriple
-  (\<upharpoonleft>rbt_assn (rbt.Branch col lhs k\<^sub>o v\<^sub>o rhs) treei **
-  \<upharpoonleft>rbt_assn (local.rbt_insert lhs k\<^sub>n v\<^sub>n) lhs_ins_i)
-  (ll_insert_value treei )
-
-  "
 
 
 lemma insert_correct:
@@ -523,65 +551,95 @@ lemma insert_correct:
   (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_insert tree k\<^sub>n v) r)"
 proof(induction tree arbitrary: treei)
   case Empty
-  then show ?case
+
+  note [simp] = rbt_assn_branch_def
+
+  from Empty show ?case
     apply (subst insert.simps)
-    by vcg
+    apply vcg
+    done
 next
   case (Branch col lhs k\<^sub>t v rhs)
 
   note [vcg_rules] = Branch.IH
+  note [simp] = rbt_assn_branch_def
+  note [vcg_normalize_simps] = rbt_node_insert_value
 
   show ?case
     apply (subst insert.simps)
     apply vcg_monadify
     apply vcg
-    apply (auto simp del: rbt_assn_branch_def)
-
-
-
+    subgoal 
+      apply simp
+      apply vcg
+      done
+    subgoal
+      apply vcg
+      done
+    done
 qed
-
-
-
 
 
 end
 
-definition "key_assn \<equiv> bool.assn"
+definition key_delete :: "'a :: len word \<Rightarrow> unit llM" where [llvm_inline]:
+"key_delete _ = Mreturn ()"
 
-definition lt_impl:: "1 word \<Rightarrow> 1 word \<Rightarrow> 1 word llM" where
-  "lt_impl x y \<equiv> ll_icmp_ult x y"
+lemma word1_neq1_is_zero: "(x::1 word) \<noteq> 1 \<longleftrightarrow> x = 0"
+  using word1_neqZ_is_one by blast
 
-
-lemma H1 [simp]: "
-  llvm_htriple
-  (\<upharpoonleft>bool.assn lhs lhsi ** \<upharpoonleft>bool.assn rhs rhsi)
-  (lt_impl lhsi rhsi)
-  (\<lambda>r. \<upharpoonleft>bool.assn (lhs < rhs) r)" 
-  unfolding lt_impl_def
-  apply vcg_monadify
-  apply vcg
-  sorry
-
-
-interpretation rbt_impl
-  lt_impl
-  key_assn
+global_interpretation unat_rbt: rbt_impl
+  ll_icmp_ult
+  "unat.assn::(nat, 'a :: len word) dr_assn"
+  key_delete 
+  defines 
+    unat_rbt_insert = unat_rbt.insert and
+    unat_rbt_empty = unat_rbt.empty
 proof(standard, goal_cases)
   case (1 lhs lhsi rhs rhsi)
-  note [vcg_rules] = H1
 
-  thus ?case 
-    unfolding lt_impl_def
-    unfolding key_assn_def
+  thus ?case
     apply vcg
-    sorry
+    unfolding bool.assn_def 
+    apply (auto simp add: word1_neqZ_is_one word1_neq1_is_zero)
+     apply vcg+
+    done
+next
+  case (2 k ki)
 
+  show ?case
+    unfolding key_delete_def
+    by vcg
 qed
 
-lemma H: "\<upharpoonleft>(Abs_dr_assn x) = x" 
-  unfolding dr_assn_prefix_def
-  by simp
+
+lemmas [llvm_code] = unat_rbt.insert.simps unat_rbt.empty_def
+
+
+abbreviation unat_rbt_insert_64 :: 
+  "(64 word, 8 word) rbt_node ptr \<Rightarrow> _"        
+  where "unat_rbt_insert_64 \<equiv> unat_rbt_insert"
+
+
+abbreviation unat_rbt_empty_64 :: "(64 word, 8 word) rbt_node ptr llM"
+  where "unat_rbt_empty_64 \<equiv> unat_rbt_empty"
+
+
+export_llvm 
+  unat_rbt_insert_64 is "rbt_node* insert(rbt_node*, uint64_t, uint8_t)"
+  unat_rbt_empty_64 is "rbt_node* empty()"
+  defines \<open>
+    typedef struct {
+       uint8_t color;
+       rbt_node* lhs;
+       uint64_t key;
+       uint8_t value;
+       rbt_node* rhs;        
+    } rbt_node;
+  \<close>
+  rewrites \<open>(64 word, 8 word) rbt_node\<close> = rbt_node
+  file "./exports/rbt.ll"
+
 
 
 end
