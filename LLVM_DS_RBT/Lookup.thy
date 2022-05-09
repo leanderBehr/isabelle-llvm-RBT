@@ -1,5 +1,5 @@
-theory Contains
-  imports Setup
+theory Lookup
+  imports Setup OptionI
 begin
 
 
@@ -54,6 +54,61 @@ next
   show ?case
     apply (subst contains.simps)
     apply vcg_monadify
+    apply vcg
+    done
+qed
+
+
+partial_function (M) lookup :: 
+  "('ki, 'v::llvm_rep) rbti \<Rightarrow> 'ki \<Rightarrow> ('v option_i) llM" where
+  "lookup node_p k = do {
+    if node_p = null
+    then return OPTION_I init 0
+    else do {
+      node \<leftarrow> ll_load node_p;
+      k_old \<leftarrow> return rbt_node.key node;
+      k_lt \<leftarrow> lt_impl k k_old;
+      if k_lt = 1
+      then lookup (rbt_node.left node) k
+      else do {
+        k_gt \<leftarrow> lt_impl k_old k;
+        if k_gt = 1
+        then lookup (rbt_node.right node) k
+        else return (OPTION_I (rbt_node.val node) 1)
+      }
+    }
+  }"
+
+
+interpretation v_option: option_impl 
+  "mk_assn (\<lambda> v vi. \<up>(v = vi))"
+  .
+
+abbreviation "option_assn \<equiv> v_option.option_assn"
+
+
+lemma lookup_correct:
+  "llvm_htriple
+  (\<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)
+  (lookup ti ki)
+  (\<lambda>ri. \<upharpoonleft>option_assn (rbt_lookup t k) ri ** \<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)"
+proof(induction t arbitrary: ti)
+  case Empty
+  then show ?case
+    apply (subst lookup.simps)
+    apply vcg
+    done
+next
+  case (Branch x1 t1 x3 x4 t2)
+
+  note [vcg_rules] = Branch.IH
+  note [simp] = rbt_assn_branch_def
+
+  show ?case
+    apply (subst lookup.simps)
+    apply vcg_monadify
+    apply vcg
+    apply (auto split: if_split)
     apply vcg
     done
 qed

@@ -2,7 +2,7 @@ theory Export
   imports
     Delete
     Insert
-    Contains
+    Lookup
 begin
 
 

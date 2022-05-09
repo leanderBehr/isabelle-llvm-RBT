@@ -3,7 +3,7 @@ theory LLVM_DS_RBT
   "LLVM_DS_RBT/Delete"
   "LLVM_DS_RBT/Insert"
   "LLVM_DS_RBT/Export"
-  "LLVM_DS_RBT/Contains"
+  "LLVM_DS_RBT/Lookup"
 begin                                     
 
 
@@ -70,11 +70,6 @@ dummy_insert2 tree k v = do {
 
 
 ML_val \<open>Basic_VCG.print_solvers @{context}\<close>
-
-
-lemma test: "POSTCOND asf Q = (\<lambda>s. EXTRACT (POSTCOND asf Q s))"
-  unfolding EXTRACT_def
-  by simp
 
 
 lemma dummy_insert2_correct:
