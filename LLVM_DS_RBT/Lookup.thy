@@ -59,11 +59,27 @@ next
 qed
 
 
+abbreviation "alloc_opt_of v \<equiv> do {
+    opt \<leftarrow> ll_balloc;
+    ll_store (OPTION_I v 1) opt;
+    return opt
+}"
+
+
+abbreviation "alloc_opt_none \<equiv> do {
+    opt \<leftarrow> ll_balloc;
+    ll_store (OPTION_I init 0) opt;
+    return opt
+}"
+
+
+
+
 partial_function (M) lookup :: 
-  "('ki, 'v::llvm_rep) rbti \<Rightarrow> 'ki \<Rightarrow> ('v option_i) llM" where
+  "('ki, 'v::llvm_rep) rbti \<Rightarrow> 'ki \<Rightarrow> (('v option_i) ptr) llM" where
   "lookup node_p k = do {
     if node_p = null
-    then return OPTION_I init 0
+    then alloc_opt_none
     else do {
       node \<leftarrow> ll_load node_p;
       k_old \<leftarrow> return rbt_node.key node;
@@ -74,7 +90,7 @@ partial_function (M) lookup ::
         k_gt \<leftarrow> lt_impl k_old k;
         if k_gt = 1
         then lookup (rbt_node.right node) k
-        else return (OPTION_I (rbt_node.val node) 1)
+        else alloc_opt_of (rbt_node.val node)
       }
     }
   }"
@@ -91,7 +107,11 @@ lemma lookup_correct:
   "llvm_htriple
   (\<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)
   (lookup ti ki)
-  (\<lambda>ri. \<upharpoonleft>option_assn (rbt_lookup t k) ri ** \<upharpoonleft>rbt_assn t ti ** \<upharpoonleft>key_assn k ki)"
+  (\<lambda>ri. (EXS opt.
+            \<upharpoonleft>ll_bpto opt ri **
+            \<upharpoonleft>option_assn (rbt_lookup t k) opt **
+            \<upharpoonleft>rbt_assn t ti **
+            \<upharpoonleft>key_assn k ki))"
 proof(induction t arbitrary: ti)
   case Empty
   then show ?case

@@ -5,7 +5,7 @@ begin
 
 
 datatype 'a option_i =
-  OPTION_I (val: 'a) (flag: "1 word")
+  OPTION_I (val: 'a) (flag: "8 word")
 hide_const (open) val flag
 
 instantiation option_i :: (llvm_rep) llvm_rep
@@ -27,7 +27,7 @@ definition from_val_option_i :: "llvm_val \<Rightarrow> 'a option_i" where
 
 
 definition "struct_of_option_i (_ :: 'a option_i itself) \<equiv> 
-  VS_STRUCT [struct_of TYPE('a), struct_of TYPE(1 word)]"
+  VS_STRUCT [struct_of TYPE('a), struct_of TYPE(8 word)]"
 
 
 definition "init_option_i \<equiv> OPTION_I init init" 
