@@ -3,14 +3,22 @@ theory Setup
     "Isabelle_LLVM.LLVM_DS_All"
     "HOL-Library.RBT_Impl"
 begin
-                         
+
+
+(*TODO remove*)
+abbreviation "R \<equiv> color.R"
+abbreviation "B \<equiv> color.B"
+
+
 datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
   RBT_NODE
   (color: "8 word")
   (left: "('key,'value) rbt_node ptr")
-  (key: 'key) (val: 'value)
+  (key: 'key) 
+  (val: 'value)
   (right: "('key,'value) rbt_node ptr")
 
+hide_const (open) color left key val right
 
 type_synonym ('k, 'v) rbti = "('k, 'v) rbt_node ptr"  
 
@@ -94,7 +102,7 @@ lemma [ll_identified_structures]:
 
 subsubsection \<open>Code Generator Preprocessor Setup\<close>  
 text \<open>The next two are auxiliary lemmas\<close>
-lemma rbt_node_insert_value:
+lemma rbt_node_insert_value [simp]:
   "ll_insert_value (RBT_NODE c l k v r) ci 0 = Mreturn (RBT_NODE ci l k v r)"
   "ll_insert_value (RBT_NODE c l k v r) li (Suc 0) = Mreturn (RBT_NODE c li k v r)"
   "ll_insert_value (RBT_NODE c l k v r) ki 2 = Mreturn (RBT_NODE c l ki v r)"
@@ -105,7 +113,7 @@ lemma rbt_node_insert_value:
       Let_def checked_from_val_def struct_of_rbt_node_def)
 
 
-lemma rbt_node_extract_value:
+lemma rbt_node_extract_value [simp]:
   "ll_extract_value (RBT_NODE c l k v r) 0 = Mreturn c"
   "ll_extract_value (RBT_NODE c l k v r) (Suc 0) = Mreturn l"
   "ll_extract_value (RBT_NODE c l k v r) 2 = Mreturn k"
@@ -125,7 +133,7 @@ lemma inline_return_node[llvm_pre_simp]: "Mreturn (RBT_NODE c l k v r) =
     res \<leftarrow> ll_insert_value res r 4;
     Mreturn res
   }"
-  by (auto simp: init_rbt_node_def rbt_node_insert_value)
+  by (auto simp: init_rbt_node_def)
 
 
 lemma inline_node_case[llvm_pre_simp]: "
@@ -139,7 +147,7 @@ lemma inline_node_case[llvm_pre_simp]: "
     f c l k v r
   }"  
   apply (cases x)
-  by (auto simp: rbt_node_extract_value)
+  by auto
 
 
 lemma inline_return_node_case[llvm_pre_simp]: "Mreturn (case x of (RBT_NODE c l k v r) \<Rightarrow> f c l k v r) = 
@@ -152,12 +160,40 @@ lemma inline_return_node_case[llvm_pre_simp]: "Mreturn (case x of (RBT_NODE c l 
     Mreturn (f c l k v r)   
   }"  
   apply (cases x)
-  by (auto simp: rbt_node_extract_value)
+  by auto
 
 
-lemmas [llvm_inline] = rbt_node.color_def rbt_node.left_def rbt_node.key_def 
-  rbt_node.val_def rbt_node.right_def
+lemmas [llvm_inline] = 
+  rbt_node.color_def
+  rbt_node.left_def
+  rbt_node.key_def 
+  rbt_node.val_def
+  rbt_node.right_def
 
+
+subsection \<open>Setters\<close>
+definition set_color :: 
+  "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> 8 word \<Rightarrow> _"
+  where "set_color node col \<equiv> ll_insert_value node col 0"
+definition set_left :: 
+  "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> ('k, 'v) rbti \<Rightarrow> _"
+  where "set_left node lhs \<equiv> ll_insert_value node lhs 1"
+definition set_key :: 
+  "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> 'k \<Rightarrow> _"
+  where "set_key node k \<equiv> ll_insert_value node k 2"
+definition set_value :: 
+  "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> 'v \<Rightarrow> _"
+  where "set_value node v \<equiv> ll_insert_value node v 3"
+definition set_right :: 
+  "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> ('k, 'v) rbti \<Rightarrow> _"
+  where "set_right node rhs \<equiv> ll_insert_value node rhs 4"
+
+lemmas [llvm_inline] =
+  set_color_def
+  set_left_def
+  set_key_def
+  set_value_def
+  set_right_def
 
 fun color_assn' :: "color \<Rightarrow> 8 word \<Rightarrow> ll_assn" where
   "color_assn' color.R rep = \<up>(rep=0)"
@@ -242,8 +278,8 @@ fun rbt_assn' :: "
       \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
       \<upharpoonleft>color_assn col coli **
       rbt_assn' lhs lhsi **
-        \<upharpoonleft>key_assn k ki **
-        \<up>(vi=v) **  
+      \<upharpoonleft>key_assn k ki **
+      \<up>(vi=v) **  
       rbt_assn' rhs rhsi
   )"
 
@@ -256,7 +292,7 @@ lemma[simp]: "\<upharpoonleft>rbt_assn t null = \<up>(t=rbt.Empty)"
   by (cases t; auto)
 
 
-lemma[simp]: "\<upharpoonleft>rbt_assn (rbt.Empty) p = \<up>(p=null)"
+lemma[simp]: "\<upharpoonleft>rbt_assn rbt.Empty p = \<up>(p=null)"
   unfolding rbt_assn_def by simp
 
 
@@ -273,11 +309,31 @@ lemma rbt_assn_branch_def: "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p 
   by simp
 
 
+lemma load_rbt [vcg_rules]:
+  "
+    llvm_htriple
+    (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ti)
+    (ll_load ti)
+    (\<lambda>r. 
+      EXS coli lhsi ki vi rhsi.
+        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
+        \<upharpoonleft>color_assn col coli **
+        \<upharpoonleft>rbt_assn lhs lhsi **
+        \<upharpoonleft>key_assn k ki **
+        \<up>(vi=v) **  
+        \<upharpoonleft>rbt_assn rhs rhsi **
+        \<up>(r = RBT_NODE coli lhsi ki vi rhsi)
+    )
+  "
+  unfolding rbt_assn_branch_def
+  by vcg
+
+
 definition empty :: "('ki, 'v) rbti llM"
   where "empty \<equiv> Mreturn null"
 
 
-lemma empty_correct: 
+lemma empty_correct [vcg_rules]: 
   "llvm_htriple
    \<box>
    empty
