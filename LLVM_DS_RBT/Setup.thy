@@ -1,6 +1,6 @@
 theory Setup
   imports
-    "../../isabelle_llvm/thys/ds/LLVM_DS_All"
+    "Isabelle_LLVM.LLVM_DS_All"
     "HOL-Library.RBT_Impl"
 begin
                          

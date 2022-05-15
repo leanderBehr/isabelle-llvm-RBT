@@ -1,5 +1,5 @@
 theory OptionI
-  imports "../../isabelle_llvm/thys/ds/LLVM_DS_All"
+  imports "Isabelle_LLVM.LLVM_DS_All"
   Main
 begin
 
