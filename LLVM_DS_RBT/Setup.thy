@@ -284,6 +284,51 @@ fun rbt_assn' :: "
   )"
 
 
+fun rbt_val_assn where
+  "rbt_val_assn (Branch col lhs k v rhs) (RBT_NODE coli lhsi ki vi rhsi) = 
+    (
+     \<upharpoonleft>color_assn col coli **
+      rbt_assn' lhs lhsi **
+        \<upharpoonleft>key_assn k ki **
+        \<up>(vi=v) **  
+      rbt_assn' rhs rhsi
+    )" |
+  "rbt_val_assn _ _ = sep_false"
+
+
+lemma entails_exE: 
+  assumes "\<And>x. P x \<turnstile> Q"
+  shows "(EXS x. P x) \<turnstile> Q"
+  using assms unfolding entails_def
+  by auto
+
+
+lemma entails_pre_pure_iff:
+  fixes P Q R
+  shows
+  "((\<lambda>s. P \<and> (Q s)) \<turnstile> R) \<longleftrightarrow> (P \<longrightarrow> Q \<turnstile> R)"
+  unfolding entails_def
+  by blast
+
+
+lemma "rbt_assn' (Branch col lhs k v rhs) p =
+    (EXS n. \<upharpoonleft>ll_bpto n p ** rbt_val_assn (Branch col lhs k v rhs) n)"
+  apply (auto simp add: entails_eq_iff sep_algebra_simps)
+   apply (rule entails_exE)+
+   apply (rule entails_exI)
+   apply (rule conj_entails_mono)
+    apply rule
+   apply (simp add: sep_algebra_simps)
+  apply (rule entails_exE)
+  subgoal for x
+    apply (cases x)
+    apply (auto simp add: sep_algebra_simps entails_pre_pure_iff)
+    apply (rule entails_exI)+
+    apply rule
+    done
+  done
+
+
 definition "rbt_assn \<equiv> mk_assn rbt_assn'"
 
 
