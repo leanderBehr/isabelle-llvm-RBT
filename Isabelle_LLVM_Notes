@@ -1,3 +1,4 @@
 - mising EXTRACT
-- reasoning on pure_part of assertions
+- reasoning on pure_part of assertions; needs method/rules for extracting and splitting pure parts
 - missing fri_extract to convert existential quantification
+- to argue on subtrees, rbt assertion must be split up so we can't argue on full tree anymore 
