@@ -1,7 +1,7 @@
 theory LLVM_DS_RBT
   imports
   "LLVM_DS_RBT/Delete"
-  "LLVM_DS_RBT/Insert"
+  "LLVM_DS_RBT/Balance"
   "LLVM_DS_RBT/Export"
   "LLVM_DS_RBT/Lookup"
 begin                                     

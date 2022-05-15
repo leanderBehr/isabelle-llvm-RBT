@@ -1,8 +1,9 @@
 theory Export
   imports
     Delete
-    Insert
+    Balance
     Lookup
+    "Insert/Naive_Insert"
 begin
 
 
@@ -19,7 +20,7 @@ global_interpretation unat_rbt: rbt_impl
   "unat.assn::(nat, 'a :: len word) dr_assn"
   key_delete 
   defines 
-    unat_rbt_insert = unat_rbt.insert and
+    unat_rbt_naive_insert = unat_rbt.naive_insert and
     unat_rbt_empty = unat_rbt.empty and
     unat_rbt_lookup = unat_rbt.lookup
 proof(standard, goal_cases)
@@ -40,12 +41,12 @@ next
 qed
 
 
-lemmas [llvm_code] = unat_rbt.insert.simps unat_rbt.empty_def unat_rbt.lookup.simps
+lemmas [llvm_code] = unat_rbt.naive_insert.simps unat_rbt.empty_def unat_rbt.lookup.simps
 
 
-abbreviation unat_rbt_insert_64 :: 
+abbreviation unat_rbt_naive_insert_64 :: 
   "(64 word, 8 word) rbt_node ptr \<Rightarrow> _"        
-  where "unat_rbt_insert_64 \<equiv> unat_rbt_insert"
+  where "unat_rbt_naive_insert_64 \<equiv> unat_rbt_naive_insert"
 
 
 abbreviation unat_rbt_empty_64 :: "(64 word, 8 word) rbti llM"
@@ -58,7 +59,7 @@ abbreviation unat_rbt_lookup_64 :: "(64 word, 8 word) rbti \<Rightarrow> _"
 
 export_llvm
   unat_rbt_empty_64 is "rbt_node* empty()"  
-  unat_rbt_insert_64 is "rbt_node* insert(rbt_node*, uint64_t, uint8_t)"
+  unat_rbt_naive_insert_64 is "rbt_node* insert(rbt_node*, uint64_t, uint8_t)"
   unat_rbt_lookup_64 is "option_i* lookup(rbt_node*, uint64_t)"
   defines \<open>
     typedef struct {
