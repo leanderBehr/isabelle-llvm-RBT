@@ -1,6 +1,6 @@
 theory Setup
   imports
-    "Isabelle_LLVM.LLVM_DS_All"
+    Isabelle_LLVM.LLVM_DS_All
     "HOL-Library.RBT_Impl"
 begin
 
@@ -81,14 +81,14 @@ end
 
 subsubsection \<open>Setup for LLVM code export\<close>
 text \<open>Declare structure to code generator.\<close>
-lemma to_val_rbt_node[ll_to_val]:
+lemma to_val_rbt_node [ll_to_val]:
   "to_val x = LL_STRUCT [to_val (rbt_node.color x),
                          to_val (rbt_node.left x),
                          to_val (rbt_node.key x),
                          to_val (rbt_node.val x),
                          to_val (rbt_node.right x)]"
   apply (cases x)
-  apply (auto simp: to_val_node_def)
+  apply auto
   done
 
 
@@ -124,7 +124,7 @@ lemma rbt_node_extract_value [simp]:
 
 
 text \<open>Lemmas to translate node construction and destruction\<close>
-lemma inline_return_node[llvm_pre_simp]: "Mreturn (RBT_NODE c l k v r) =
+lemma inline_return_node [llvm_pre_simp]: "Mreturn (RBT_NODE c l k v r) =
    doM {
     res \<leftarrow> ll_insert_value init c 0;
     res \<leftarrow> ll_insert_value res l 1;
@@ -188,7 +188,7 @@ definition set_right ::
   "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> ('k, 'v) rbti \<Rightarrow> _"
   where "set_right node rhs \<equiv> ll_insert_value node rhs 4"
 
-lemmas [llvm_inline] =
+lemmas [llvm_inline, simp] =
   set_color_def
   set_left_def
   set_key_def
@@ -219,6 +219,7 @@ proof(standard+)
     by (cases col; auto)
 qed
 
+
 definition fb :: "bool \<Rightarrow> 1 word" where "fb = from_bool"
 
 lemma fb_true [simp]: "fb True = 1" 
@@ -235,6 +236,8 @@ lemma fb_num [simp]:
   unfolding fb_def
   by simp+
 
+abbreviation ll_True :: "1 word" where "ll_True \<equiv> 1"
+abbreviation ll_False :: "1 word" where "ll_False \<equiv> 0"
 
 
 locale linorder_impl =
@@ -385,6 +388,12 @@ lemma empty_correct [vcg_rules]:
    (\<lambda> r. \<upharpoonleft>rbt_assn rbt.Empty r)"
   unfolding empty_def
   by vcg
+
+
+lemmas [llvm_code] = empty_def
+
+
 end
+
 
 end

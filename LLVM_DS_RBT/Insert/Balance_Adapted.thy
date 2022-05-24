@@ -2,6 +2,10 @@ theory Balance_Adapted
   imports "HOL-Library.RBT_Impl"
 begin
 
+                                          
+abbreviation "rbt_balance \<equiv> RBT_Impl.balance"
+                                        
+
 subsection \<open>Rbt Utilities\<close>
 
 definition "rbt_is_red tree \<equiv> 

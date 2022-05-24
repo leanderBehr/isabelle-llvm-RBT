@@ -64,7 +64,7 @@ naive_insert tree_p k v = do {
 }"
 
 
-lemma naive_insert_correct:
+lemma naive_insert_correct [vcg_rules]:
   "llvm_htriple
   (\<upharpoonleft>rbt_assn tree treei ** \<upharpoonleft>key_assn k\<^sub>n ki)
   (naive_insert treei ki v)
@@ -88,6 +88,9 @@ next
     apply (subst naive_insert.simps)
     by vcg
 qed
+
+
+lemmas [llvm_code] = naive_insert.simps
 
 
 end

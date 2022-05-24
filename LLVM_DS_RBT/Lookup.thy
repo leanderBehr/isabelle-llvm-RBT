@@ -96,9 +96,13 @@ partial_function (M) lookup ::
   }"
 
 
+lemmas [llvm_code] = lookup.simps
+
+
 interpretation v_option: option_impl 
   "mk_assn (\<lambda> v vi. \<up>(v = vi))"
   .
+
 
 abbreviation "option_assn \<equiv> v_option.option_assn"
 

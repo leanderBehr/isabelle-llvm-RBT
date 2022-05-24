@@ -1,7 +1,7 @@
 theory Balance
   imports 
-    Delete 
-    "Insert/Balance_Adapted"
+    "../Delete"
+    Balance_Adapted
 begin
 
 
@@ -15,12 +15,15 @@ interpretation llvm_prim_setup .
 subsection \<open>Utilities\<close>
 
 
+subsubsection \<open>Functions\<close>
+
+
 definition "is_red node_p \<equiv> do {
     if node_p = null
-    then return False
+    then return 0
     else do {
       node \<leftarrow> ll_load node_p;
-      return rbt_node.color node = 0
+      return from_bool (rbt_node.color node = 0)
     }
   }"
 
@@ -30,7 +33,7 @@ lemma is_red_correct [vcg_rules]:
     llvm_htriple
     (\<upharpoonleft>rbt_assn t ti)
     (is_red ti)
-    (\<lambda>r. \<up>(r = rbt_is_red t) ** \<upharpoonleft>rbt_assn t ti) 
+    (\<lambda>r. \<up>(r = fb (rbt_is_red t)) ** \<upharpoonleft>rbt_assn t ti) 
   "
 proof(cases t)
   case Empty
@@ -53,7 +56,7 @@ definition "left node_p \<equiv> do {
 }"
 
 
-lemma left_correct[vcg_rules]:
+lemma left_correct [vcg_rules]:
   "
     llvm_htriple
     (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ni)
@@ -78,7 +81,7 @@ definition "right node_p \<equiv> do {
 }"
 
 
-lemma right_correct[vcg_rules]:
+lemma right_correct [vcg_rules]:
   "
     llvm_htriple
     (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ni)
@@ -95,18 +98,6 @@ lemma right_correct[vcg_rules]:
   "
   unfolding right_def
   by vcg
-
-
-definition sc_and (infixl "&&!" 64) where
-  "sc_and a b \<equiv> do {
-    a_res \<leftarrow> a;
-    if a_res
-    then do {
-       b_res \<leftarrow> b;
-       return a_res \<and> b_res
-    }
-    else return False
-  }"
 
 
 definition "new x \<equiv> do {
@@ -127,18 +118,36 @@ lemma new_correct [vcg_rules]:
   by vcg
 
 
+lemmas [llvm_inline] = 
+  is_red_def
+  left_def
+  right_def
+  new_def
+
+
+subsubsection \<open>Macros\<close>
+
+
 definition If_ll :: 
-  "bool llM \<Rightarrow> 'a llM \<Rightarrow> 'a llM \<Rightarrow> 'a llM" 
+  "1 word llM \<Rightarrow> 'a llM \<Rightarrow> 'a llM \<Rightarrow> 'a llM" 
   ("(if! (_)/ then! (_)/ else! (_))" [0, 0, 10] 10) where
   "If_ll condf truef elsef = do {
     cond \<leftarrow> condf;
-    if cond
+    if cond = 1
     then truef
     else elsef
   }"
 
 
-lemmas [simp] = If_ll_def sc_and_def
+definition sc_and (infixl "&&!" 64) where
+  "sc_and a b \<equiv> do {
+    if! a
+    then! b
+    else! return 0
+  }"
+
+
+lemmas [simp, llvm_pre_simp] = If_ll_def sc_and_def
 
 
 subsection \<open>Checks\<close>
@@ -156,7 +165,7 @@ lemma check_1_correct [vcg_rules]:
     llvm_htriple
     (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
     (check_1 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = rbt_check_1 lhs rhs))
+    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_1 lhs rhs)))
   "
   unfolding rbt_check_1_def check_1_def sc_and_def
   by vcg
@@ -167,7 +176,7 @@ lemma check_2_correct [vcg_rules]:
     llvm_htriple
     (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
     (check_2 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = rbt_check_2 lhs rhs))
+    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_2 lhs rhs)))
   "
   unfolding rbt_check_2_def check_2_def sc_and_def
   apply vcg
@@ -186,7 +195,7 @@ lemma check_3_correct [vcg_rules]:
     llvm_htriple
     (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
     (check_3 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = rbt_check_3 lhs rhs))
+    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_3 lhs rhs)))
   "
   unfolding rbt_check_3_def check_3_def sc_and_def
   apply vcg
@@ -205,7 +214,7 @@ lemma check_4_correct [vcg_rules]:
     llvm_htriple
     (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
     (check_4 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = rbt_check_4 lhs rhs))
+    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_4 lhs rhs)))
   "
   unfolding rbt_check_4_def check_4_def sc_and_def
   apply vcg
@@ -224,7 +233,7 @@ lemma check_5_correct [vcg_rules]:
     llvm_htriple
     (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
     (check_5 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = rbt_check_5 lhs rhs))
+    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_5 lhs rhs)))
   "
   unfolding rbt_check_5_def check_5_def sc_and_def
   apply vcg
@@ -236,6 +245,14 @@ lemma check_5_correct [vcg_rules]:
     done 
   subgoal by vcg
   done
+
+
+lemmas [llvm_code] = 
+  check_1_def
+  check_2_def
+  check_3_def
+  check_4_def
+  check_5_def
 
 
 subsection \<open>Balance Cases\<close>
@@ -414,7 +431,7 @@ lemma balance_ad_case_5_correct [vcg_rules]:
   apply vcg
   done
 
-
+                                             
 definition "balance_ad_case_6 l_p k v r_p \<equiv> new (RBT_NODE 1 l_p k v r_p)"
 
 
@@ -429,6 +446,15 @@ lemma balance_ad_case_6_correct [vcg_rules]:
   apply vcg
   unfolding rbt_assn_branch_def
   by vcg
+
+
+lemmas [llvm_code] = 
+  balance_ad_case_1_def
+  balance_ad_case_2_def
+  balance_ad_case_3_def
+  balance_ad_case_4_def
+  balance_ad_case_5_def
+  balance_ad_case_6_def
 
 
 subsection \<open>Balance Function\<close>
@@ -450,8 +476,10 @@ definition balance ::
       else! balance_ad_case_6 lhs_p k v rhs_p
   }"
 
+lemmas [llvm_code] = balance_def
 
-lemma balance_correct:
+
+lemma balance_correct':
   "llvm_htriple
   (
     \<upharpoonleft>rbt_assn tree_l tree_li **
@@ -466,6 +494,20 @@ proof -
     unfolding balance_def
     by vcg
 qed
+
+
+lemma balance_correct [vcg_rules]:
+  "llvm_htriple
+  (
+    \<upharpoonleft>rbt_assn tree_l tree_li **
+    \<upharpoonleft>rbt_assn tree_r tree_ri **   
+    \<upharpoonleft>key_assn k ki
+  )
+  (balance tree_li ki v tree_ri)
+  (\<lambda>ri. \<upharpoonleft>rbt_assn (rbt_balance tree_l k v tree_r) ri) 
+  "
+  by (metis balance_correct' rbt_balance_ad_correct)
+
 
 
 subsection \<open>WIP GARBAGE\<close>
