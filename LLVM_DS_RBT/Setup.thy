@@ -1,14 +1,8 @@
 theory Setup
   imports
     Isabelle_LLVM.LLVM_DS_All
-    "HOL-Library.RBT_Impl"
+    Abstract_Rbt
 begin
-
-
-(*TODO remove*)
-abbreviation "R \<equiv> color.R"
-abbreviation "B \<equiv> color.B"
-
 
 datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
   RBT_NODE
@@ -145,7 +139,7 @@ lemma inline_node_case[llvm_pre_simp]: "
     v \<leftarrow> ll_extract_value x 3;
     r \<leftarrow> ll_extract_value x 4;
     f c l k v r
-  }"  
+  }"
   apply (cases x)
   by auto
 
@@ -158,7 +152,7 @@ lemma inline_return_node_case[llvm_pre_simp]: "Mreturn (case x of (RBT_NODE c l 
     v \<leftarrow> ll_extract_value x 3;
     r \<leftarrow> ll_extract_value x 4;
     Mreturn (f c l k v r)   
-  }"  
+  }"
   apply (cases x)
   by auto
 
@@ -166,7 +160,7 @@ lemma inline_return_node_case[llvm_pre_simp]: "Mreturn (case x of (RBT_NODE c l 
 lemmas [llvm_inline] = 
   rbt_node.color_def
   rbt_node.left_def
-  rbt_node.key_def 
+  rbt_node.key_def
   rbt_node.val_def
   rbt_node.right_def
 
@@ -188,12 +182,36 @@ definition set_right ::
   "('k::llvm_rep, 'v::llvm_rep) rbt_node \<Rightarrow> ('k, 'v) rbti \<Rightarrow> _"
   where "set_right node rhs \<equiv> ll_insert_value node rhs 4"
 
+
+definition [llvm_pre_simp, simp]: "mod_ptr f n_p \<equiv>
+  doM {
+    n_pre \<leftarrow> ll_load n_p;
+    n_post \<leftarrow> f n_pre;
+    ll_store n_post n_p 
+  }"
+
+
+definition "set_color_p x \<equiv> mod_ptr (\<lambda>n. set_color n x)"
+definition "set_left_p x \<equiv> mod_ptr (\<lambda>n. set_left n x)"
+definition "set_key_p x \<equiv> mod_ptr (\<lambda>n. set_key n x)"
+definition "set_value_p x \<equiv> mod_ptr (\<lambda>n. set_value n x)"
+definition "set_right_p x \<equiv> mod_ptr (\<lambda>n. set_right n x)"
+
+
 lemmas [llvm_inline, simp] =
   set_color_def
   set_left_def
   set_key_def
   set_value_def
   set_right_def
+
+  set_color_p_def
+  set_left_p_def
+  set_key_p_def
+  set_value_p_def
+  set_right_p_def
+
+
 
 fun color_assn' :: "color \<Rightarrow> 8 word \<Rightarrow> ll_assn" where
   "color_assn' color.R rep = \<up>(rep=0)"
@@ -203,12 +221,55 @@ fun color_assn' :: "color \<Rightarrow> 8 word \<Rightarrow> ll_assn" where
 definition "color_assn \<equiv> mk_assn color_assn'"
 
 
+lemma color_assn_eq: "\<upharpoonleft>color_assn c rep = 
+  \<up>(case c of color.R \<Rightarrow> rep = 0 | color.B \<Rightarrow> rep = 1)"
+  unfolding color_assn_def 
+  by (cases c; simp)
+
+
 lemma [simp]: "\<upharpoonleft>color_assn color.R rep = \<up>(rep=0)"
   unfolding color_assn_def by simp
 
-
 lemma [simp]: "\<upharpoonleft>color_assn color.B rep = \<up>(rep=1)"
   unfolding color_assn_def by simp
+
+
+lemma [simp]: "\<upharpoonleft>color_assn c 0 = \<up>(c = color.R)"
+  unfolding color_assn_eq
+  by (cases c; auto)
+
+lemma [simp]: "\<upharpoonleft>color_assn c 1 = \<up>(c = color.B)"
+  unfolding color_assn_eq
+  by (cases c; auto)
+
+
+
+lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn color.R rep = \<up>(rep=0)"
+  by (simp add: dr_assn_pure_prefix_def)
+
+lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn color.B rep = \<up>(rep=1)"
+  by (simp add: dr_assn_pure_prefix_def)
+
+
+lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn c 0 = \<up>(c = color.R)"
+  by (cases c; auto)
+
+lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn c 1 = \<up>(c = color.B)"
+  by (cases c; auto)
+
+
+lemma [simp]: "\<flat>\<^sub>pcolor_assn color.R rep = (rep=0)"
+  sorry
+  
+
+lemma [simp]: "\<flat>\<^sub>p color_assn color.B rep = (rep=1)"
+  sorry
+
+lemma [simp]: "\<flat>\<^sub>pcolor_assn c 0 = (c = color.R)"
+  by (cases c; auto)
+
+lemma [simp]: "\<flat>\<^sub>pcolor_assn c 1 = (c = color.B)"
+  by (cases c; auto)
 
 
 lemma color_assn_pure [is_pure_rule]: "is_pure color_assn"
@@ -269,6 +330,11 @@ interpretation llvm_prim_ctrl_setup .
 interpretation llvm_prim_arith_setup .
 interpretation llvm_prim_setup .
 
+datatype ('kk, 'vv) Conc = U | B "('kk, 'vv) rbt_node"
+
+
+datatype ('kk, 'vv) RbtA = RBTA "('kk, 'vv) rbti" "('kk, 'vv) Conc"
+
 
 fun rbt_assn' :: "
   ('k, 'v) rbt \<Rightarrow>
@@ -282,7 +348,7 @@ fun rbt_assn' :: "
       \<upharpoonleft>color_assn col coli **
       rbt_assn' lhs lhsi **
       \<upharpoonleft>key_assn k ki **
-      \<up>(vi=v) **  
+      \<up>(vi=v) **
       rbt_assn' rhs rhsi
   )"
 
@@ -299,7 +365,7 @@ fun rbt_val_assn where
   "rbt_val_assn _ _ = sep_false"
 
 
-lemma entails_exE: 
+lemma entails_exE:
   assumes "\<And>x. P x \<turnstile> Q"
   shows "(EXS x. P x) \<turnstile> Q"
   using assms unfolding entails_def
@@ -335,6 +401,11 @@ lemma "rbt_assn' (Branch col lhs k v rhs) p =
 definition "rbt_assn \<equiv> mk_assn rbt_assn'"
 
 
+lemma rbt_assn_tag_def: "\<upharpoonleft>rbt_assn = rbt_assn'"
+  unfolding rbt_assn_def mk_assn_def dr_assn_prefix_def 
+  by simp 
+
+
 lemma[simp]: "\<upharpoonleft>rbt_assn t null = \<up>(t=rbt.Empty)"
   unfolding rbt_assn_def
   by (cases t; auto)
@@ -355,6 +426,93 @@ lemma rbt_assn_branch_def: "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p 
   )"
   unfolding rbt_assn_def
   by simp
+
+subsection \<open>Foldable rbt assn\<close>
+
+
+fun rbt_assn_m' ::
+  "('k, 'v) rbt \<Rightarrow>
+  ('ki::llvm_rep, 'v::llvm_rep) RbtA \<Rightarrow>
+  ll_assn" where
+  "rbt_assn_m' rbt.Empty (RBTA p X) = \<up>(p = null)"
+| "rbt_assn_m' (rbt.Branch col lhs k v rhs) (RBTA p U) = 
+  (  
+    EXS coli lhsi ki vi rhsi. 
+          \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
+          \<upharpoonleft>color_assn col coli **
+          \<upharpoonleft>rbt_assn lhs lhsi **
+          \<upharpoonleft>key_assn k ki **
+          \<up>(vi=v) **
+          \<upharpoonleft>rbt_assn rhs rhsi
+  )"
+| "rbt_assn_m' (rbt.Branch col lhs k v rhs) (RBTA p (B (RBT_NODE coli lhsi ki vi rhsi))) =
+  (    
+    \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
+    \<upharpoonleft>color_assn col coli **
+    \<upharpoonleft>rbt_assn lhs lhsi **
+    \<upharpoonleft>key_assn k ki **
+    \<up>(vi=v) **
+    \<upharpoonleft>rbt_assn rhs rhsi
+  )  
+"
+
+
+definition "rbt_assn_m = mk_assn rbt_assn_m'"
+
+
+lemma rbt_assn_m_tag_def: "\<upharpoonleft>rbt_assn_m = rbt_assn_m'"
+  unfolding rbt_assn_m_def dr_assn_prefix_def mk_assn_def
+  by simp
+
+
+lemma close_rbt_assn_m_entails:
+  "
+  (
+    \<upharpoonleft>ll_bpto (RBT_NODE 0 lhsi ki vi rhsi) ti **
+    \<upharpoonleft>rbt_assn lhs lhsi **
+    \<upharpoonleft>key_assn k ki **
+    \<upharpoonleft>rbt_assn rhs rhsi
+  ) \<turnstile>
+  (\<upharpoonleft>rbt_assn_m (rbt.Branch color.R lhs k vi rhs) (RBTA ti (B (RBT_NODE 0 lhsi ki vi rhsi))))
+  "
+  unfolding rbt_assn_m_tag_def
+  by (simp add: sep_algebra_simps)
+
+
+lemma close_rbt_assn_entails:
+  "
+  (
+    \<upharpoonleft>ll_bpto (RBT_NODE ci lhsi ki vi rhsi) ti **
+    \<upharpoonleft>color_assn c ci **  
+    \<upharpoonleft>rbt_assn lhs lhsi **
+    \<upharpoonleft>key_assn k ki **
+    \<upharpoonleft>rbt_assn rhs rhsi
+  ) \<turnstile> 
+  \<upharpoonleft>rbt_assn (rbt.Branch c lhs k vi rhs) ti
+  "
+  unfolding rbt_assn_branch_def
+  apply (rule ENTAILSD)
+  apply vcg_solve
+  done
+
+
+lemma entails_to_state_elim:
+  assumes
+    "PRE \<turnstile> POST"
+    "STATE asf X s"
+    "FRAME X PRE Y"
+    "STATE asf (POST ** Y) s \<Longrightarrow> thesis"
+  shows thesis
+  using assms
+  using FRAME_def STATE_monoI entails_mp by blast
+ 
+
+lemmas close_rbt_m_assn = entails_to_state_elim[OF close_rbt_assn_m_entails]
+lemmas close_rbt_assn = entails_to_state_elim[OF close_rbt_assn_entails]
+
+
+subsection \<open>rest\<close>
+
 
 
 lemma load_rbt [vcg_rules]:

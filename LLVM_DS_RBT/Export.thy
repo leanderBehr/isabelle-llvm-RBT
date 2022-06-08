@@ -1,9 +1,10 @@
 theory Export
   imports
-    Delete
+    Free
     "Insert/Insert"
     Lookup
     "Insert/Naive_Insert"
+    Delete
 begin
 
 
@@ -24,7 +25,10 @@ global_interpretation unat_rbt: rbt_impl
     unat_rbt_balance = unat_rbt.balance and
     unat_rbt_insert = unat_rbt.insert and
     unat_rbt_empty = unat_rbt.empty and
-    unat_rbt_lookup = unat_rbt.lookup
+    unat_rbt_lookup = unat_rbt.lookup and
+    unat_rbt_free = unat_rbt.free and
+    unat_rbt_balance_left = unat_rbt.balance_left and
+    unat_rbt_balance_right = unat_rbt.balance_right
 proof(standard, goal_cases)
   case (1 lhs lhsi rhs rhsi)
 
@@ -61,13 +65,24 @@ abbreviation unat_rbt_empty_64 :: "(64 word, 8 word) rbti llM"
 abbreviation unat_rbt_lookup_64 :: "(64 word, 8 word) rbti \<Rightarrow> _"
   where "unat_rbt_lookup_64 \<equiv> unat_rbt_lookup"
 
+abbreviation unat_rbt_free_64 :: "(64 word, 8 word) rbti \<Rightarrow> _"
+  where "unat_rbt_free_64 \<equiv> unat_rbt_free"
+
+abbreviation unat_rbt_balance_left_64 :: "(64 word, 8 word) rbti \<Rightarrow> _"
+  where "unat_rbt_balance_left_64 \<equiv> unat_rbt_balance_left"
+
+abbreviation unat_rbt_balance_right_64 :: "(64 word, 8 word) rbti \<Rightarrow> _"
+  where "unat_rbt_balance_right_64 \<equiv> unat_rbt_balance_right"
 
 export_llvm
-  unat_rbt_empty_64 is "rbt_node* empty()"  
-  unat_rbt_naive_insert_64 is "rbt_node* naive_insert(rbt_node*, uint64_t, uint8_t)"
-  unat_rbt_insert_64 is "rbt_node* insert(uint64_t, uint8_t, rbt_node*)"
-  unat_rbt_balance_64 is "rbt_node* balance(rbt_node*, uint64_t, uint8_t, rbt_node*)"
-  unat_rbt_lookup_64 is "option_i* lookup(rbt_node*, uint64_t)"
+  unat_rbt_empty_64 is "rbt_node* rbt_empty()"  
+  unat_rbt_naive_insert_64 is "rbt_node* rbt_naive_insert(rbt_node*, uint64_t, uint8_t)"
+  unat_rbt_insert_64 is "rbt_node* rbt_insert(uint64_t, uint8_t, rbt_node*)"
+  unat_rbt_balance_64 is "rbt_node* rbt_balance(rbt_node*, uint64_t, uint8_t, rbt_node*)"
+  unat_rbt_lookup_64 is "option_i* rbt_lookup(rbt_node*, uint64_t)"
+  unat_rbt_free_64 is "void rbt_free(rbt_node*)"
+  unat_rbt_balance_left_64 is "rbt_node* rbt_balance_left(rbt_node*, uint64_t, uint8_t, rbt_node*)"
+  unat_rbt_balance_right_64 is "rbt_node* rbt_balance_right(rbt_node*, uint64_t, uint8_t, rbt_node*)"
   defines \<open>
     typedef struct {
        uint8_t color;

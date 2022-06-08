@@ -1,6 +1,6 @@
 theory Balance
   imports 
-    "../Delete"
+    "../Utilities"
     Balance_Adapted
 begin
 
@@ -10,144 +10,6 @@ begin
 interpretation llvm_prim_ctrl_setup .
 interpretation llvm_prim_arith_setup .
 interpretation llvm_prim_setup .
-
-
-subsection \<open>Utilities\<close>
-
-
-subsubsection \<open>Functions\<close>
-
-
-definition "is_red node_p \<equiv> do {
-    if node_p = null
-    then return 0
-    else do {
-      node \<leftarrow> ll_load node_p;
-      return from_bool (rbt_node.color node = 0)
-    }
-  }"
-
-
-lemma is_red_correct [vcg_rules]:
-  "
-    llvm_htriple
-    (\<upharpoonleft>rbt_assn t ti)
-    (is_red ti)
-    (\<lambda>r. \<up>(r = fb (rbt_is_red t)) ** \<upharpoonleft>rbt_assn t ti) 
-  "
-proof(cases t)
-  case Empty
-  then show ?thesis 
-    unfolding is_red_def rbt_is_red_def
-    by vcg
-next
-  case (Branch col lhs k v rhs)
-  then show ?thesis
-    apply (simp add: rbt_assn_branch_def rbt_is_red_def is_red_def)
-    apply (cases col)
-    apply vcg
-    done
-qed
-
-
-definition "left node_p \<equiv> do {
-    node \<leftarrow> ll_load node_p;
-    return rbt_node.left node
-}"
-
-
-lemma left_correct [vcg_rules]:
-  "
-    llvm_htriple
-    (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ni)
-    (left ni)
-    (\<lambda>lhsi.
-      EXS coli ki vi rhsi. 
-        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ni **
-        \<upharpoonleft>color_assn col coli **
-        \<upharpoonleft>rbt_assn lhs lhsi **
-        \<upharpoonleft>key_assn k ki **
-        \<up>(vi=v) **  
-        \<upharpoonleft>rbt_assn rhs rhsi
-    )
-  "
-  unfolding left_def
-  by vcg
-
-
-definition "right node_p \<equiv> do {
-    node \<leftarrow> ll_load node_p;
-    return rbt_node.right node
-}"
-
-
-lemma right_correct [vcg_rules]:
-  "
-    llvm_htriple
-    (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ni)
-    (right ni)
-    (\<lambda>rhsi.
-      EXS coli lhsi ki vi. 
-        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ni **
-        \<upharpoonleft>color_assn col coli **
-        \<upharpoonleft>rbt_assn lhs lhsi **
-        \<upharpoonleft>key_assn k ki **
-        \<up>(vi=v) **  
-        \<upharpoonleft>rbt_assn rhs rhsi
-    )
-  "
-  unfolding right_def
-  by vcg
-
-
-definition "new x \<equiv> do {
-    ptr \<leftarrow> ll_balloc;
-    ll_store x ptr;
-    return ptr
-  }"
-
-
-lemma new_correct [vcg_rules]:
-  "
-    llvm_htriple
-    \<box>
-    (new x)
-    (\<lambda>r. \<upharpoonleft>ll_bpto x r)
-  "
-  unfolding new_def
-  by vcg
-
-
-lemmas [llvm_inline] = 
-  is_red_def
-  left_def
-  right_def
-  new_def
-
-
-subsubsection \<open>Macros\<close>
-
-
-definition If_ll :: 
-  "1 word llM \<Rightarrow> 'a llM \<Rightarrow> 'a llM \<Rightarrow> 'a llM" 
-  ("(if! (_)/ then! (_)/ else! (_))" [0, 0, 10] 10) where
-  "If_ll condf truef elsef = do {
-    cond \<leftarrow> condf;
-    if cond = 1
-    then truef
-    else elsef
-  }"
-
-
-definition sc_and (infixl "&&!" 64) where
-  "sc_and a b \<equiv> do {
-    if! a
-    then! b
-    else! return 0
-  }"
-
-
-lemmas [simp, llvm_pre_simp] = If_ll_def sc_and_def
 
 
 subsection \<open>Checks\<close>
@@ -168,8 +30,10 @@ lemma check_1_correct [vcg_rules]:
     (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_1 lhs rhs)))
   "
   unfolding rbt_check_1_def check_1_def sc_and_def
-  by vcg
-
+  apply vcg
+  subgoal unfolding rbt_is_red_def by vcg
+  subgoal by vcg
+  done
 
 lemma check_2_correct [vcg_rules]:
   "
@@ -179,8 +43,6 @@ lemma check_2_correct [vcg_rules]:
     (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_2 lhs rhs)))
   "
   unfolding rbt_check_2_def check_2_def sc_and_def
-  apply vcg
-  apply (erule rbt_is_red_unfold_branch)
   apply vcg
   subgoal
     unfolding rbt_assn_branch_def rbt_is_red_def rbt_left_def
@@ -199,8 +61,6 @@ lemma check_3_correct [vcg_rules]:
   "
   unfolding rbt_check_3_def check_3_def sc_and_def
   apply vcg
-  apply (erule rbt_is_red_unfold_branch)
-  apply vcg
   subgoal
     unfolding rbt_assn_branch_def rbt_is_red_def rbt_right_def
     apply vcg_try_solve
@@ -217,8 +77,6 @@ lemma check_4_correct [vcg_rules]:
     (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<up>(r = fb (rbt_check_4 lhs rhs)))
   "
   unfolding rbt_check_4_def check_4_def sc_and_def
-  apply vcg
-  apply (erule rbt_is_red_unfold_branch)
   apply vcg
   subgoal
     unfolding rbt_assn_branch_def rbt_is_red_def rbt_right_def
@@ -237,8 +95,6 @@ lemma check_5_correct [vcg_rules]:
   "
   unfolding rbt_check_5_def check_5_def sc_and_def
   apply vcg
-  apply (erule rbt_is_red_unfold_branch)
-  apply vcg
   subgoal
     unfolding rbt_assn_branch_def rbt_is_red_def rbt_left_def
     apply vcg_try_solve
@@ -247,7 +103,7 @@ lemma check_5_correct [vcg_rules]:
   done
 
 
-lemmas [llvm_code] = 
+lemmas [llvm_inline] = 
   check_1_def
   check_2_def
   check_3_def
@@ -476,6 +332,7 @@ definition balance ::
       else! balance_ad_case_6 lhs_p k v rhs_p
   }"
 
+
 lemmas [llvm_code] = balance_def
 
 
@@ -508,35 +365,46 @@ lemma balance_correct [vcg_rules]:
   "
   by (metis balance_correct' rbt_balance_ad_correct)
 
-
-
-subsection \<open>WIP GARBAGE\<close>
-
-
-lemma pure_part_split_conjE:
-  fixes A B
-  assumes "pure_part (A ** B)"
-  obtains
-    "pure_part A"
-    "pure_part B"
-  using assms
-  by (blast dest: pure_part_split_conj)
-
-lemma rbt_assn_non_null_def:
-  assumes 
-    "pure_part (\<upharpoonleft>rbt_assn tree_l tree_li)"
-  shows
-    "tree_li = null \<longleftrightarrow> (tree_l = rbt.Empty)"
-  using assms
-  apply (cases tree_l)
-  subgoal by simp
-  subgoal
-    unfolding rbt_assn_branch_def
-    by fastforce
-  done
-
 lemma fri_exE: "(\<And>x. FRAME_INFER (P x) Qs F) \<Longrightarrow> FRAME_INFER (EXS x. P x) Qs F"
   by (auto simp: FRAME_INFER_def entails_def)
+
+lemma LL: "(\<upharpoonleft>rbt_assn_m t (RBTA ti X)) \<turnstile> \<upharpoonleft>rbt_assn t ti"
+  unfolding rbt_assn_m_tag_def rbt_assn_tag_def
+  sorry
+
+lemma assn_ent_assnm: "\<upharpoonleft>rbt_assn t ti = \<upharpoonleft>rbt_assn_m t (RBTA ti U)"
+unfolding rbt_assn_m_tag_def rbt_assn_tag_def
+  apply (induction t)
+  apply auto
+  unfolding rbt_assn_tag_def
+  by auto
+
+
+lemma LLL:
+  "
+    \<upharpoonleft>rbt_assn_m tree_l (RBTA tree_li X) **
+    \<upharpoonleft>rbt_assn_m tree_r (RBTA tree_ri Y) **   
+    \<upharpoonleft>key_assn k ki \<turnstile>
+    \<upharpoonleft>rbt_assn tree_l tree_li **
+    \<upharpoonleft>rbt_assn tree_r tree_ri **
+    \<upharpoonleft>key_assn k ki
+  "
+  by (auto simp add: sep_algebra_simps LL intro!: conj_entails_mono)
+
+
+lemma balance_correct_ :
+  "llvm_htriple
+  (
+    \<upharpoonleft>rbt_assn_m tree_l (RBTA tree_li X) **
+    \<upharpoonleft>rbt_assn_m tree_r (RBTA tree_ri Y) **   
+    \<upharpoonleft>key_assn k ki
+  )
+  (balance tree_li ki v tree_ri)
+  (\<lambda>ri. \<upharpoonleft>rbt_assn (rbt_balance tree_l k v tree_r) ri) 
+  "
+  apply (rule htriple_ent_pre)
+   apply (rule LLL)
+  by (simp add: balance_correct)
 
 
 end

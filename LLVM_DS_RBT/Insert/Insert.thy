@@ -111,7 +111,7 @@ next
   
   note [vcg_rules] = 2
 
-  have color_contr_B: "\<not>\<flat>\<^sub>pcolor_assn B 0"
+  have color_contr_B: "\<not>\<flat>\<^sub>pcolor_assn color.B 0"
     by (simp add: color_assn_def dr_assn_prefix_def dr_assn_pure_asm_prefix_def mk_assn_def)
 
   from color_contr_B show ?case
@@ -126,7 +126,7 @@ next
 
   note [vcg_rules] = 3
 
-  have color_contr_R: "\<flat>\<^sub>pcolor_assn R x \<Longrightarrow> x = 0" for x
+  have color_contr_R: "\<flat>\<^sub>pcolor_assn color.R x \<Longrightarrow> x = 0" for x
     by (simp add: color_assn_def dr_assn_prefix_def dr_assn_pure_asm_prefix_def mk_assn_def)
 
   from color_contr_R show ?case
@@ -167,7 +167,7 @@ definition insert where "insert k v tree \<equiv> do {
 }"
 
 lemma rbt_balance_unfold:
-  obtains c l' k' v' r' where "rbt_balance l k v r = Branch c l' k' v' r'"
+  obtains c l' k' v' r' where "rbt_balance l k v r = rbt.Branch c l' k' v' r'"
   apply(cases "(l, k, v ,r)" rule: RBT_Impl.balance.cases)
   by auto
 
@@ -182,7 +182,7 @@ lemma rbt_insert_ad'_non_empty:
   by (simp add: rbt_balance_non_empty)+
 
 
-lemma *: "\<upharpoonleft>\<^sub>pcolor_assn B 1 = \<up>True"
+lemma *: "\<upharpoonleft>\<^sub>pcolor_assn color.B 1 = \<up>True"
   by (simp add: dr_assn_pure_prefix_def)
 
 

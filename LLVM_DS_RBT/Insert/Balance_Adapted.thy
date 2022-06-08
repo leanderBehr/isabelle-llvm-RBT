@@ -1,36 +1,10 @@
 theory Balance_Adapted
-  imports "HOL-Library.RBT_Impl"
-begin
-
-                                          
-abbreviation "rbt_balance \<equiv> RBT_Impl.balance"
-                                        
-
-subsection \<open>Rbt Utilities\<close>
-
-definition "rbt_is_red tree \<equiv> 
-  case tree of
-    (Branch color.R _ _ _ _ ) \<Rightarrow> True |
-    _ \<Rightarrow> False
-"
-
-
-lemma rbt_is_red_unfold_branch:
-  assumes "rbt_is_red tree"
-  obtains lhs k v rhs where "tree = Branch color.R lhs k v rhs"
-  using assms
-  unfolding rbt_is_red_def
-  apply (cases tree)
-  subgoal by auto
-  subgoal for c  by (cases c; auto)
-  done
-
-
-definition "rbt_left node \<equiv> case node of (Branch _ lhs _ _ _) \<Rightarrow> lhs" 
-definition "rbt_right node \<equiv> case node of (Branch _ _ _ _ rhs) \<Rightarrow> rhs"
+  imports "../Abstract_Rbt"
+begin                                     
 
 
 subsection \<open>Balance Cases\<close>
+
 
 definition "rbt_balance_ad_case_1 lhs k v rhs \<equiv>
   case (lhs, k, v, rhs) of 
@@ -145,7 +119,7 @@ fun rbt_balance_ad where
 
 
 lemma rbt_balance_ad_correct: 
-  "rbt_balance_ad lhs k v rhs = balance lhs k v rhs"
+  "rbt_balance_ad lhs k v rhs = rbt_balance lhs k v rhs"
   apply (induction lhs k v rhs rule: balance.induct)
   by(auto simp add: 
       rbt_is_red_def
