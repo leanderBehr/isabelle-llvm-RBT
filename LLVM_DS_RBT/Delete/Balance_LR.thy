@@ -1,11 +1,10 @@
-theory Delete
-  imports 
-    Setup
-    Utilities
-    "Insert/Balance"
-    Free
+theory Balance_LR
+  imports
+    "../Setup"
+    "../Utilities"
+    "../Insert/Balance"
+    "../Free"
 begin
-
 
 context rbt_impl
 begin
@@ -13,10 +12,19 @@ interpretation llvm_prim_ctrl_setup .
 interpretation llvm_prim_arith_setup .
 interpretation llvm_prim_setup .
 
+subsection \<open>Balance Left\<close>
+
+
+subsubsection \<open>Patterns\<close>
+
 
 abbreviation "bl_pat_1 \<equiv> Branch CP_R RVar RVar"
 abbreviation "bl_pat_2 \<equiv> Branch CP_B RVar RVar"
 abbreviation "bl_pat_3 \<equiv> Branch CP_R (Branch CP_B RVar RVar) RVar"
+
+
+subsubsection \<open>Adjusted Function\<close>
+
 
 fun rbt_balance_left_ad where
   "rbt_balance_left_ad l key val r =
@@ -39,7 +47,7 @@ lemma rbt_balance_left_ad_correct:
   by auto
 
 
-subsection \<open>Cases\<close>
+subsubsection \<open>Concrete Implementation\<close>
 
 
 definition "bl_case_1 l_p k v r_p \<equiv>
@@ -164,14 +172,44 @@ lemma balance_left_correct [vcg_rules]:
   using balance_left_correct' rbt_balance_left_ad_correct by metis
 
 
-subsection \<open>balance right\<close>
+subsection \<open>Balance Right\<close>
 
 
-subsubsection \<open>patterns\<close>
+subsubsection \<open>Patterns\<close>
+
 
 abbreviation "br_pat_1 \<equiv> Branch CP_R RVar RVar"
 abbreviation "br_pat_2 \<equiv> Branch CP_B RVar RVar"
 abbreviation "br_pat_3 \<equiv> Branch CP_R RVar (Branch CP_B RVar RVar)"
+
+
+subsubsection \<open>Adjusted Function\<close>
+
+
+fun rbt_balance_right_ad where   
+  "rbt_balance_right_ad l key val r =
+    (
+      if matches_rbt_pattern br_pat_1 r
+      then case r of (rbt.Branch color.R a k x b) \<Rightarrow>
+        rbt.Branch color.R l key val (rbt.Branch color.B a k x b)
+      else if matches_rbt_pattern br_pat_2 l
+      then case l of (rbt.Branch color.B a s y b) \<Rightarrow> 
+        rbt_balance (rbt.Branch color.R a s y b) key val r
+      else if matches_rbt_pattern br_pat_3 l
+      then case l of (rbt.Branch color.R a k x (rbt.Branch color.B b s y c)) \<Rightarrow>
+        rbt.Branch color.R (rbt_balance (paint color.R a) k x b) s y (rbt.Branch color.B c key val r)
+      else rbt.Empty
+    )"
+  
+lemma rbt_balance_right_ad_correct:
+  "rbt_balance_right_ad l k v r = rbt_balance_right l k v r"
+  apply (induction l k v r rule: RBT_Impl.balance_right.induct)
+  apply auto
+  done
+
+
+subsubsection \<open>Concrete Implementation\<close>
+
 
 definition "br_case_1 l_p k v r_p \<equiv>
   do {
@@ -208,27 +246,6 @@ definition "br_case_3 l_p k v r_p \<equiv>
   }"
 
 
-fun rbt_balance_right_ad where   
-  "rbt_balance_right_ad l key val r =
-    (
-      if matches_rbt_pattern br_pat_1 r
-      then case r of (rbt.Branch color.R a k x b) \<Rightarrow>
-        rbt.Branch color.R l key val (rbt.Branch color.B a k x b)
-      else if matches_rbt_pattern br_pat_2 l
-      then case l of (rbt.Branch color.B a s y b) \<Rightarrow> 
-        rbt_balance (rbt.Branch color.R a s y b) key val r
-      else if matches_rbt_pattern br_pat_3 l
-      then case l of (rbt.Branch color.R a k x (rbt.Branch color.B b s y c)) \<Rightarrow>
-        rbt.Branch color.R (rbt_balance (paint color.R a) k x b) s y (rbt.Branch color.B c key val r)
-      else rbt.Empty
-    )"
-  
-lemma rbt_balance_right_ad_correct:
-  "rbt_balance_right_ad l k v r = rbt_balance_right l k v r"
-  apply (induction l k v r rule: RBT_Impl.balance_right.induct)
-  apply auto
-  done
-
 definition "balance_right l_p k v r_p \<equiv>
   do {
     if! matches_rbt_pattern_i br_pat_1 r_p
@@ -244,6 +261,7 @@ definition "balance_right l_p k v r_p \<equiv>
     }
   }
 "
+
 
 lemma balance_right_correct':
   "
@@ -297,6 +315,7 @@ lemma balance_right_correct':
     done
   done
 
+
 lemma balance_right_correct [vcg_rules]:
   "
     llvm_htriple
@@ -316,53 +335,6 @@ lemmas [llvm_inline] =
 lemmas [llvm_code] = balance_right_def
 
 
-subsection \<open>random crap\<close>
-
-
-definition "Equiv (f:: real \<Rightarrow> real) g \<equiv> \<forall>x. f (g x) = x"
-
-
-lemma 1 [intro]: "f = (\<lambda>x. f' (x - c)) \<Longrightarrow> Equiv f' g \<Longrightarrow> Equiv f (\<lambda>x. g x + c)"
-  unfolding Equiv_def by simp
-
-lemma 2 [intro]: "Equiv f (\<lambda>x. g x + (-c)) \<Longrightarrow> Equiv f (\<lambda>x. g x - c)"
-  by simp
-
-lemma 3 [intro]: "c \<noteq> 0 \<Longrightarrow> f = (\<lambda>x. f' ( x / c)) \<Longrightarrow> Equiv f' g \<Longrightarrow> Equiv f (\<lambda>x. c * g x)"
-  unfolding Equiv_def
-  by auto
-
-lemma 4 [intro]: "f = (\<lambda>x. x) \<Longrightarrow> Equiv f (\<lambda>x. x)"
-  unfolding Equiv_def by simp
-
-lemma 5 [intro]: "Equiv f (\<lambda>x. (1/c) * g x ) \<Longrightarrow> Equiv f (\<lambda>x. g x / c)"
-  by simp
-
-
-
-definition "g \<equiv> (\<lambda>(x::real). 2 * (x + 5 - x) + x + 12 * x - 1 + (1.1 * x))"
-
-schematic_goal "Equiv ?f g"
-  unfolding g_def
-  apply (rule | simp)+
-  done
-
-
-definition "Cond (ff::'a list \<Rightarrow> 'b) (gg:: 'a list \<Rightarrow> 'b) = (ff = gg)"
-
-
-lemma R1: "f [] = undefined \<Longrightarrow> (\<And>l. f l = E (hd l) (tl l)) \<Longrightarrow> Cond f (\<lambda>l. case l of x # xs \<Rightarrow> E x xs)" 
-  unfolding Cond_def
-  apply standard
-  by (simp add: list.case_eq_if)
-
-
-schematic_goal "Cond ?f (\<lambda>l. case l of x # (y # xs) \<Rightarrow> x)"
-  apply (rule R1)
-  sorry
-
-
-end 
-
+end
 
 end
