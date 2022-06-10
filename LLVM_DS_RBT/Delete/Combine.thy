@@ -17,24 +17,6 @@ abbreviation "is_black_b_i x \<equiv> matches_rbt_pattern_i (Branch CP_B RVar RV
 abbreviation "is_red_b_i x \<equiv> matches_rbt_pattern_i (Branch CP_R RVar RVar) x"
 
 
-
-(*
-fun rbt_combine_ad where "rbt_combine_ad l r =
-(
-  if l = rbt.Empty then return r
-  else if r = rbt.Empty then return l
-  else if is_red_b l \<and> is_red_b r
-  then let c = combine (rbt.right l) (rbt.left r) in X
-  else if is_black_b l \<and> is_black_b r
-  then Y
-  else if is_red_b r
-  then Z
-  else W
-)
-"
-*)
-
-
 partial_function (M) combine ::
   "('ki, 'v::llvm_rep) rbti \<Rightarrow> ('ki, 'v) rbti \<Rightarrow> ('ki, 'v) rbti llM" where
   "combine l_p r_p = do {
