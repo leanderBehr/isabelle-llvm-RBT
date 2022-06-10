@@ -3,3 +3,4 @@
 - missing fri_extract to convert existential quantification
 - to argue on subtrees, rbt assertion must be split up so we can't argue on full tree anymore 
 - no error at [llvm_code] declaration, but only at export_llvm
+- using "macros" like if! C then! T else! F in partial_function 
