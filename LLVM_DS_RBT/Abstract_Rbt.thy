@@ -5,10 +5,12 @@ begin
 abbreviation "rbt_balance \<equiv> RBT_Impl.balance"
 abbreviation "rbt_balance_left \<equiv> RBT_Impl.balance_left"
 abbreviation "rbt_balance_right \<equiv> RBT_Impl.balance_right"
+abbreviation "rbt_combine \<equiv> RBT_Impl.combine"
 
 hide_const balance
 hide_const balance_left
 hide_const balance_right
+hide_const combine
 
 
 subsection \<open>Rbt Utilities\<close>

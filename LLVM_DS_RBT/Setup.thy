@@ -505,10 +505,21 @@ lemma entails_to_state_elim:
   shows thesis
   using assms
   using FRAME_def STATE_monoI entails_mp by blast
- 
+
+
+lemma entails_to_ENTAILS_elim:
+  assumes
+    "PRE \<turnstile> POST"
+    "FRAME P PRE Y"
+    "ENTAILS (POST**Y) Q"
+  shows "ENTAILS P Q"
+  using assms                    
+  using ENTAILS_def gen_drule by blast
+
 
 lemmas close_rbt_m_assn = entails_to_state_elim[OF close_rbt_assn_m_entails]
 lemmas close_rbt_assn = entails_to_state_elim[OF close_rbt_assn_entails]
+                        entails_to_ENTAILS_elim[OF close_rbt_assn_entails]
 
 
 subsection \<open>rest\<close>
