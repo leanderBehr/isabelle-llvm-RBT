@@ -4,7 +4,7 @@ theory Export
     "Insert/Insert"
     Lookup
     "Insert/Naive_Insert"
-    Delete
+    "Delete/Delete"
 begin
 
 
