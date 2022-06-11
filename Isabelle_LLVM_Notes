@@ -1,6 +1,19 @@
-- mising EXTRACT
-- reasoning on pure_part of assertions; needs method/rules for extracting and splitting pure parts
+DONE:
+- missing EXTRACT
+
+
+TODO:
+- reasoning on pure_part of assertions; needs method/rules for extracting and splitting pure parts [search <STATE_extract_pure>]
+- reasoning on pure assertions like color_assn is a pain because of different tags
+
+- automate folding/unfolding rbt assn as needed ====>>
+- to argue on subtrees, rbt assertion must be split up so we can't argue on full tree anymore
+
+- using "macros" like if! C then! T else! F in partial_function
+
 - missing fri_extract to convert existential quantification
-- to argue on subtrees, rbt assertion must be split up so we can't argue on full tree anymore 
+
 - no error at [llvm_code] declaration, but only at export_llvm
-- using "macros" like if! C then! T else! F in partial_function 
+- export_llvm errors are unhelpful
+
+
