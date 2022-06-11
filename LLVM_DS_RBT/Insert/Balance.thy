@@ -365,47 +365,6 @@ lemma balance_correct [vcg_rules]:
   "
   by (metis balance_correct' rbt_balance_ad_correct)
 
-lemma fri_exE: "(\<And>x. FRAME_INFER (P x) Qs F) \<Longrightarrow> FRAME_INFER (EXS x. P x) Qs F"
-  by (auto simp: FRAME_INFER_def entails_def)
-
-lemma LL: "(\<upharpoonleft>rbt_assn_m t (RBTA ti X)) \<turnstile> \<upharpoonleft>rbt_assn t ti"
-  unfolding rbt_assn_m_tag_def rbt_assn_tag_def
-  sorry
-
-lemma assn_ent_assnm: "\<upharpoonleft>rbt_assn t ti = \<upharpoonleft>rbt_assn_m t (RBTA ti U)"
-unfolding rbt_assn_m_tag_def rbt_assn_tag_def
-  apply (induction t)
-  apply auto
-  unfolding rbt_assn_tag_def
-  by auto
-
-
-lemma LLL:
-  "
-    \<upharpoonleft>rbt_assn_m tree_l (RBTA tree_li X) **
-    \<upharpoonleft>rbt_assn_m tree_r (RBTA tree_ri Y) **   
-    \<upharpoonleft>key_assn k ki \<turnstile>
-    \<upharpoonleft>rbt_assn tree_l tree_li **
-    \<upharpoonleft>rbt_assn tree_r tree_ri **
-    \<upharpoonleft>key_assn k ki
-  "
-  by (auto simp add: sep_algebra_simps LL intro!: conj_entails_mono)
-
-
-lemma balance_correct_ :
-  "llvm_htriple
-  (
-    \<upharpoonleft>rbt_assn_m tree_l (RBTA tree_li X) **
-    \<upharpoonleft>rbt_assn_m tree_r (RBTA tree_ri Y) **   
-    \<upharpoonleft>key_assn k ki
-  )
-  (balance tree_li ki v tree_ri)
-  (\<lambda>ri. \<upharpoonleft>rbt_assn (rbt_balance tree_l k v tree_r) ri) 
-  "
-  apply (rule htriple_ent_pre)
-   apply (rule LLL)
-  by (simp add: balance_correct)
-
 
 end
 

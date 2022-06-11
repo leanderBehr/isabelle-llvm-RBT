@@ -45,8 +45,6 @@ lemma extract_pure: "STATE asf X s \<Longrightarrow> (pure_part X \<Longrightarr
   by (meson STATE_def pure_partI)
 
 
-
-
 subsubsection \<open>Macros\<close>
 
 
@@ -225,7 +223,6 @@ lemma is_black_branch_correct [vcg_rules]:
   done
 
 
-
 definition "new x \<equiv> do {
     ptr \<leftarrow> ll_balloc;
     ll_store x ptr;
@@ -250,8 +247,10 @@ lemmas [llvm_inline] =
   right_def
   new_def
 
+
 datatype ColorPattern = CP_Var | CP_R | CP_B
 datatype RbtPattern = RVar | Empty | Branch ColorPattern RbtPattern RbtPattern
+
 
 fun matches_color_pattern_i ::
   "ColorPattern \<Rightarrow> 8 word \<Rightarrow> 1 word llM" where
@@ -294,12 +293,14 @@ fun matches_rbt_pattern_i ::
     }
   }"
 
+(*!FIX!, color_assn reasoning cumbersome*)
 lemma H1: "\<flat>\<^sub>pcolor_assn c ci \<Longrightarrow> fb (ci = 0) = fb (c = color.R)"
   by (smt (verit) color.exhaust color.simps(3) color.simps(4) color_assn_eq dr_assn_pure_asm_prefix_def pure_part_pureD zero_neq_one)
 
 
 lemma H2: "\<flat>\<^sub>pcolor_assn c ci \<Longrightarrow> fb (ci = 1) = fb (c = color.B)"
   by (smt (verit) color.exhaust color.simps(3) color.simps(4) color_assn_eq dr_assn_pure_asm_prefix_def pure_part_pureD zero_neq_one)
+
 
 lemma matches_color_pattern_correct [vcg_rules]:
 "
@@ -310,13 +311,14 @@ lemma matches_color_pattern_correct [vcg_rules]:
 "
   apply(cases pat)
   using H1 H2 by vcg
-  
+
 
 lemma H3: "pure_part (\<upharpoonleft>rbt_assn t ti) \<Longrightarrow> fb (ti = null) = fb (t = rbt.Empty)"
   apply (rule arg_cong[where f = fb])
   apply (cases ti)
   apply auto
   done
+
 
 method STATE_extract_pure = 
   rule extract_pure,
@@ -392,15 +394,19 @@ lemmas matches_rbt_pattern_unfold_elims =
   matches_rbt_pattern_empty_E
   matches_rbt_pattern_branch_E
 
+
 lemmas [simp del] = matches_rbt_pattern_i.simps
+
 
 lemmas [llvm_pre_simp] =
   matches_rbt_pattern_i.simps
   matches_color_pattern_i.simps
   fb_def
 
+
 method resolve_rbt_pat_mat =
   (auto elim!: matches_rbt_pattern.elims(1-2))[1]
+
 
 end
 

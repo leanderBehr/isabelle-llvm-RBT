@@ -65,7 +65,7 @@ lemma rbt_check_2_unfold:
     "lhs = (Branch color.R (Branch color.R lll k_ll v_ll llr) k_l v_l lr)"
   using assms
   unfolding rbt_check_2_def rbt_left_def
-  by (fastforce elim: rbt_is_red_unfold_branch)
+  by fastforce
 
 
 lemma rbt_check_3_unfold:
@@ -75,7 +75,7 @@ lemma rbt_check_3_unfold:
     "lhs = (Branch color.R ll k_l v_l (Branch color.R lrl k_lr v_lr lrr))"
   using assms
   unfolding rbt_check_3_def rbt_right_def
-  by (fastforce elim: rbt_is_red_unfold_branch)
+  by fastforce
 
 
 lemma rbt_check_4_unfold:
@@ -85,7 +85,7 @@ lemma rbt_check_4_unfold:
     "rhs = (Branch color.R rl k_r v_r (Branch color.R rrl k_rr v_rr rrr))"
   using assms
   unfolding rbt_check_4_def rbt_right_def
-  by (fastforce elim: rbt_is_red_unfold_branch)
+  by fastforce
 
 
 lemma rbt_check_5_unfold:
@@ -95,10 +95,11 @@ lemma rbt_check_5_unfold:
     "rhs = (Branch color.R (Branch color.R rll k_rl v_rl rlr) k_r v_r rr)"
   using assms
   unfolding rbt_check_5_def rbt_left_def
-  by (fastforce elim: rbt_is_red_unfold_branch)
+  by fastforce
 
 
 subsubsection \<open>Adapted Balance Function\<close>
+
 
 fun rbt_balance_ad where 
   "rbt_balance_ad lhs k v rhs = 

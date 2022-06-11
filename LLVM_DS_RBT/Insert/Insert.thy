@@ -37,16 +37,6 @@ context rbt_impl
 begin 
 
 
-definition X :: "'a \<Rightarrow> 'a llM" where  "X x = Mreturn x"
-
-partial_function (M) insertt where
-  "insertt x = do {
-    z \<leftarrow> insertt x;
-    a \<leftarrow> X z;
-    return a
-  }"
-
-
 partial_function (M) insert' ::
   "'ki \<Rightarrow> 'v::llvm_rep \<Rightarrow> ('ki, 'v) rbti \<Rightarrow> ('ki, 'v) rbti llM" where
   "insert' k\<^sub>n v\<^sub>n n_p = do {
@@ -111,10 +101,7 @@ next
   
   note [vcg_rules] = 2
 
-  have color_contr_B: "\<not>\<flat>\<^sub>pcolor_assn color.B 0"
-    by (simp add: color_assn_def dr_assn_prefix_def dr_assn_pure_asm_prefix_def mk_assn_def)
-
-  from color_contr_B show ?case
+  show ?case
     apply (subst insert'.simps)
     apply vcg
     apply simp
@@ -126,10 +113,7 @@ next
 
   note [vcg_rules] = 3
 
-  have color_contr_R: "\<flat>\<^sub>pcolor_assn color.R x \<Longrightarrow> x = 0" for x
-    by (simp add: color_assn_def dr_assn_prefix_def dr_assn_pure_asm_prefix_def mk_assn_def)
-
-  from color_contr_R show ?case
+  show ?case
     apply (subst insert'.simps)
     apply vcg
     subgoal (*case left*)
@@ -166,25 +150,16 @@ definition insert where "insert k v tree \<equiv> do {
   return r_p
 }"
 
-lemma rbt_balance_unfold:
-  obtains c l' k' v' r' where "rbt_balance l k v r = rbt.Branch c l' k' v' r'"
-  apply(cases "(l, k, v ,r)" rule: RBT_Impl.balance.cases)
-  by auto
 
 lemma rbt_balance_non_empty:
   "rbt_balance l k v r \<noteq> rbt.Empty"
-  by (metis rbt_balance_unfold rbt.simps(3))
-  
+  by (induction l k v r rule: RBT_Impl.balance.induct, auto)
+
 
 lemma rbt_insert_ad'_non_empty:
   "rbt_insert_ad' k v tree \<noteq> rbt.Empty"
-  apply(cases "(k, v, tree)" rule: rbt_insert_ad'.cases)
-  by (simp add: rbt_balance_non_empty)+
-
-
-lemma *: "\<upharpoonleft>\<^sub>pcolor_assn color.B 1 = \<up>True"
-  by (simp add: dr_assn_pure_prefix_def)
-
+  by(induction k v tree rule: rbt_insert_ad'.induct,
+      simp_all add: rbt_balance_non_empty)
 
 lemma insert_correct':
   "
@@ -194,7 +169,7 @@ lemma insert_correct':
     (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_insert_ad k v tree) r)
   "
   unfolding insert_def rbt_insert_ad_def
-  supply insert'_correct [vcg_rules]
+  supply insert'_correct[vcg_rules]
   apply vcg
   apply (cases "rbt_insert_ad' k v tree")
   subgoal using rbt_insert_ad'_non_empty by fast
@@ -202,8 +177,7 @@ lemma insert_correct':
     apply simp
     unfolding rbt_assn_branch_def
     apply vcg
-    supply *[simp]
-    apply vcg_try_solve
+    apply vcg_try_solve (*!FIX!*)
     by (simp add: bury_pure_assn' fri_end)
   done
 

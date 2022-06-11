@@ -71,14 +71,14 @@ partial_function (M) combine ::
   }"
 
 
-lemma combine_correct:
+lemma combine_correct [vcg_rules]:
 "
   llvm_htriple
   (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>rbt_assn r ri)
   (combine li ri)
   (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_combine l r) x)
 "
-proof(induction l r arbitrary: li ri rule: combine.induct)
+proof(induction l r arbitrary: li ri rule: RBT_Impl.combine.induct)
   case (1 x)
   then show ?case 
     apply (subst combine.simps)
@@ -117,7 +117,7 @@ next
         apply (rule close_rbt_assn[where ti=li], vcg_solve)
         apply vcg
         done
-        (*broken*)
+        (*!FIX!*)
         (*
         apply (cases col, auto)
         unfolding rbt_assn_branch_def
@@ -194,6 +194,9 @@ next
     apply vcg    
     done
 qed
+
+
+lemmas [llvm_code] = combine.simps
 
 
 end
