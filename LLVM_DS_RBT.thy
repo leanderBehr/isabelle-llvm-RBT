@@ -1,6 +1,6 @@
 theory LLVM_DS_RBT
   imports
-  "LLVM_DS_RBT/Delete"
+  "LLVM_DS_RBT/Free"
   "LLVM_DS_RBT/Insert/Insert"
   "LLVM_DS_RBT/Export"
   "LLVM_DS_RBT/Lookup"
