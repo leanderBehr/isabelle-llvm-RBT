@@ -195,8 +195,6 @@ lemma is_black_correct [vcg_rules]:
   unfolding is_black_def rbt_is_black_def
   apply (cases t; (auto split: color.splits))
     apply vcg
-  unfolding rbt_assn_branch_def
-   apply vcg
   done
 
 
@@ -218,8 +216,6 @@ lemma is_black_branch_correct [vcg_rules]:
   unfolding is_black_branch_def rbt_is_black_def rbt_is_branch_def
   apply (cases t; (auto split: color.splits))
     apply vcg
-  unfolding rbt_assn_branch_def
-   apply vcg
   done
 
 
@@ -292,6 +288,7 @@ fun matches_rbt_pattern_i ::
       }
     }
   }"
+
 
 (*!FIX!, color_assn reasoning cumbersome*)
 lemma H1: "\<flat>\<^sub>pcolor_assn c ci \<Longrightarrow> fb (ci = 0) = fb (c = color.R)"

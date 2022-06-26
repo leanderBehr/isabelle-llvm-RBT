@@ -126,15 +126,13 @@ lemma balance_left_correct':
   subgoal (*case 1*)
     apply resolve_rbt_pat_mat
     apply vcg
-    unfolding rbt_assn_branch_def
-    apply vcg
     done
   subgoal (*case 2+*)
+
     apply vcg
+  
     subgoal (*case 2*)
       apply resolve_rbt_pat_mat
-      apply vcg
-      apply (erule close_rbt_assn, vcg_solve)
       apply vcg
       done
     subgoal (*case 3+*)
@@ -142,18 +140,9 @@ lemma balance_left_correct':
       subgoal (*case 3*)
         apply resolve_rbt_pat_mat
         apply vcg
-        subgoal (*paint null case*)
-          unfolding rbt_assn_branch_def
-          apply vcg
-          done
         subgoal (*paint non-null case*)
-          apply vcg
           apply STATE_extract_pure
           apply (erule rbt_assn_non_null_unfold, auto)
-          apply vcg
-          apply (erule close_rbt_assn, vcg_solve)
-          apply vcg
-          unfolding rbt_assn_branch_def
           apply vcg
           done
         done
@@ -279,15 +268,11 @@ lemma balance_right_correct':
   subgoal (*case 1*)
     apply resolve_rbt_pat_mat
     apply vcg
-    unfolding rbt_assn_branch_def
-    apply vcg
     done
   subgoal (*case 2+*)
     apply vcg
     subgoal (*case 2*) 
       apply resolve_rbt_pat_mat
-      apply vcg
-      apply (erule close_rbt_assn, vcg_solve)
       apply vcg
       done
     subgoal (*case 3+*)
@@ -295,18 +280,9 @@ lemma balance_right_correct':
       subgoal (*case 3*)
         apply resolve_rbt_pat_mat        
         apply vcg
-        subgoal (*paint null*)
-          unfolding rbt_assn_branch_def
-          apply vcg
-          done
         subgoal (*paint non-null*)
-          apply standard
           apply STATE_extract_pure
           apply (erule rbt_assn_non_null_unfold, auto)
-          apply vcg
-          apply (erule close_rbt_assn, vcg_solve)
-          apply vcg
-          unfolding rbt_assn_branch_def
           apply vcg
           done
         done

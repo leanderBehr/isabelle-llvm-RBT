@@ -93,8 +93,6 @@ proof (induction k v tree arbitrary: treei ki v rule: rbt_insert_ad'.induct)
   then show ?case
     apply (subst insert'.simps)
     apply vcg
-    unfolding rbt_assn_branch_def
-    apply vcg
     done
 next
   case (2 k\<^sub>n v\<^sub>n l k v r)
@@ -103,9 +101,6 @@ next
 
   show ?case
     apply (subst insert'.simps)
-    apply vcg
-    apply simp
-    unfolding rbt_assn_branch_def 
     apply vcg
     done
 next
@@ -116,25 +111,6 @@ next
   show ?case
     apply (subst insert'.simps)
     apply vcg
-    subgoal (*case left*)
-      apply simp
-      unfolding rbt_assn_branch_def
-      apply vcg
-      done
-    subgoal (*cases right, equal*)
-      apply vcg
-      subgoal (*case right*)
-        apply simp
-        unfolding rbt_assn_branch_def
-        apply vcg
-        done
-      subgoal (*case equal*)
-        apply vcg
-        apply simp
-        unfolding rbt_assn_branch_def
-        apply vcg
-        done
-      done
     done
 qed
 

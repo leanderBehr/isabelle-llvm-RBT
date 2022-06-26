@@ -124,21 +124,7 @@ next
 
   show ?case
     apply (subst del.simps)
-    apply vcg (*x < y; is_black_b -- is automatic*)
-    subgoal (*x < y, \<not>is_black_b*)
-      apply auto
-      unfolding rbt_assn_branch_def
-      apply vcg
-      done 
-    subgoal (*x \<ge> y*)
-      apply vcg (*x > y; is_black_b -- is automatic*)
-      subgoal (*x > y; \<not>is_black_b*)
-        apply simp
-        unfolding rbt_assn_branch_def
-        apply vcg
-        done
-      subgoal (*x = y*) by vcg
-      done
+    apply vcg
     done
 qed
 
@@ -176,12 +162,7 @@ lemma delete_correct [vcg_rules]:
   apply STATE_extract_pure
   apply (erule rbt_assn_non_null_unfold, simp)
   apply vcg
-  apply auto
-  unfolding rbt_assn_branch_def
-  apply vcg
   done
-(*this is me refusing to make a dedicated function that implements paint*)
-
 
 lemmas [llvm_code] = delete_def
 

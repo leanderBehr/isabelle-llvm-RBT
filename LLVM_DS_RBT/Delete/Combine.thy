@@ -72,7 +72,7 @@ partial_function (M) combine ::
 
 
 lemma combine_correct [vcg_rules]:
-"
+  "
   llvm_htriple
   (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>rbt_assn r ri)
   (combine li ri)
@@ -99,47 +99,12 @@ next
     subgoal
       apply resolve_rbt_pat_mat
       apply vcg
-      unfolding rbt_assn_branch_def
-      apply vcg_try_solve
       done
     subgoal
       apply vcg
-      apply simp
       apply (cases "rbt_combine b c")
-       apply auto
-      subgoal
-        unfolding rbt_assn_branch_def
-        apply vcg
-        done
-      subgoal for col
-        apply (auto split: color.splits)
-        apply (rule close_rbt_assn[where ti=ri], vcg_solve)
-        apply (rule close_rbt_assn[where ti=li], vcg_solve)
-        apply vcg
-        done
-        (*!FIX!*)
-        (*
-        apply (cases col, auto)
-        unfolding rbt_assn_branch_def
-        apply vcg_solve
-        apply fri_dbg_start
-        apply (rule fri_exE)+
-        apply fri_dbg_step
-
-        apply fri_dbg_step
-         apply fri_dbg_step
-         apply vcg_try_solve
-        apply fri_dbg_step
-        apply fri_dbg_step
-        apply fri_dbg_step
-        apply fri_dbg_step
-        apply fri_dbg_step
-         apply fri_dbg_step
-         apply vcg_try_solve
-        apply fri_dbg_step
-        apply fri_dbg_step
-        sorry
-      *)
+       apply (auto split: color.splits)
+       apply vcg
       done
     done
 next
@@ -151,35 +116,19 @@ next
     subgoal
       apply resolve_rbt_pat_mat
       apply vcg
-      apply (simp add: rbt_assn_branch_def)
-      apply vcg
       done
     subgoal
       apply vcg
-      apply (erule close_rbt_assn, vcg_solve)
-      apply vcg
       apply (cases "rbt_combine b c")
-      subgoal 
-        apply auto
-        apply vcg
-        done
-      subgoal
-        apply (auto split: color.splits)
-        apply vcg
-        done
+       apply (auto split: color.splits)
+       apply vcg
       done
     done
 next
   case (5 va vb vc vd b k x c)
-
   note [vcg_rules] = 5
-
   show ?case
     apply (subst combine.simps)
-    apply vcg
-    apply (erule close_rbt_assn[where ti=li], vcg_solve)
-    apply vcg
-    apply (rule close_rbt_assn[where ti=ri], vcg_solve)
     apply vcg
     done
 next
@@ -188,10 +137,6 @@ next
   show ?case
     apply (subst combine.simps)
     apply vcg
-    apply (erule close_rbt_assn[where ti=ri], vcg_solve)
-    apply vcg
-    apply (rule close_rbt_assn[where ti=li], vcg_solve)
-    apply vcg    
     done
 qed
 

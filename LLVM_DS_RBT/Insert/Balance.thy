@@ -138,9 +138,6 @@ lemma balance_ad_case_1_correct [vcg_rules]:
   apply vcg
   apply (erule rbt_check_1_unfold)
   apply vcg
-  apply auto
-  unfolding rbt_assn_branch_def
-  apply vcg
   done
 
 
@@ -173,9 +170,6 @@ lemma balance_ad_case_2_correct [vcg_rules]:
   apply vcg
   apply (erule rbt_check_2_unfold)
   apply vcg
-  apply auto
-  unfolding rbt_assn_branch_def
-  apply vcg
   done
 
 
@@ -207,9 +201,6 @@ lemma balance_ad_case_3_correct [vcg_rules]:
   unfolding balance_ad_case_3_def rbt_balance_ad_case_3_def new_def
   apply vcg
   apply (erule rbt_check_3_unfold)
-  apply vcg
-  apply auto
-  unfolding rbt_assn_branch_def
   apply vcg
   done
 
@@ -245,9 +236,6 @@ lemma balance_ad_case_4_correct [vcg_rules]:
   apply vcg
   apply (erule rbt_check_4_unfold)
   apply vcg
-  apply auto
-  unfolding rbt_assn_branch_def
-  apply vcg
   done
 
 
@@ -282,9 +270,6 @@ lemma balance_ad_case_5_correct [vcg_rules]:
   apply vcg
   apply (erule rbt_check_5_unfold)
   apply vcg
-  apply auto
-  unfolding rbt_assn_branch_def
-  apply vcg
   done
 
                                              
@@ -299,8 +284,6 @@ lemma balance_ad_case_6_correct [vcg_rules]:
     (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_6 lhs k v rhs) r)
   "
   unfolding balance_ad_case_6_def rbt_balance_ad_case_6_def
-  apply vcg
-  unfolding rbt_assn_branch_def
   by vcg
 
 

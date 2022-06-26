@@ -524,6 +524,25 @@ lemma empty_correct [vcg_rules]:
 lemmas [llvm_code] = empty_def
 
 
+subsection "Reduction Rules"
+
+
+lemma unfold_rbt_assn_red_rule [fri_red_rules]: "is_sep_red
+    \<box>
+    (\<upharpoonleft>color_assn c ci ** \<upharpoonleft>rbt_assn l li \<and>* \<upharpoonleft>key_assn k ki \<and>* \<up>(vi = v) \<and>* \<upharpoonleft>rbt_assn r ri)
+    (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
+    (\<upharpoonleft>rbt_assn (rbt.Branch c l k v r) ti)"
+  apply (rule is_sep_redI)
+  unfolding rbt_assn_branch_def
+  subgoal premises prems for Ps Qs
+    apply (sep_drule prems)
+    apply (simp only: fri_extract_simps entails_lift_extract_simps cong: entails_pre_cong)
+    apply clarify
+    apply fri
+    done
+  done
+
+
 end
 
 
