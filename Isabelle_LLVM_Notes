@@ -1,13 +1,15 @@
 DONE:
 - missing EXTRACT
-
+- automatic unfolding of conclusions in rule applications, equiv to folding premise
+- 
 
 TODO:
 - reasoning on pure_part of assertions; needs method/rules for extracting and splitting pure parts [search <STATE_extract_pure>]
 - reasoning on pure assertions like color_assn is a pain because of different tags
 
-- automate folding/unfolding rbt assn as needed ====>>
-- to argue on subtrees, rbt assertion must be split up so we can't argue on full tree anymore
+- automate unfolding rbt assn in premise as needed
+
+- have variables as input to rbt assn??
 
 - using "macros" like if! C then! T else! F in partial_function
 
@@ -15,5 +17,3 @@ TODO:
 
 - no error at [llvm_code] declaration, but only at export_llvm
 - export_llvm errors are unhelpful
-
-
