@@ -2,12 +2,6 @@ theory Naive_Insert
   imports "../Setup"
 begin
 
-context rbt_impl
-begin
-interpretation llvm_prim_ctrl_setup .
-interpretation llvm_prim_arith_setup .
-interpretation llvm_prim_setup .
-
 
 fun rbt_naive_insert ::
   "('key::linorder, 'val) rbt \<Rightarrow> 'key \<Rightarrow> 'val \<Rightarrow> ('key, 'val) rbt"
@@ -22,6 +16,13 @@ fun rbt_naive_insert ::
       else rbt.Branch col lhs k' v' rhs
     )
 )"
+
+
+context rbt_impl
+begin
+interpretation llvm_prim_ctrl_setup .
+interpretation llvm_prim_arith_setup .
+interpretation llvm_prim_setup .
 
 
 partial_function (M) naive_insert :: "
