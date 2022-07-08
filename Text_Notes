@@ -1,2 +1,4 @@
 - Macro programming
 - different translation approaches
+- existing vbg/fri not designed as standalone entails/frame solvers
+	e.g. fri assumes that all pure assertions are extracted
