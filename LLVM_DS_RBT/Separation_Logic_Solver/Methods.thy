@@ -20,8 +20,12 @@ method any_succeed methods m = fails \<open>all \<open>fails m\<close>\<close>
 lemma sep_conj_noop_cong: "(x ** y) = (x ** y)" by simp
 lemma frame_cong: "\<lbrakk>p=p'; q=q'\<rbrakk> \<Longrightarrow> frame p pr q qr = frame p' pr q' qr" by simp
 
+method has_prems = match premises in _ (cut) \<Rightarrow> succeed
+method match_prems methods M = 
+  then_else \<open>has_prems\<close> \<open>match premises in _ (cut) \<Rightarrow> M\<close> \<open>M\<close>
 
-method normalize_with uses thms congs = is_sep_goal, simp only: thms cong: congs frame_cong
+method normalize_with uses thms congs = 
+  is_sep_goal, match_prems \<open>simp only: thms cong: congs frame_cong\<close>
 
 
 (*removed \<box> from conjunctions*)
@@ -126,8 +130,6 @@ method entails_rev_assumption = rule degenerate_frameD, frame_rev_assumption, (r
 
 
 subsubsection "Combined"
-
-method X = then_else \<open>succeed\<close> \<open>fail\<close> \<open>succeed\<close>
   
 
 method is_pre_frame = match conclusion in "?P -- ?PR \<tturnstile> ?Q" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
@@ -297,9 +299,14 @@ lemma entails_exE: "(\<And>x. P x \<turnstile> C) \<Longrightarrow> (EXS x. P x)
   by blast
 
 
+lemma frame_exE: "(\<And>x. P x -- Pr \<tturnstile> Q -- Qr) \<Longrightarrow> (EXS x. P x) -- Pr \<tturnstile> Q -- Qr"
+  unfolding frame_def entails_def sep_conj_def
+  by blast
+
+
 method isep_elim_ex = 
   (normalize_with thms: sep_conj_exists congs: entails_pre_cong)?,
-  (rule entails_exE)+,
+  (rule entails_exE)+ | (rule frame_exE)+,
   isep_normalize_conj_braces?
 
 
@@ -332,16 +339,40 @@ method defer_non_sep_goal = then_else \<open>is_sep_goal\<close> \<open>fail\<cl
 method solves_non_sep_goals methods m = m;fails \<open>is_sep_goal\<close> 
 
 
+lemma dupl: "X \<Longrightarrow> (X \<Longrightarrow> Y) \<Longrightarrow> Y" by simp
+
+
+method thin_duplicate = 
+  match premises in P[thin]: Q for Q \<Rightarrow> 
+  \<open>match premises in Q \<Rightarrow> \<open>thin_tac P\<close>\<close>
+
+
+method thin_all_duplicates = thin_duplicate+
+
+
+method isep_extract_pure =
+ changed \<open>
+   rule entails_pureI,
+   star \<open>erule conjE | drule pure_part_split_conj\<close>,
+   thin_all_duplicates?
+  \<close>
+
+
 method isep_solver_keep declares isep_reduction isep_intro isep_dest =
   ((
-      (has_any_sep_goal, defer_non_sep_goal) |
-      entails_box_solver |
-      isep_elim_ex |
-      isep_assumption |
-      isep_backtracking_red_rule red_rule: fri_red_rules isep_reduction |
-      isep_backtracking_rule rule: isep_intro |
-      isep_backtracking_drule drule: isep_dest |
-      solves_non_sep_goals \<open>isep_intro_ex, isep_solver_keep\<close>)+)[1]
+      has_any_sep_goal,
+      (
+        defer_non_sep_goal+ |
+        isep_normalize_conj_braces |
+        entails_box_solver |
+        isep_elim_ex, isep_extract_pure |  
+        isep_assumption |
+        changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_reduction\<close> |
+        isep_backtracking_rule rule: isep_intro |
+        isep_backtracking_drule drule: isep_dest |
+        solves_non_sep_goals \<open>isep_intro_ex, isep_solver_keep\<close>
+        )
+      )+)[1]
 
 
 method isep_solver 
@@ -371,6 +402,10 @@ lemma
   shows "A \<turnstile> B"
   apply (isep_solver isep_intro: trap rule)
   back ..
+
+
+lemma sep_pureI [isep_intro]: "B \<Longrightarrow> \<box> \<turnstile> \<up>B"
+  by (simp add: pure_true_conv)
 
 
 end
