@@ -1,5 +1,7 @@
 theory Lookup
-  imports Setup OptionI
+  imports 
+    "../Setup"
+    OptionI
 begin
 
 

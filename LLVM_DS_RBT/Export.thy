@@ -2,7 +2,7 @@ theory Export
   imports
     Free
     "Insert/Insert"
-    Lookup
+    "Lookup/Lookup"
     "Insert/Naive_Insert"
     "Delete/Delete"
 begin
