@@ -1,4 +1,12 @@
 - Macro programming
 - different translation approaches
-- existing vbg/fri not designed as standalone entails/frame solvers
+- existing fri not designed as standalone entails/frame solvers
 	e.g. fri assumes that all pure assertions are extracted
+- parameterization on member assn as paramter to assertion or locale
+- list of llvm_rep + assertions to abstract vs list of abstract
+	- same question for mapping for both keys and values 
+
+### sep solver
+
+- efficient focusing method?
+- allows dest and intro with multiple prems/concs
