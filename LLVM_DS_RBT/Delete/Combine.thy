@@ -5,9 +5,7 @@ begin
 
 context rbt_impl
 begin
-interpretation llvm_prim_ctrl_setup .
-interpretation llvm_prim_arith_setup .
-interpretation llvm_prim_setup .
+interpretation rbt_impl_deps .
 
 
 abbreviation "is_black_b x \<equiv> matches_rbt_pattern (Branch CP_B RVar RVar) x"
@@ -18,7 +16,7 @@ abbreviation "is_red_b_i x \<equiv> matches_rbt_pattern_i (Branch CP_R RVar RVar
 
 
 partial_function (M) combine ::
-  "('ki, 'v::llvm_rep) rbti \<Rightarrow> ('ki, 'v) rbti \<Rightarrow> ('ki, 'v) rbti llM" where
+  "('ki, 'vi) rbti \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> ('ki, 'vi) rbti llM" where
   "combine l_p r_p = do {
     if l_p = null then return r_p
     else if r_p = null then return l_p

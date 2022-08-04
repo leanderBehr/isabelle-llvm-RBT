@@ -59,10 +59,9 @@ end
 
 subsubsection \<open>Setup for LLVM code export\<close>
 text \<open>Declare structure to code generator.\<close>
-lemma to_val_option_i[ll_to_val]:
-  "to_val opti = LL_STRUCT [to_val (option_i.val opti),
-                            to_val (option_i.flag opti)]"
-  by (cases opti; (simp add: to_val_option_i_def))
+lemma to_val_option_i[ll_struct_of]:
+  "struct_of TYPE('a::llvm_rep option_i) =  VS_STRUCT [struct_of TYPE('a), struct_of TYPE(8 word)]"
+  unfolding struct_of_option_i_def by simp
   
 
 subsubsection \<open>Code Generator Preprocessor Setup\<close>  

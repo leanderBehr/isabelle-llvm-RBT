@@ -7,9 +7,7 @@ begin
 
 context rbt_impl
 begin
-interpretation llvm_prim_ctrl_setup .
-interpretation llvm_prim_arith_setup .
-interpretation llvm_prim_setup .
+interpretation rbt_impl_deps .
 
 
 fun rbt_del_ad where
@@ -31,17 +29,17 @@ fun rbt_del_ad where
 
 
 (*looks easy now but really wasn't*)
-lemma 
+lemma
   rbt_del_ad_correct_left:
   "\<lbrakk>x < y\<rbrakk> \<Longrightarrow>
-  rbt_del_ad x (rbt.Branch c a (y::'k) (s::'a) b) = rbt_del_from_left x a y s b" and
+  rbt_del_ad x (rbt.Branch c a y s b) = rbt_del_from_left x a y s b" and
 
   rbt_del_ad_correct_right:
   "\<lbrakk>x > y\<rbrakk> \<Longrightarrow>
   rbt_del_ad x (rbt.Branch c a y s b) = rbt_del_from_right x a y s b" and
 
   rbt_del_ad_correct:
-  "rbt_del_ad x (t:: ('k, 'a) rbt) = rbt_del x t"
+  "rbt_del_ad x t = rbt_del x t"
 
 proof (induct x a y s b and x a y s b and x t
     rule: rbt_del_from_left_rbt_del_from_right_rbt_del.induct)
@@ -51,7 +49,7 @@ qed auto
 
 
 partial_function (M) del ::
-  "'ki \<Rightarrow> ('ki, 'v::llvm_rep) rbti \<Rightarrow> (('ki, 'v::llvm_rep) rbti) llM" where
+  "'ki \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> (('ki, 'vi) rbti) llM" where
  "del x t_p = do {
   if t_p = null then return null
   else do {
@@ -79,7 +77,8 @@ partial_function (M) del ::
           else do { set_right_p r_del t_p; set_color_p 0 t_p; return t_p }
         }
         else do {
-          key_delete y;          
+          key_delete y;
+          value_delete s;
           ll_free t_p;
           combine a b
         }
@@ -163,6 +162,7 @@ lemma delete_correct [vcg_rules]:
   apply (erule rbt_assn_non_null_unfold, simp)
   apply vcg
   done
+
 
 lemmas [llvm_code] = delete_def
 

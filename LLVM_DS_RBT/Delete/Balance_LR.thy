@@ -8,9 +8,7 @@ begin
 
 context rbt_impl
 begin
-interpretation llvm_prim_ctrl_setup .
-interpretation llvm_prim_arith_setup .
-interpretation llvm_prim_setup .
+interpretation rbt_impl_deps .
 
 subsection \<open>Balance Left\<close>
 
@@ -95,6 +93,7 @@ definition "balance_left l_p k v r_p \<equiv>
     then! bl_case_3 l_p k v r_p
     else! do { 
       key_delete k;
+      value_delete v;
       free l_p; free r_p;
       empty
     }
@@ -113,8 +112,8 @@ lemmas [llvm_code] = balance_left_def
 lemma balance_left_correct':
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn r ri)
-    (balance_left li ki v ri)
+    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (balance_left li ki vi ri)
     (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_left_ad l k v r) x)
   "
   unfolding 
@@ -154,8 +153,8 @@ lemma balance_left_correct':
 lemma balance_left_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn r ri)
-    (balance_left li ki v ri)
+    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (balance_left li ki vi ri)
     (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_left l k v r) x)
   "
   using balance_left_correct' rbt_balance_left_ad_correct by metis
@@ -245,6 +244,7 @@ definition "balance_right l_p k v r_p \<equiv>
     then! br_case_3 l_p k v r_p
     else! do { 
       key_delete k;
+      value_delete v;
       free l_p; free r_p;
       empty
     }
@@ -255,8 +255,8 @@ definition "balance_right l_p k v r_p \<equiv>
 lemma balance_right_correct':
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn r ri)
-    (balance_right li ki v ri)
+    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (balance_right li ki vi ri)
     (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_right_ad l k v r) x)
   "
   unfolding
@@ -295,8 +295,8 @@ lemma balance_right_correct':
 lemma balance_right_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn r ri)
-    (balance_right li ki v ri)
+    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (balance_right li ki vi ri)
     (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_right l k v r) x)
   "
   using balance_right_correct' rbt_balance_right_ad_correct by metis

@@ -4,13 +4,11 @@ begin
 
 context rbt_impl
 begin
-interpretation llvm_prim_ctrl_setup .
-interpretation llvm_prim_arith_setup .
-interpretation llvm_prim_setup .
+interpretation rbt_impl_deps .
 
 
 partial_function (M) free :: "
-  ('ki, 'val::llvm_rep) rbti \<Rightarrow> unit llM 
+  ('ki, 'vi::llvm_rep) rbti \<Rightarrow> unit llM 
 " where "
   free tree_p = do {
     if tree_p = null
@@ -18,6 +16,7 @@ partial_function (M) free :: "
     else do {
       tree \<leftarrow> ll_load tree_p;
       key_delete (rbt_node.key tree);
+      value_delete (rbt_node.val tree);
       ll_free tree_p;
       free (rbt_node.left tree);
       free (rbt_node.right tree)
