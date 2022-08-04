@@ -223,81 +223,25 @@ lemmas [llvm_inline, simp] =
 
 subsection \<open>Color Assertion\<close>
 
-
-fun color_assn' :: "color \<Rightarrow> 8 word \<Rightarrow> ll_assn" where
-  "color_assn' color.R rep = \<up>(rep=0)"
-| "color_assn' color.B rep = \<up>(rep=1)"
-
-
-definition "color_assn \<equiv> mk_assn color_assn'"
+fun color_pred where 
+  "color_pred color.R rep = (rep = 0)"
+| "color_pred color.B rep = (rep = 1)"
 
 
-lemma color_assn_eq: "\<upharpoonleft>color_assn c rep = 
-  \<up>(case c of color.R \<Rightarrow> rep = 0 | color.B \<Rightarrow> rep = 1)"
-  unfolding color_assn_def 
-  by (cases c; simp)
+abbreviation "color_assn c ci \<equiv> \<up>(color_pred c ci)" 
 
 
-lemma color_assn_pure [is_pure_rule]: "is_pure color_assn" 
-  unfolding is_pure_def color_assn_eq by simp
-
-
-lemma [simp]: "\<upharpoonleft>color_assn color.R rep = \<up>(rep=0)"
-  unfolding color_assn_def by simp
-
-lemma [simp]: "\<upharpoonleft>color_assn color.B rep = \<up>(rep=1)"
-  unfolding color_assn_def by simp
-
-lemma [simp]: "\<upharpoonleft>color_assn c 0 = \<up>(c = color.R)"
-  unfolding color_assn_eq
-  by (cases c; auto)
-
-lemma [simp]: "\<upharpoonleft>color_assn c 1 = \<up>(c = color.B)"
-  unfolding color_assn_eq
-  by (cases c; auto)
-
-
-lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn color.R rep = \<up>(rep=0)"
-  by (simp add: dr_assn_pure_prefix_def)
-
-lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn color.B rep = \<up>(rep=1)"
-  by (simp add: dr_assn_pure_prefix_def)
-
-lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn c 0 = \<up>(c = color.R)"
-  by (cases c; auto)
-
-lemma [simp]: "\<upharpoonleft>\<^sub>pcolor_assn c 1 = \<up>(c = color.B)"
-  by (cases c; auto)
-
-
-lemma [simp]: "\<flat>\<^sub>pcolor_assn color.R rep = (rep=0)"
-  unfolding dr_assn_pure_asm_prefix_def
-  using color_assn_pure by auto
-  
-lemma [simp]: "\<flat>\<^sub>p color_assn color.B rep = (rep=1)"
-  unfolding dr_assn_pure_asm_prefix_def
-  using color_assn_pure by auto
-
-lemma [simp]: "\<flat>\<^sub>pcolor_assn c 0 = (c = color.R)"
-  by (cases c; auto)
-
-lemma [simp]: "\<flat>\<^sub>pcolor_assn c 1 = (c = color.B)"
-  by (cases c; auto)
-
-
-subsection \<open>fb Setup\<close>
-
-
-definition fb :: "bool \<Rightarrow> 1 word" where "fb = from_bool"
-
-
-lemma fb_true [simp]: "fb True = 1" 
-  unfolding fb_def
+lemma color_assn_R_0 [fri_red_rules]:
+  "is_sep_red \<box> \<box> \<box> (color_assn color.R 0)"
+  apply (rule is_sep_redI)
+  apply isep_solver
   by simp
 
 
-lemma fb_false [simp]: "fb False = 0" 
-  unfolding fb_def
+lemma color_assn_B_1 [fri_red_rules]:
+  "is_sep_red \<box> \<box> \<box> (color_assn color.B 1)"
+  apply (rule is_sep_redI)
+  apply isep_solver
   by simp
 
 
@@ -331,21 +275,59 @@ locale linorder_impl =
 subsection \<open>RBT Locale\<close>
 
 
-locale rbt_impl = linorder_impl lt_impl key_assn
-  for lt_impl :: "('ki::llvm_rep) \<Rightarrow> 'ki \<Rightarrow> 1 word llM"
-    and key_assn :: "('k::linorder, 'ki) dr_assn" +
-  fixes key_delete :: "'ki \<Rightarrow> unit llM"
-  assumes key_delete_rule [vcg_rules]: "
-    llvm_htriple
-    (\<upharpoonleft>key_assn k ki)
-    (key_delete ki)
-    (\<lambda>_.\<box>)
-  "
+locale monad_syntax_M_loc
 begin
-unbundle monad_syntax_M  
-interpretation llvm_prim_ctrl_setup .
-interpretation llvm_prim_arith_setup .
-interpretation llvm_prim_setup .
+
+unbundle monad_syntax_M
+
+end
+
+
+locale rbt_impl_deps = 
+  monad_syntax_M_loc +
+  llvm_prim_ctrl_setup +
+  llvm_prim_arith_setup +
+  llvm_prim_setup
+
+
+locale rbt_impl =
+  linorder_impl key_type key_type_i lt_impl key_assn
+  for
+    key_type :: "'k :: linorder itself" and
+    key_type_i :: "'ki :: llvm_rep itself" and
+    value_type :: "'v itself" and
+    value_type_i :: "'vi :: llvm_rep itself" and    
+    
+    lt_impl and
+    key_assn and
+    key_delete :: "'ki \<Rightarrow> unit llM" and
+    value_assn :: "('v, 'vi) dr_assn" and
+    value_delete :: "'vi \<Rightarrow> unit llM" and
+    value_copy :: "'vi \<Rightarrow> 'vi llM" +
+  assumes
+    key_delete_rule [vcg_rules]: 
+    "
+      llvm_htriple
+      (\<upharpoonleft>key_assn k ki)
+      (key_delete ki)
+      (\<lambda>_. \<box>)
+    " and
+    value_delete_rule [vcg_rules]:
+    "
+      llvm_htriple
+      (\<upharpoonleft>value_assn v vi)
+      (value_delete vi)
+      (\<lambda>_. \<box>)
+    " and
+    value_coyp_rule [vcg_rules]:
+    "
+      llvm_htriple
+      (\<upharpoonleft>value_assn v vi)
+      (value_copy vi)
+      (\<lambda>r. \<upharpoonleft>value_assn v r ** \<upharpoonleft>value_assn v vi)
+    "
+begin
+interpretation rbt_impl_deps .
 
 
 subsection \<open>RBT Assertion\<close>
@@ -360,7 +342,7 @@ fun rbt_assn' :: "
 | "rbt_assn' (rbt.Branch col lhs k v rhs) p = (
     EXS coli lhsi ki vi rhsi. 
       \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
-      \<upharpoonleft>color_assn col coli **
+      color_assn col coli **
       rbt_assn' lhs lhsi **
       \<upharpoonleft>key_assn k ki **
       \<up>(vi=v) **
@@ -371,7 +353,7 @@ fun rbt_assn' :: "
 fun rbt_val_assn where
   "rbt_val_assn (Branch col lhs k v rhs) (RBT_NODE coli lhsi ki vi rhsi) = 
     (
-     \<upharpoonleft>color_assn col coli **
+     color_assn col coli **
       rbt_assn' lhs lhsi **
         \<upharpoonleft>key_assn k ki **
         \<up>(vi=v) **  
@@ -431,14 +413,16 @@ lemma[simp]: "\<upharpoonleft>rbt_assn rbt.Empty p = \<up>(p=null)"
   unfolding rbt_assn_def by simp
 
 
-lemma rbt_assn_branch_def: "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p = (
-  EXS coli lhsi ki vi rhsi. 
-    \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
-    \<upharpoonleft>color_assn col coli **
-    \<upharpoonleft>rbt_assn lhs lhsi **
-    \<upharpoonleft>key_assn k ki **
-    \<up>(vi=v) **  
-    \<upharpoonleft>rbt_assn rhs rhsi
+lemma rbt_assn_branch_def: 
+  "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p =
+  (
+    EXS coli lhsi ki vi rhsi. 
+      \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
+      color_assn col coli **
+      \<upharpoonleft>rbt_assn lhs lhsi **
+      \<upharpoonleft>key_assn k ki **
+      \<upharpoonleft>value_assn v vi **  
+      \<upharpoonleft>rbt_assn rhs rhsi
   )"
   unfolding rbt_assn_def
   by simp
@@ -448,17 +432,16 @@ lemma close_rbt_assn_entails:
   "
   (
     \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
-    \<upharpoonleft>color_assn col coli **  
+    color_assn col coli **
     \<upharpoonleft>rbt_assn lhs lhsi **
     \<upharpoonleft>key_assn k ki **
+    \<upharpoonleft>value_assn v vi **
     \<upharpoonleft>rbt_assn rhs rhsi
   ) \<turnstile> 
-  \<upharpoonleft>rbt_assn (rbt.Branch col lhs k vi rhs) ti
+  \<upharpoonleft>rbt_assn (rbt.Branch col lhs k v rhs) ti
   "
   unfolding rbt_assn_branch_def
-  apply (rule ENTAILSD)
-  apply vcg_solve
-  done
+  by isep_solver
 
 
 lemma entails_to_state_elim:
@@ -497,10 +480,10 @@ lemma load_rbt [vcg_rules]:
     (\<lambda>r. 
       EXS coli lhsi ki vi rhsi.
         \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
-        \<upharpoonleft>color_assn col coli **
+        color_assn col coli **
         \<upharpoonleft>rbt_assn lhs lhsi **
         \<upharpoonleft>key_assn k ki **
-        \<up>(vi=v) **  
+        \<upharpoonleft>value_assn v vi **  
         \<upharpoonleft>rbt_assn rhs rhsi **
         \<up>(r = RBT_NODE coli lhsi ki vi rhsi)
     )
@@ -512,8 +495,8 @@ lemma load_rbt [vcg_rules]:
 subsection "Empty Function"
 
 
-definition empty :: "('ki, 'v) rbti llM"
-  where "empty \<equiv> Mreturn null"
+definition empty :: "('ki, 'vi) rbti llM"
+  where [llvm_code]: "empty \<equiv> Mreturn null"
 
 
 lemma empty_correct [vcg_rules]: 
@@ -525,15 +508,13 @@ lemma empty_correct [vcg_rules]:
   by vcg
 
 
-lemmas [llvm_code] = empty_def
-
 
 subsection "Reduction Rules"
 
 
 lemma unfold_rbt_assn_red_rule [fri_red_rules]: "is_sep_red
     \<box>
-    (\<upharpoonleft>color_assn c ci ** \<upharpoonleft>rbt_assn l li \<and>* \<upharpoonleft>key_assn k ki \<and>* \<up>(vi = v) \<and>* \<upharpoonleft>rbt_assn r ri)
+    (color_assn c ci ** \<upharpoonleft>rbt_assn l li \<and>* \<upharpoonleft>key_assn k ki \<and>* \<upharpoonleft>value_assn v vi \<and>* \<upharpoonleft>rbt_assn r ri)
     (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
     (\<upharpoonleft>rbt_assn (rbt.Branch c l k v r) ti)"
   apply (rule is_sep_redI)
