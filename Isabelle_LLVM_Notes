@@ -1,19 +1,43 @@
 DONE:
 - missing EXTRACT
 - automatic unfolding of conclusions in rule applications, equiv to folding premise
-- 
 
 TODO:
-- reasoning on pure_part of assertions; needs method/rules for extracting and splitting pure parts [search <STATE_extract_pure>]
-- reasoning on pure assertions like color_assn is a pain because of different tags
+
+### IMPL
 
 - automate unfolding rbt assn in premise as needed
+- using "macros" like if! C then! T else! F in partial_function ++ DO ++
 
-- have variables as input to rbt assn??
+### FRI / VCG
 
-- using "macros" like if! C then! T else! F in partial_function
+- using inline + on words leads to difficult proofs because ll_add rules aren't used ++ DO? ++
+  - same for <
 
+- reasoning on pure assertions like color_assn is a pain because of different tags
+- extracts \<flat>\<^sub>psnat.assn (length x) r and then can't prove snat.assn (length x) r ARRGHH
 - missing fri_extract to convert existential quantification
+- not designed as entails solver
+  - expects all pure parts to be extracted before entails
+
+### ISEP / IVCG
+
+- pure intro rule before isep_assumption to not "waste" pure assn?
+- intro rules can mess up order
+- do normalization cleanly
+- make isep_extract_pure idempotent ++ DO ++
+- apply simp to conclusions only without creating flex-flex-pairs ++ DO ++
+
+### EXPORT
+
+- example doesn't export  ++ DO ++
 
 - no error at [llvm_code] declaration, but only at export_llvm
 - export_llvm errors are unhelpful
+
+### LOCALES
+
+- fix type variables in locale without assumptions involving them?
+	- how does my rbt_impl_simple_value locale in setup work???
+
+- how to properly introduce locale with default instantiations
