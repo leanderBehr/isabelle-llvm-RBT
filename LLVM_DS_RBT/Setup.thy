@@ -394,18 +394,19 @@ lemma entails_pre_pure_iff:
 
 lemma "rbt_assn' (Branch col lhs k v rhs) p =
     (EXS n. \<upharpoonleft>ll_bpto n p ** rbt_val_assn (Branch col lhs k v rhs) n)"
-  apply (auto simp add: entails_eq_iff sep_algebra_simps)
-   apply (rule entails_exE)+
-   apply (rule entails_exI)
-   apply (rule conj_entails_mono)
-    apply rule
-   apply (simp add: sep_algebra_simps)
-  apply (rule entails_exE)
-  subgoal for x
-    apply (cases x)
-    apply (auto simp add: sep_algebra_simps entails_pre_pure_iff)
-    apply (rule entails_exI)+
-    apply rule
+  apply (auto simp add: entails_eq_iff)
+  subgoal
+    apply isep_elim_ex
+    apply isep_intro_ex
+    apply isep_solver_keep
+    apply simp
+    done
+  subgoal
+    apply isep_elim_ex
+    subgoal for x
+      apply (cases x, simp)
+      apply isep_solver
+      done
     done
   done
 
