@@ -11,8 +11,9 @@ section "Normalization"
 text "We match premises so that simp only acts on conclusion"
 
 
-method is_sep_goal = (match conclusion in "?X \<turnstile> ?Y" \<Rightarrow> succeed \<bar> "?P -- ?PR \<tturnstile> ?Q -- ?QR" \<Rightarrow> succeed \<bar> _ \<Rightarrow> fail)
-
+method is_sep_goal = 
+  succeeds 
+  \<open>(match conclusion in "?X \<turnstile> ?Y" \<Rightarrow> succeed \<bar> "?P -- ?PR \<tturnstile> ?Q -- ?QR" \<Rightarrow> succeed \<bar> _ \<Rightarrow> fail)\<close>
 
 method any_succeed methods m = fails \<open>all \<open>fails m\<close>\<close>
 
@@ -24,17 +25,21 @@ method has_prems = match premises in _ (cut) \<Rightarrow> succeed
 method match_prems methods M = 
   then_else \<open>has_prems\<close> \<open>match premises in _ (cut) \<Rightarrow> M\<close> \<open>M\<close>
 
+
 method normalize_with uses thms congs = 
-  is_sep_goal, match_prems \<open>simp only: thms cong: congs frame_cong\<close>
+  is_sep_goal, simp only: thms cong: congs frame_cong
 
 
-(*removed \<box> from conjunctions*)
+(*removes \<box> from conjunctions*)
 method isep_normalize_box_conj = normalize_with thms: sep_conj_empty sep_conj_empty' congs: sep_conj_noop_cong
 
 
 (*applies associativity*)
 method isep_normalize_conj_braces = normalize_with thms: sep_conj_assoc
 
+
+method isep_normalize = isep_normalize_conj_braces?, isep_normalize_box_conj
+                                                                
 
 section "Methods"
 
@@ -43,6 +48,18 @@ method has_rule uses rule = (match rule in _ \<Rightarrow> succeed) | (print_ter
 
 
 method star methods m = (m+)?
+
+
+method_setup no_inst_rule = 
+  \<open>Attrib.thms >> (fn thms => fn ctxt => SIMPLE_METHOD' (match_tac ctxt thms THEN_ALL_NEW Goal.norm_hhf_tac ctxt))\<close>
+
+
+method_setup no_inst_drule = 
+  \<open>Attrib.thms >> (fn thms => fn ctxt => SIMPLE_METHOD' (dmatch_tac ctxt thms THEN_ALL_NEW Goal.norm_hhf_tac ctxt))\<close>
+
+
+method_setup no_inst_erule = 
+  \<open>Attrib.thms >> (fn thms => fn ctxt => SIMPLE_METHOD' (ematch_tac ctxt thms THEN_ALL_NEW Goal.norm_hhf_tac ctxt))\<close>
 
 
 subsection "Assumption"
@@ -135,6 +152,7 @@ subsubsection "Combined"
 method is_pre_frame = match conclusion in "?P -- ?PR \<tturnstile> ?Q" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
 method is_post_frame = match conclusion in "?P \<tturnstile> ?Q -- ?QR" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
 
+
 method isep_assumption = 
   entails_assumption |
   is_post_frame, frame_assumption |
@@ -158,38 +176,9 @@ schematic_goal "A ** B ** C -- ?PR \<tturnstile> B ** C ** X ** A"
 subsection "Rule Application"
 
 
-lemma entails_reduction_rule:
-  assumes
-    weaken_pre: "P_o \<tturnstile> P -- R_o" and
-    (*not quite symmetric to weaken_pre because we don't have reverse frame inference*)
-    (*i.e. Q ** ?R \<turnstile> Q_o*)
-    strengthen_post: "Q \<turnstile> Q_o" and
-    reduction: "is_sep_red P' Q' P Q" and
-    reduced: "P' ** R_o \<turnstile> Q'"
-  shows "P_o \<turnstile> Q_o"
-proof -
-  from reduction have
-    "P' ** Ps \<turnstile> Q' ** Qs \<Longrightarrow> P ** Ps \<turnstile> Q ** Qs"
-    for Ps Qs unfolding is_sep_red_def by blast
-
-  then have red_rule: "P' \<and>* R_o \<turnstile> Q' \<Longrightarrow> P \<and>* R_o \<turnstile> Q"
-    using sep_conj_empty by metis
-
-  from weaken_pre have drule: "P_o \<turnstile> P ** R_o" unfolding frame_def by simp
-
-  show "P_o \<turnstile> Q_o"
-    apply (rule sep_drule[OF drule])
-    apply (rule sep_rule[OF strengthen_post])
-    apply (rule red_rule)
-    using reduced .
-qed
-
-
 lemma frame_reduction_rule:
   assumes
     weaken_pre: "P_o \<tturnstile> P -- PR_o" and
-    (*not quite symmetric to weaken_pre because we don't have reverse frame inference*)
-    (*i.e. Q ** ?R \<turnstile> Q_o*)
     strengthen_post: "Q -- QR_o \<tturnstile> Q_o" and
     reduction: "is_sep_red P' Q' P Q" and
     reduced: "P' ** PR_o -- PR \<tturnstile> Q' ** QR_o -- QR"
@@ -199,19 +188,21 @@ lemma frame_reduction_rule:
 
 
 method isep_red_rule_raw uses red_rule =
-  has_rule rule: red_rule,
-  (rule degenerate_frameD)?,
-  rule frame_reduction_rule[OF _ _ red_rule],
-  prefer_last,  
-  (rule degenerate_frameI)?,
-  defer_tac
+  (
+    has_rule rule: red_rule,
+    (rule degenerate_frameD)?,
+    rule frame_reduction_rule[OF _ _ red_rule],
+    (isep_normalize?)[2],
+    prefer_last,
+    (no_inst_rule degenerate_frameI)?,
+    isep_normalize?,
+    defer_tac
+  )[1]
 
 
 method isep_red_rule uses red_rule =
   isep_red_rule_raw red_rule: red_rule,
-  (star isep_assumption)[2];
-  isep_normalize_box_conj?; 
-  isep_normalize_conj_braces?
+  (star isep_assumption)[2]
 
 
 lemma intro_red_rule:
@@ -226,7 +217,7 @@ lemma intro_red_rule:
 
 
 method isep_rule uses rule = has_rule rule: rule, isep_red_rule red_rule: intro_red_rule[OF rule]
-
+                                                                                  
 
 lemma dest_red_rule:
   assumes drule: "P \<turnstile> P'"
@@ -284,11 +275,6 @@ lemma
   done
 
 
-named_theorems isep_intro
-named_theorems isep_dest
-named_theorems isep_reduction
-
-
 lemma sep_exI: "P x \<turnstile> (EXS x. P x)"
   apply (rule entails_exI)
   by auto
@@ -306,7 +292,7 @@ lemma frame_exE: "(\<And>x. P x -- Pr \<tturnstile> Q -- Qr) \<Longrightarrow> (
 
 method isep_elim_ex = 
   (normalize_with thms: sep_conj_exists congs: entails_pre_cong)?,
-  (rule entails_exE)+ | (rule frame_exE)+,
+  ((rule entails_exE)+ | (rule frame_exE)+),
   isep_normalize_conj_braces?
 
 
@@ -339,35 +325,42 @@ method defer_non_sep_goal = then_else \<open>is_sep_goal\<close> \<open>fail\<cl
 method solves_non_sep_goals methods m = m;fails \<open>is_sep_goal\<close> 
 
 
-lemma dupl: "X \<Longrightarrow> (X \<Longrightarrow> Y) \<Longrightarrow> Y" by simp
+lemma frame_pureI: "\<lbrakk>pure_part P \<Longrightarrow> P -- Pr \<tturnstile> Q -- Qr\<rbrakk> \<Longrightarrow>  P -- Pr \<tturnstile> Q -- Qr"
+  unfolding frame_def
+  using entails_pureI pure_part_split_conj by auto
 
 
-method thin_duplicate = 
-  match premises in P[thin]: Q for Q \<Rightarrow> 
-  \<open>match premises in Q \<Rightarrow> \<open>thin_tac P\<close>\<close>
+lemma dupl_D:  "P \<Longrightarrow> P \<Longrightarrow> True" ..
 
 
-method thin_all_duplicates = thin_duplicate+
+method thin_duplicate = (determ \<open>drule(1) dupl_D, thin_tac True\<close>)
+method thin_duplicates = thin_duplicate+ 
 
 
 method isep_extract_pure =
- changed \<open>
-   rule entails_pureI,
-   star \<open>erule conjE | drule pure_part_split_conj\<close>,
-   thin_all_duplicates?
+  changed \<open>
+    (rule entails_pureI | rule frame_pureI),
+    star \<open>erule conjE | drule pure_part_split_conj\<close>,
+    thin_duplicates?
   \<close>
 
 
-method isep_solver_keep declares isep_reduction isep_intro isep_dest =
+named_theorems isep_intro
+named_theorems isep_dest
+named_theorems isep_red
+
+
+method isep_solver_keep declares isep_red isep_intro isep_dest =
   ((
       has_any_sep_goal,
+      isep_extract_pure?,
       (
         defer_non_sep_goal+ |
         isep_normalize_conj_braces |
         entails_box_solver |
         isep_elim_ex, isep_extract_pure |  
         isep_assumption |
-        changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_reduction\<close> |
+        changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close> |
         isep_backtracking_rule rule: isep_intro |
         isep_backtracking_drule drule: isep_dest |
         solves_non_sep_goals \<open>isep_intro_ex, isep_solver_keep\<close>
@@ -376,7 +369,7 @@ method isep_solver_keep declares isep_reduction isep_intro isep_dest =
 
 
 method isep_solver 
-  declares isep_reduction isep_intro isep_dest = 
+  declares isep_red isep_intro isep_dest = 
   solves_non_sep_goals \<open>isep_solver_keep\<close>
 
 
@@ -406,6 +399,21 @@ lemma
 
 lemma sep_pureI [isep_intro]: "B \<Longrightarrow> \<box> \<turnstile> \<up>B"
   by (simp add: pure_true_conv)
+
+
+lemma frame_FRAMEI: "P \<tturnstile> Q -- R \<Longrightarrow> FRAME P Q R"
+  unfolding frame_def FRAME_def by simp
+
+
+lemma entails_FRAME_INFERI: "P \<turnstile> Q \<Longrightarrow> FRAME_INFER P Q \<box>"
+  unfolding FRAME_INFER_def by simp
+
+
+lemma frame_FRAME_INFERI: "P \<tturnstile> Q -- R \<Longrightarrow> FRAME_INFER P Q R"
+  unfolding frame_def FRAME_INFER_def by simp
+
+
+method vcg_compat = ((simp only: PRECOND_def ENTAILS_def FRI_END_def) | (rule entails_FRAME_INFERI frame_FRAMEI frame_FRAME_INFERI))+
 
 
 end
