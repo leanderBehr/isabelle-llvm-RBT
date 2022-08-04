@@ -2,6 +2,7 @@ theory Setup
   imports
     Isabelle_LLVM.LLVM_DS_All
     Abstract_Rbt
+    "Separation_Logic_Solver/Methods"
 begin
 
 
@@ -332,6 +333,23 @@ interpretation rbt_impl_deps .
 
 subsection \<open>RBT Assertion\<close>
 
+fun rbt_assn_mem where
+  "rbt_assn_mem rbt.Empty ptrs p = \<up>(p = null)"
+| "rbt_assn_mem (rbt.Branch col lhs k v rhs) ptrs p =
+  (
+    \<up>(ptrs k = Some p) **
+    (
+      EXS coli lhsi ki vi rhsi. 
+        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
+        color_assn col coli **
+        rbt_assn_mem lhs ptrs lhsi **
+        \<upharpoonleft>key_assn k ki **
+        \<upharpoonleft>value_assn v vi **
+        rbt_assn_mem rhs ptrs rhsi
+    )
+  )
+  "
+
 
 fun rbt_assn' :: "
   ('k, 'v) rbt \<Rightarrow>
@@ -348,6 +366,139 @@ fun rbt_assn' :: "
       \<up>(vi=v) **
       rbt_assn' rhs rhsi
   )"
+
+
+lemma "rbt_assn_mem t ptrs ti \<turnstile> rbt_assn' t ti"
+  apply (induction t arbitrary: ti)
+   apply simp
+  subgoal premises prems
+    apply simp
+    apply (isep_solver_keep isep_intro: prems)
+    done
+  done
+
+
+lemma 
+  ptrs_upd_rbt_assn_mem_sepI:
+  "kn \<notin> set(RBT_Impl.keys t) \<Longrightarrow>
+   rbt_assn_mem t ptrs ti \<turnstile> rbt_assn_mem t (\<lambda>x. if x = kn then p else ptrs x) ti"
+proof (induction t arbitrary: ti p)
+  case Empty show ?case by simp
+next
+  case (Branch c l k v r)
+  from Branch(3) show ?case
+    apply auto    
+    apply isep_solver_keep
+    apply isep_intro_ex
+    apply (isep_solver_keep isep_intro: Branch(1-2))
+    apply simp_all
+    done
+qed
+
+
+lemma
+  ptrs_add_left_rbt_assn_mem_sepI:
+  "dom ptrs2 \<inter> set (RBT_Impl.keys t) = {} \<Longrightarrow>
+  rbt_assn_mem t ptrs1 ti \<turnstile> rbt_assn_mem t (ptrs1 ++ ptrs2) ti"
+  proof (induction t arbitrary: ti)
+    case Empty
+    then show ?case by simp
+  next
+    case (Branch c l k v r)
+
+    from Branch(3) have l_int: "dom ptrs2 \<inter> set (RBT_Impl.keys l) = {}" by auto
+    from Branch(3) have r_int: "dom ptrs2 \<inter> set (RBT_Impl.keys r) = {}" by auto
+
+
+    note IH_l = Branch(1)[OF l_int]
+    note IH_r = Branch(2)[OF r_int]
+
+    show ?case
+      apply simp
+      apply isep_solver_keep
+      subgoal
+        apply isep_intro_ex
+        apply (isep_solver_keep isep_dest: IH_l IH_r)
+        done
+      subgoal using Branch(3) by simp
+    done
+qed
+
+
+lemma
+  ptrs_add_right_rbt_assn_mem_sepI:
+  "dom ptrs1 \<inter> set (RBT_Impl.keys t) = {} \<Longrightarrow>
+  rbt_assn_mem t ptrs2 ti \<turnstile> rbt_assn_mem t (ptrs1 ++ ptrs2) ti"
+proof (induction t arbitrary: ti)
+  case Empty
+  then show ?case by simp
+next
+  case (Branch c l k v r)
+
+  from Branch(3) have l_int: "dom ptrs1 \<inter> set (RBT_Impl.keys l) = {}" by auto
+  from Branch(3) have r_int: "dom ptrs1 \<inter> set (RBT_Impl.keys r) = {}" by auto
+
+
+  note IH_l = Branch(1)[OF l_int]
+  note IH_r = Branch(2)[OF r_int]
+
+  show ?case
+    apply simp
+    apply isep_solver_keep
+    subgoal
+      apply isep_intro_ex
+      apply (isep_solver_keep isep_dest: IH_l IH_r)
+      done
+    subgoal using Branch(3) by simp
+    done
+qed
+
+lemma 
+  rbt_sorted_key_uniqI:
+  "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys l)"
+  "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys r)"
+  apply simp_all
+  unfolding rbt_less_prop rbt_greater_prop
+  by blast+
+
+
+lemma 
+  rbt_sorted_subtrees_disjoint:
+  "rbt_sorted (Branch c l k v r) \<Longrightarrow> set (RBT_Impl.keys l) \<inter> set (RBT_Impl.keys r) = {}"
+  apply simp
+  unfolding rbt_less_prop rbt_greater_prop
+  by fastforce
+
+
+lemma "rbt_sorted t \<Longrightarrow> rbt_assn' t ti \<turnstile> (EXS ptrs. rbt_assn_mem t ptrs ti ** \<up>(dom ptrs = set (RBT_Impl.keys t)))"
+proof(induction t arbitrary: ti)
+  case Empty
+  then show ?case
+    apply simp
+    apply isep_solver
+    apply simp
+    done
+next
+  case (Branch c l k v r)
+
+  show ?case
+    apply simp
+    apply (isep_solver_keep isep_dest: Branch(1-2))
+      apply simp
+    subgoal for x xa xb xc xd ptrs1 ptrs2
+      apply (isep_intro_ex_with "(ptrs1 ++ ptrs2)(k \<mapsto> ti)")
+      apply simp
+      apply isep_intro_ex
+      apply (simp add: fun_upd_def)
+      apply (isep_solver isep_intro: ptrs_upd_rbt_assn_mem_sepI ptrs_add_left_rbt_assn_mem_sepI ptrs_add_right_rbt_assn_mem_sepI)
+          apply blast
+         apply (metis Branch(3) rbt_sorted_key_uniqI(1))
+        apply (metis Branch(3) rbt_sorted_key_uniqI(2))
+      using rbt_sorted_subtrees_disjoint Branch(3) apply fast+
+      done
+    using Branch(3) apply auto
+    done
+qed
 
 
 fun rbt_val_assn where
