@@ -17,7 +17,9 @@ datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
   (val: 'value)
   (right: "('key,'value) rbt_node ptr")
 
+
 hide_const (open) color left key val right
+
 
 type_synonym ('k, 'v) rbti = "('k, 'v) rbt_node ptr"  
 
@@ -26,14 +28,16 @@ text \<open>Abstract type rbt represented by rbti where null represents rbt.Empt
 
 
 subsubsection \<open>Encoding to heap-representable\<close>
-
+   
 
 instantiation rbt_node :: (llvm_rep, llvm_rep) llvm_rep
 begin
 
+
 fun to_val_rbt_node where
   "to_val_rbt_node (RBT_NODE col l_child k v r_child) = 
     LL_STRUCT [to_val col, to_val l_child, to_val k, to_val v, to_val r_child]"
+
 
 fun from_val_rbt_node where
   "from_val_rbt_node (LL_STRUCT [col, l_child_rep, k_rep, v_rep, r_child_rep]) = 
@@ -44,19 +48,21 @@ fun from_val_rbt_node where
              (from_val r_child_rep)"
 | "from_val_rbt_node _ = undefined"
 
-definition "struct_of_rbt_node (_::('a, 'b) rbt_node itself) = 
+
+definition "struct_of_rbt_node (_::('a, 'b) rbt_node itself) =
     VS_STRUCT [VS_INT 8, VS_PTR, struct_of TYPE('a), struct_of TYPE('b), VS_PTR]"
+
 
 definition "init_rbt_node \<equiv> RBT_NODE init init init init init"
 
-instance 
+
+instance
 proof(standard, goal_cases)
   case 1
-  then show ?case unfolding comp_def id_def
+  then show ?case unfolding comp_def id_def 
   proof
     fix x:: "('a,'b) rbt_node"
-    show "from_val (to_val x) = x"
-      by (cases x; simp)
+    show "from_val (to_val x) = x" by (cases x; simp)
   qed
 next
   case (2 v)
@@ -71,9 +77,7 @@ next
 next
   case 4
   then show ?case
-    unfolding init_rbt_node_def
-      struct_of_rbt_node_def
-    by (auto simp: init_zero to_val_word_def to_val_ptr_def null_def)
+    by (simp add: init_zero init_rbt_node_def struct_of_rbt_node_def to_val_word_def to_val_ptr_def null_def)
 qed
 end
 
@@ -138,7 +142,7 @@ lemma inline_return_node [llvm_pre_simp]: "Mreturn (RBT_NODE c l k v r) =
   by (auto simp: init_rbt_node_def)
 
 
-lemma inline_node_case[llvm_pre_simp]: "
+lemma inline_node_case [llvm_pre_simp]: "
   (case x of (RBT_NODE c l k v r) \<Rightarrow> f c l k v r) =
    doM {
     c \<leftarrow> ll_extract_value x 0;
@@ -152,7 +156,8 @@ lemma inline_node_case[llvm_pre_simp]: "
   by auto
 
 
-lemma inline_return_node_case[llvm_pre_simp]: "Mreturn (case x of (RBT_NODE c l k v r) \<Rightarrow> f c l k v r) = 
+lemma inline_return_node_case [llvm_pre_simp]: 
+  "Mreturn (case x of (RBT_NODE c l k v r) \<Rightarrow> f c l k v r) = 
   doM {
     c \<leftarrow> ll_extract_value x 0;
     l \<leftarrow> ll_extract_value x 1;
@@ -193,7 +198,8 @@ definition set_right ::
   where "set_right node rhs \<equiv> ll_insert_value node rhs 4"
 
 
-definition [llvm_pre_simp, simp]: "mod_ptr f n_p \<equiv>
+definition [llvm_pre_simp, simp]: 
+  "mod_ptr f n_p \<equiv>
   doM {
     n_pre \<leftarrow> ll_load n_p;
     n_post \<leftarrow> f n_pre;
@@ -246,29 +252,21 @@ lemma color_assn_B_1 [fri_red_rules]:
   by simp
 
 
-lemma fb_num [simp]: 
-  "fb x = 0 \<longleftrightarrow> \<not>x"
-  "fb x = 1 \<longleftrightarrow> x"
-  unfolding fb_def
-  by simp+
-
-
-abbreviation ll_True :: "1 word" where "ll_True \<equiv> 1"
-abbreviation ll_False :: "1 word" where "ll_False \<equiv> 0"
-
-
 subsection \<open>Linorder Locale\<close>
 
 
 locale linorder_impl =
-  fixes lt_impl :: "('ai::llvm_rep) \<Rightarrow> 'ai \<Rightarrow> 1 word llM"
-    and elem_assn :: "('a::linorder, 'ai) dr_assn"
+  fixes 
+    abs_type :: "'a :: linorder itself" and
+    conc_type :: "'ai :: llvm_rep itself" and
+    lt_impl :: "'ai \<Rightarrow> 'ai \<Rightarrow> 1 word llM" and
+    elem_assn :: "('a, 'ai) dr_assn"
   assumes lt_impl_rule [vcg_rules]: 
     "llvm_htriple
             (\<upharpoonleft>elem_assn lhs lhsi ** \<upharpoonleft>elem_assn rhs rhsi)
             (lt_impl lhsi rhsi)
             (\<lambda>r. 
-              \<up>(r = fb (lhs < rhs)) **
+              \<upharpoonleft>bool.assn (lhs < rhs) r **
               \<upharpoonleft>elem_assn lhs lhsi **
               \<upharpoonleft>elem_assn rhs rhsi)"
 
@@ -353,7 +351,7 @@ fun rbt_assn_mem where
 
 fun rbt_assn' :: "
   ('k, 'v) rbt \<Rightarrow>
-  ('ki::llvm_rep, 'v::llvm_rep) rbti \<Rightarrow>
+  ('ki, 'vi) rbti \<Rightarrow>
   ll_assn
 " where
   "rbt_assn' rbt.Empty p = \<up>(p=null)"
@@ -363,7 +361,7 @@ fun rbt_assn' :: "
       color_assn col coli **
       rbt_assn' lhs lhsi **
       \<upharpoonleft>key_assn k ki **
-      \<up>(vi=v) **
+      \<upharpoonleft>value_assn v vi **
       rbt_assn' rhs rhsi
   )"
 
@@ -507,25 +505,10 @@ fun rbt_val_assn where
      color_assn col coli **
       rbt_assn' lhs lhsi **
         \<upharpoonleft>key_assn k ki **
-        \<up>(vi=v) **  
+        \<upharpoonleft>value_assn v vi **  
       rbt_assn' rhs rhsi
     )" |
   "rbt_val_assn _ _ = sep_false"
-
-
-lemma entails_exE:
-  assumes "\<And>x. P x \<turnstile> Q"
-  shows "(EXS x. P x) \<turnstile> Q"
-  using assms unfolding entails_def
-  by auto
-
-
-lemma entails_pre_pure_iff:
-  fixes P Q R
-  shows
-  "((\<lambda>s. P \<and> (Q s)) \<turnstile> R) \<longleftrightarrow> (P \<longrightarrow> Q \<turnstile> R)"
-  unfolding entails_def
-  by blast
 
 
 lemma "rbt_assn' (Branch col lhs k v rhs) p =
@@ -550,17 +533,12 @@ lemma "rbt_assn' (Branch col lhs k v rhs) p =
 definition "rbt_assn \<equiv> mk_assn rbt_assn'"
 
 
-lemma rbt_assn_tag_def: "\<upharpoonleft>rbt_assn = rbt_assn'"
-  unfolding rbt_assn_def mk_assn_def dr_assn_prefix_def 
-  by simp 
-
-
-lemma[simp]: "\<upharpoonleft>rbt_assn t null = \<up>(t=rbt.Empty)"
+lemma [simp]: "\<upharpoonleft>rbt_assn t null = \<up>(t=rbt.Empty)"
   unfolding rbt_assn_def
   by (cases t; auto)
 
 
-lemma[simp]: "\<upharpoonleft>rbt_assn rbt.Empty p = \<up>(p=null)"
+lemma [simp]: "\<upharpoonleft>rbt_assn rbt.Empty p = \<up>(p=null)"
   unfolding rbt_assn_def by simp
 
 
@@ -612,7 +590,7 @@ lemma entails_to_ENTAILS_elim:
     "FRAME P PRE Y"
     "ENTAILS (POST**Y) Q"
   shows "ENTAILS P Q"
-  using assms                    
+  using assms        
   using ENTAILS_def gen_drule by blast
 
 
@@ -663,21 +641,52 @@ lemma empty_correct [vcg_rules]:
 subsection "Reduction Rules"
 
 
-lemma unfold_rbt_assn_red_rule [fri_red_rules]: "is_sep_red
+lemma unfold_rbt_assn_red_rule [fri_red_rules]: 
+  "
+    is_sep_red
     \<box>
     (color_assn c ci ** \<upharpoonleft>rbt_assn l li \<and>* \<upharpoonleft>key_assn k ki \<and>* \<upharpoonleft>value_assn v vi \<and>* \<upharpoonleft>rbt_assn r ri)
     (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
-    (\<upharpoonleft>rbt_assn (rbt.Branch c l k v r) ti)"
+    (\<upharpoonleft>rbt_assn (rbt.Branch c l k v r) ti)
+  "
   apply (rule is_sep_redI)
   unfolding rbt_assn_branch_def
   subgoal premises prems for Ps Qs
     apply (sep_drule prems)
+    (*apply isep_solver*)
     apply (simp only: fri_extract_simps entails_lift_extract_simps cong: entails_pre_cong)
     apply clarify
     apply fri
     done
   done
 
+
+lemma 
+  H:
+  "(\<And>x. llvm_htriple (pre x) comm (\<lambda>r. post x r)) \<Longrightarrow>
+  llvm_htriple (EXS x. pre x) comm (\<lambda>r. EXS x. post x r)"
+  unfolding htriple_def wpa_def NEMonad.wp_def Sep_Generic_Wp.wp_def STATE_def
+  by blast
+
+lemma load_rbt':
+  "
+    llvm_htriple
+    (EXS col. \<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ti)
+    (ll_load ti)
+    (\<lambda>r. 
+      EXS col. (EXS coli lhsi ki vi rhsi.
+        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
+        color_assn col coli **
+        \<upharpoonleft>rbt_assn lhs lhsi **
+        \<upharpoonleft>key_assn k ki **
+        \<upharpoonleft>value_assn v vi **  
+        \<upharpoonleft>rbt_assn rhs rhsi **
+        \<up>(r = RBT_NODE coli lhsi ki vi rhsi))
+    )
+  "
+  apply (rule H)
+  using load_rbt .
+  
 
 end
 
