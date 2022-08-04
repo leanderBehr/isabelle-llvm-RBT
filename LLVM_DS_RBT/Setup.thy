@@ -79,15 +79,18 @@ end
 
 subsubsection \<open>Setup for LLVM code export\<close>
 text \<open>Declare structure to code generator.\<close>
-lemma to_val_rbt_node [ll_to_val]:
-  "to_val x = LL_STRUCT [to_val (rbt_node.color x),
-                         to_val (rbt_node.left x),
-                         to_val (rbt_node.key x),
-                         to_val (rbt_node.val x),
-                         to_val (rbt_node.right x)]"
-  apply (cases x)
-  apply auto
-  done
+lemma to_val_rbt_node [ll_struct_of]:
+  "struct_of TYPE(('k::llvm_rep, 'v::llvm_rep) rbt_node) =
+      VS_STRUCT 
+      [
+        struct_of TYPE(8 word),
+        struct_of TYPE(('k, 'v) rbt_node ptr),
+        struct_of TYPE('k),
+        struct_of TYPE('v),
+        struct_of TYPE(('k, 'v) rbt_node ptr)
+      ]"
+  unfolding struct_of_rbt_node_def
+  by auto
 
 
 text \<open>Declare as named structure. Required b/c of circular reference.\<close>
