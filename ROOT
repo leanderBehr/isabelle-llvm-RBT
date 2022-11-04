@@ -1,5 +1,5 @@
 session Isabelle_LLVM_RBT = Isabelle_LLVM +
-  options [browser_info]
+  options [document = pdf, document_output = "output"]
   
   directories
     LLVM_DS_RBT
@@ -7,5 +7,8 @@ session Isabelle_LLVM_RBT = Isabelle_LLVM +
     "LLVM_DS_RBT/Insert"
     "LLVM_DS_RBT/Lookup"
     "LLVM_DS_RBT/Delete"
+    "LLVM_DS_RBT/Example"
   theories
     LLVM_DS_RBT
+  document_files
+    "root.tex"
