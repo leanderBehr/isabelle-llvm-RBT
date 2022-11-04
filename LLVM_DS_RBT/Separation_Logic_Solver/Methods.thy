@@ -5,41 +5,54 @@ theory Methods
 begin
 
 
-section "Normalization"
-
-
-text "We match premises so that simp only acts on conclusion"
+section "Tools"
 
 
 method is_sep_goal = 
   succeeds 
   \<open>(match conclusion in "?X \<turnstile> ?Y" \<Rightarrow> succeed \<bar> "?P -- ?PR \<tturnstile> ?Q -- ?QR" \<Rightarrow> succeed \<bar> _ \<Rightarrow> fail)\<close>
 
+
 method any_succeed methods m = fails \<open>all \<open>fails m\<close>\<close>
 
 
-lemma sep_conj_noop_cong: "(x ** y) = (x ** y)" by simp
-lemma frame_cong: "\<lbrakk>p=p'; q=q'\<rbrakk> \<Longrightarrow> frame p pr q qr = frame p' pr q' qr" by simp
-
-method has_prems = match premises in _ (cut) \<Rightarrow> succeed
-method match_prems methods M = 
-  then_else \<open>has_prems\<close> \<open>match premises in _ (cut) \<Rightarrow> M\<close> \<open>M\<close>
+method has_any_sep_goal = any_succeed \<open>is_sep_goal\<close>
 
 
-method normalize_with uses thms congs = 
-  is_sep_goal, simp only: thms cong: congs frame_cong
+method defer_non_sep_goal = then_else \<open>is_sep_goal\<close> \<open>fail\<close> \<open>defer_tac\<close>
 
 
-(*removes \<box> from conjunctions*)
-method isep_normalize_box_conj = normalize_with thms: sep_conj_empty sep_conj_empty' congs: sep_conj_noop_cong
+method solves_sep_goals methods m = m;fails \<open>is_sep_goal\<close> 
 
 
-(*applies associativity*)
-method isep_normalize_conj_braces = normalize_with thms: sep_conj_assoc
+section "Normalization"
 
 
-method isep_normalize = isep_normalize_conj_braces?, isep_normalize_box_conj
-                                                                
+lemma frame_cong: "\<lbrakk>p\<equiv>p'; q\<equiv>q'\<rbrakk> \<Longrightarrow> frame p pr q qr \<equiv> frame p' pr q' qr" by simp
+lemma sep_conj_cong: "\<lbrakk>x\<equiv>x'; y\<equiv>y'\<rbrakk> \<Longrightarrow> x ** y \<equiv> x' ** y'" by simp
+
+
+(*simp without any rules other than those given*)
+method_setup normalize_with_impl = 
+  \<open>Attrib.thms >>
+  (fn thms => fn ctxt => 
+    SIMPLE_METHOD'
+      (simp_tac (
+        ((empty_simpset ctxt) addsimps thms)
+      )
+  ))\<close>
+
+
+lemma n1: "\<box> ** X \<equiv> X" by simp
+lemma n2: "X ** \<box> \<equiv> X" by simp
+lemma n3: "((P ** Q) ** R) \<equiv> (P ** Q ** R)" by simp
+
+
+method normalize_with uses thms = normalize_with_impl thms
+
+
+method isep_normalize = is_sep_goal, changed \<open>normalize_with_impl n1 n2 n3\<close>
+
 
 section "Methods"
 
@@ -87,7 +100,7 @@ lemma frame_prem_boxI: "A -- PR \<tturnstile> B -- QR \<Longrightarrow> \<box> *
 method frame_assumption' =
   rule frame_prem_boxD,
   all_frame_prem_shifts \<open>determ \<open>rule frame_assumption_rule\<close>\<close>,
-  isep_normalize_conj_braces?,
+  isep_normalize?,
   (rule frame_prem_boxI)? (*does not apply if only the box is left*)
 
 
@@ -124,7 +137,7 @@ lemma frame_conc_boxI: "A -- PR \<tturnstile> B -- QR \<Longrightarrow> A -- PR 
 method frame_rev_assumption' =
   rule frame_conc_boxD,
   all_frame_conc_shifts \<open>determ \<open>rule frame_rev_assumption_rule\<close>\<close>,
-  isep_normalize_conj_braces?,
+  isep_normalize?,
   (rule frame_conc_boxI)? (*does not apply if only the box is left*)
     
 
@@ -258,8 +271,7 @@ lemma
 method sep_red_rule_must_succeed uses red_rule =
   isep_red_rule_raw red_rule: red_rule,
   (all \<open>solves \<open>isep_assumption+\<close>\<close>)[2];
-  isep_normalize_box_conj?; 
-  isep_normalize_conj_braces?
+  isep_normalize?
 
 
 method isep_backtracking_red_rule uses red_rule = match red_rule in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: r\<close>
@@ -273,6 +285,9 @@ lemma
   shows "A \<turnstile> D"
   apply ((isep_backtracking_rule rule: trap1 trap2 trap3 d1 d2 d3)+, isep_assumption)
   done
+
+
+subsection "Existential Quantifier Handling"
 
 
 lemma sep_exI: "P x \<turnstile> (EXS x. P x)"
@@ -291,38 +306,31 @@ lemma frame_exE: "(\<And>x. P x -- Pr \<tturnstile> Q -- Qr) \<Longrightarrow> (
 
 
 method isep_elim_ex = 
-  (normalize_with thms: sep_conj_exists congs: entails_pre_cong)?,
+  (simp (no_asm) only: sep_conj_exists cong: entails_pre_cong)?,
   ((rule entails_exE)+ | (rule frame_exE)+),
-  isep_normalize_conj_braces?
+  isep_normalize?
 
 
 method isep_intro_ex =
-  (normalize_with thms: sep_conj_exists congs: entails_post_cong)?,
+  (simp (no_asm) only: sep_conj_exists cong: entails_post_cong)?,
   (isep_backtracking_rule rule: sep_exI)+,
-  isep_normalize_conj_braces?
+  isep_normalize?
 
 
 method isep_intro_ex_with for x =
-  (normalize_with thms: sep_conj_exists congs: entails_post_cong)?,
+  (simp (no_asm) only: sep_conj_exists cong: entails_post_cong)?,
   isep_backtracking_rule rule: sep_exI[where x=x],
-  isep_normalize_conj_braces?
+  isep_normalize?
 
+
+subsection "Pure Assertion Handling"
 
 lemma pure_entails_boxI:
   "sep_is_pure_assn X \<Longrightarrow> X \<turnstile> \<box>"
   unfolding entails_def sep_is_pure_assn_def by auto
 
 
-method entails_box_solver = rule pure_entails_boxI, (auto intro: sep_is_pure_assn_conjI)[1]
-
-
-method has_any_sep_goal = any_succeed \<open>is_sep_goal\<close>
-
-
-method defer_non_sep_goal = then_else \<open>is_sep_goal\<close> \<open>fail\<close> \<open>defer_tac\<close>
-
-
-method solves_non_sep_goals methods m = m;fails \<open>is_sep_goal\<close> 
+method entails_box_solver = rule pure_entails_boxI, (auto intro!: sep_is_pure_assn_conjI)[1]
 
 
 lemma frame_pureI: "\<lbrakk>pure_part P \<Longrightarrow> P -- Pr \<tturnstile> Q -- Qr\<rbrakk> \<Longrightarrow>  P -- Pr \<tturnstile> Q -- Qr"
@@ -345,6 +353,9 @@ method isep_extract_pure =
   \<close>
 
 
+subsection "Solver"
+
+
 named_theorems isep_intro
 named_theorems isep_dest
 named_theorems isep_red
@@ -356,21 +367,21 @@ method isep_solver_keep declares isep_red isep_intro isep_dest =
       isep_extract_pure?,
       (
         defer_non_sep_goal+ |
-        isep_normalize_conj_braces |
+        isep_normalize |
         entails_box_solver |
         isep_elim_ex, isep_extract_pure |  
         isep_assumption |
         changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close> |
         isep_backtracking_rule rule: isep_intro |
         isep_backtracking_drule drule: isep_dest |
-        solves_non_sep_goals \<open>isep_intro_ex, isep_solver_keep\<close>
+        solves_sep_goals \<open>isep_intro_ex, isep_solver_keep\<close>
         )
       )+)[1]
 
 
 method isep_solver 
   declares isep_red isep_intro isep_dest = 
-  solves_non_sep_goals \<open>isep_solver_keep\<close>
+  solves_sep_goals \<open>isep_solver_keep\<close>
 
 
 lemma
@@ -393,9 +404,8 @@ lemma
   assumes
     trap: "False \<Longrightarrow> A \<turnstile> B" and rule: "True \<Longrightarrow> A \<turnstile> B"
   shows "A \<turnstile> B"
-  apply (isep_solver isep_intro: trap rule)
+   apply (isep_solver isep_intro: trap rule)
   back ..
-
 
 lemma sep_pureI [isep_intro]: "B \<Longrightarrow> \<box> \<turnstile> \<up>B"
   by (simp add: pure_true_conv)
@@ -413,7 +423,7 @@ lemma frame_FRAME_INFERI: "P \<tturnstile> Q -- R \<Longrightarrow> FRAME_INFER 
   unfolding frame_def FRAME_INFER_def by simp
 
 
-method vcg_compat = ((simp only: PRECOND_def ENTAILS_def FRI_END_def) | (rule entails_FRAME_INFERI frame_FRAMEI frame_FRAME_INFERI))+
+method vcg_compat = ((simp only: PRECOND_def ENTAILS_def FRI_END_def) | (no_inst_rule entails_FRAME_INFERI frame_FRAMEI frame_FRAME_INFERI))+
 
 
 end

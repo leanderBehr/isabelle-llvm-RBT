@@ -77,4 +77,7 @@ definition "rbt_left node \<equiv> case node of (Branch _ lhs _ _ _) \<Rightarro
 definition "rbt_right node \<equiv> case node of (Branch _ _ _ _ rhs) \<Rightarrow> rhs"
 
 
+abbreviation "rbt_key_set t \<equiv> set (RBT_Impl.keys t)"
+
+
 end

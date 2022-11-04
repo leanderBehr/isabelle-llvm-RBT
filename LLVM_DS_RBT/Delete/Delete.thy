@@ -32,14 +32,14 @@ fun rbt_del_ad where
 lemma
   rbt_del_ad_correct_left:
   "\<lbrakk>x < y\<rbrakk> \<Longrightarrow>
-  rbt_del_ad x (rbt.Branch c a y s b) = rbt_del_from_left x a y s b" and
+  rbt_del_ad x (rbt.Branch c a (y::'a::linorder) (s::'b) b) = rbt_del_from_left x a y s b" and
 
   rbt_del_ad_correct_right:
   "\<lbrakk>x > y\<rbrakk> \<Longrightarrow>
   rbt_del_ad x (rbt.Branch c a y s b) = rbt_del_from_right x a y s b" and
 
   rbt_del_ad_correct:
-  "rbt_del_ad x t = rbt_del x t"
+  "rbt_del_ad x t = rbt_del x (t::('a, 'b) rbt)"
 
 proof (induct x a y s b and x a y s b and x t
     rule: rbt_del_from_left_rbt_del_from_right_rbt_del.induct)
@@ -91,9 +91,9 @@ partial_function (M) del ::
 lemma del_correct':
 "
   llvm_htriple
-  (\<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn t ti)
+  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti)
   (del ki ti)
-  (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_del_ad k t) r ** \<upharpoonleft>key_assn k ki)
+  (\<lambda>r. rbt_assn (rbt_del_ad k t) r ** \<upharpoonleft>key_assn k ki)
 "
 proof(induct k t arbitrary: ki ti rule: rbt_del_ad.induct)
   case (1 x)
@@ -106,17 +106,17 @@ next
 
   have IH1: 
     "x < y \<Longrightarrow> llvm_htriple
-      (\<upharpoonleft>key_assn x ki \<and>* \<upharpoonleft>rbt_assn a ti)
+      (\<upharpoonleft>key_assn x ki \<and>* rbt_assn a ti)
       (del ki ti)
-      (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_del_ad x a) r \<and>* \<upharpoonleft>key_assn x ki)"
+      (\<lambda>r. rbt_assn (rbt_del_ad x a) r \<and>* \<upharpoonleft>key_assn x ki)"
     for ki ti
     using 2(1-2) by fast
 
   have IH2:
     "y < x \<Longrightarrow> llvm_htriple
-      (\<upharpoonleft>key_assn x ki \<and>* \<upharpoonleft>rbt_assn b ti)
+      (\<upharpoonleft>key_assn x ki \<and>* rbt_assn b ti)
       (del ki ti)
-      (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_del_ad x b) r \<and>* \<upharpoonleft>key_assn x ki)"
+      (\<lambda>r. rbt_assn (rbt_del_ad x b) r \<and>* \<upharpoonleft>key_assn x ki)"
     for ki ti using 2(3-4) by fastforce
 
   note [vcg_rules] = IH1 IH2
@@ -131,9 +131,9 @@ qed
 lemma del_correct:
 "
   llvm_htriple
-  (\<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn t ti)
+  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti)
   (del ki ti)
-  (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_del k t) r ** \<upharpoonleft>key_assn k ki)
+  (\<lambda>r. rbt_assn (rbt_del k t) r ** \<upharpoonleft>key_assn k ki)
 "
   using del_correct' rbt_del_ad_correct by metis
 
@@ -151,9 +151,9 @@ definition "delete x t \<equiv> do {
 lemma delete_correct [vcg_rules]:
 "
   llvm_htriple
-  (\<upharpoonleft>key_assn k ki ** \<upharpoonleft>rbt_assn t ti)
+  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti)
   (delete ki ti)
-  (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_delete k t) r ** \<upharpoonleft>key_assn k ki)
+  (\<lambda>r. rbt_assn (rbt_delete k t) r ** \<upharpoonleft>key_assn k ki)
 "
   unfolding delete_def rbt_delete_def paint_def
   supply del_correct[vcg_rules]

@@ -12,11 +12,11 @@ interpretation bench_rbt: rbt_map
   "\<lambda>x. Mreturn ()"  (*key delete*)
   sint.assn         (*value assn*)
   "\<lambda>x. Mreturn ()"  (*value delete*)
-  "\<lambda>x. Mreturn x"   (*value copy*)
   "TYPE(nat)"       (*abs key type*)
   "TYPE(64 word)"   (*key type*)
   "TYPE(int)"       (*abs value type*)
   "TYPE(64 word)"   (*value type*)
+  "\<lambda>x. Mreturn x"   (*value copy*)
   by (standard, vcg)
 
 

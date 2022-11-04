@@ -19,15 +19,17 @@ lemma string_dr_assn_eq [simp]: "\<upharpoonleft>string_dr_assn = string_assn"
   by fastforce
 
 
-interpretation rbt_map
+interpretation map: rbt_map
   list_le
   string_dr_assn
   arl_free
   snat.assn
   "\<lambda>x. Mreturn ()"
-  "\<lambda>x. Mreturn x"
   "TYPE(nat list)"
   "TYPE((8 word, 'l::len2) array_list)"
+  _
+  _
+  "\<lambda>x. Mreturn x"
 proof(standard, goal_cases)
   case (1 lhs lhsi rhs rhsi)
   then show ?case
@@ -92,9 +94,9 @@ partial_function (M) make_index_mapping' where [llvm_code]:
       m \<leftarrow> make_index_mapping' strs ip1;
       str \<leftarrow> arl_nth strs i;
       str_copy \<leftarrow> copy.arl_copy str;
-      insert str_copy i m
+      map.insert str_copy i m
     }
-    else empty
+    else map.empty
   }"
 
 
@@ -102,14 +104,14 @@ definition make_index_mapping'' where [llvm_code]:
   "make_index_mapping'' strs = 
   do {
     len \<leftarrow> arl_len strs;
-    empty_map \<leftarrow> empty;
+    empty_map \<leftarrow> map.empty;
     llc_for_range 0 len
     (\<lambda>i m.
       do
       {
         str \<leftarrow> arl_nth strs i;
         str_copy \<leftarrow> copy.arl_copy str;
-        insert str_copy i m
+        map.insert str_copy i m
       }
     )
     empty_map
@@ -119,7 +121,7 @@ definition make_index_mapping'' where [llvm_code]:
 definition "make_index_mapping''_loop_inv
   strs strsi i mi \<equiv> 
   (
-    EXS m. rbt_map_assn m mi **
+    EXS m. map.rbt_map_assn m mi **
     string_arl_assn strs strsi **
     \<up>(is_index_mapping (take i strs) m (list_index_mapping strs))
   )" 
@@ -213,10 +215,8 @@ lemma arl_mems_assn_update:
    arl_mems_assn_ex A xs xsi arl (ex - {i})"
   unfolding arl_mems_assn_ex_def
   apply isep_extract_pure
-  apply (isep_drule drule: LLVM_DS_List_Assn.list_assn_update[where i=i])
-  apply isep_solver+
-  unfolding idxe_map_def
-  using assms apply (auto dest: list_assn_pure_partD)
+  apply (isep_drule drule: LLVM_DS_List_Assn.list_assn_update[where i=i]) 
+  using assms apply (auto simp: idxe_map_def dest: list_assn_pure_partD)
   apply isep_solver
   done
 
@@ -226,13 +226,12 @@ lemma make_index_mapping'_rule:
   llvm_htriple
   (string_arl_assn strs strsi ** \<upharpoonleft>snat.assn i ii)
   (make_index_mapping' strsi ii)
-  (\<lambda>mi. (EXS m. rbt_map_assn m mi **
+  (\<lambda>mi. (EXS m. map.rbt_map_assn m mi **
                   string_arl_assn strs strsi **
                   \<up>(is_index_mapping (drop i strs) m (list_index_mapping strs))))
 "
 proof(induction "length strs - i" arbitrary: i ii)
   case 0
-  note empty_correct[vcg_rules del]
   from 0 show ?case 
     apply (subst make_index_mapping'.simps)
     apply vcg
@@ -293,7 +292,7 @@ lemma make_index_mapping''_rule:
   llvm_htriple
   (string_arl_assn strs strsi)
   (make_index_mapping'' strsi)
-  (\<lambda>mi. (EXS m. rbt_map_assn m mi **
+  (\<lambda>mi. (EXS m. map.rbt_map_assn m mi **
                   string_arl_assn strs strsi **
                   \<up>(is_index_mapping strs m (list_index_mapping strs))))
   "
@@ -374,7 +373,7 @@ lemma make_index_mapping_rule:
   llvm_htriple
   (string_arl_assn strs strsi)
   (make_index_mapping strsi)
-  (\<lambda>(mi, li). (EXS m l. rbt_map_assn m mi ** string_arl_assn l li ** \<up>(is_index_mapping strs m (list_index_mapping l))))
+  (\<lambda>(mi, li). (EXS m l. map.rbt_map_assn m mi ** string_arl_assn l li ** \<up>(is_index_mapping strs m (list_index_mapping l))))
 "
   supply make_index_mapping'_rule[vcg_rules]
   unfolding make_index_mapping_def
@@ -386,7 +385,7 @@ lemma make_index_mapping_alt_rule:
   llvm_htriple
   (string_arl_assn strs strsi)
   (make_index_mapping_alt strsi)
-  (\<lambda>(mi, li). (EXS m l. rbt_map_assn m mi ** string_arl_assn l li ** \<up>(is_index_mapping strs m (list_index_mapping l))))
+  (\<lambda>(mi, li). (EXS m l. map.rbt_map_assn m mi ** string_arl_assn l li ** \<up>(is_index_mapping strs m (list_index_mapping l))))
 "
   supply make_index_mapping''_rule[vcg_rules]
   unfolding make_index_mapping_alt_def

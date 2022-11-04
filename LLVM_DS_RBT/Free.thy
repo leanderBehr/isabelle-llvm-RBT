@@ -27,7 +27,7 @@ partial_function (M) free :: "
 
 lemma free_correct [vcg_rules]: "
   llvm_htriple
-  (\<upharpoonleft>rbt_assn tree treei)
+  (rbt_assn tree treei)
   (free treei)
   (\<lambda>_. \<box>)
 "
@@ -40,8 +40,7 @@ proof(induction tree arbitrary: treei)
 next
   case (Branch col lhs k v rhs)
 
-  note [vcg_rules] = Branch.IH 
-  note [simp] = rbt_assn_branch_def
+  note [vcg_rules] = Branch.IH
   
   then show ?case
     apply (subst free.simps)

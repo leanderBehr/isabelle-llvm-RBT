@@ -112,9 +112,9 @@ lemmas [llvm_code] = balance_left_def
 lemma balance_left_correct':
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
     (balance_left li ki vi ri)
-    (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_left_ad l k v r) x)
+    (\<lambda>x. rbt_assn (rbt_balance_left_ad l k v r) x)
   "
   unfolding 
     balance_left_def
@@ -153,9 +153,9 @@ lemma balance_left_correct':
 lemma balance_left_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
     (balance_left li ki vi ri)
-    (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_left l k v r) x)
+    (\<lambda>x. rbt_assn (rbt_balance_left l k v r) x)
   "
   using balance_left_correct' rbt_balance_left_ad_correct by metis
 
@@ -255,9 +255,9 @@ definition "balance_right l_p k v r_p \<equiv>
 lemma balance_right_correct':
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
     (balance_right li ki vi ri)
-    (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_right_ad l k v r) x)
+    (\<lambda>x. rbt_assn (rbt_balance_right_ad l k v r) x)
   "
   unfolding
     balance_right_def
@@ -295,9 +295,9 @@ lemma balance_right_correct':
 lemma balance_right_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<upharpoonleft>rbt_assn r ri)
+    (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
     (balance_right li ki vi ri)
-    (\<lambda>x. \<upharpoonleft>rbt_assn (rbt_balance_right l k v r) x)
+    (\<lambda>x. rbt_assn (rbt_balance_right l k v r) x)
   "
   using balance_right_correct' rbt_balance_right_ad_correct by metis
 

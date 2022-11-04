@@ -14,11 +14,21 @@ locale rbt_map = rbt_impl keyabs_t key_t valueabs_t value_t
     key_t :: "'ki :: llvm_rep itself" and
     valueabs_t :: "'v itself" and
     value_t :: "'vi :: llvm_rep itself"
+    +
+  fixes value_copy :: "'vi \<Rightarrow> 'vi llM"
+  assumes
+    value_copy_rule [vcg_rules]:  
+    "
+      llvm_htriple
+      (\<upharpoonleft>value_assn v vi)
+      (value_copy vi)
+      (\<lambda>r. \<upharpoonleft>value_assn v vi ** \<upharpoonleft>value_assn v r)
+    "
 begin
 
 
 fun rbt_map_assn :: "('k \<rightharpoonup> 'v) \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> ll_assn" where
-  "rbt_map_assn m ti = (EXS t. \<upharpoonleft>rbt_assn t ti ** \<up>(rbt_lookup t = m) ** \<up>(is_rbt t))"
+  "rbt_map_assn m ti = (EXS t. rbt_assn_full t ti ** \<up>(rbt_lookup t = m))"
 
 
 lemma empty_map_rule:
@@ -31,49 +41,49 @@ lemma empty_map_rule:
 
 
 lemma free_map_rule:
-"
-  llvm_htriple
-  (rbt_map_assn m ti)
-  (free ti)
-  (\<lambda>r. \<box>)
-" by vcg 
-             
-               
+  "
+    llvm_htriple
+    (rbt_map_assn m ti)
+    (free ti)
+    (\<lambda>r. \<box>)
+  " by vcg 
+
+
 lemma lookup_map_rule:
-"
-  llvm_htriple
-  (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
-  (lookup ti ki)
-  (\<lambda>opt. \<upharpoonleft>value_option_assn (m k) opt ** rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
-" by vcg
+  "
+    llvm_htriple
+    (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
+    (lookup value_copy ti ki)
+    (\<lambda>opt. \<upharpoonleft>value_option_assn (m k) opt ** rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
+  " by vcg
 
 
 lemma insert_map_rule:
-"
-  llvm_htriple
-  (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
-  (insert ki vi ti)
-  (\<lambda>r. rbt_map_assn (m(k \<mapsto> v)) r)
-"
-  apply vcg
-  apply vcg_compat
-  apply isep_solver
-  apply (simp_all add: rbt_lookup_rbt_insert)
-  done
+  "
+    llvm_htriple
+    (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
+    (insert ki vi ti)
+    (\<lambda>r. rbt_map_assn (m(k \<mapsto> v)) r)
+  "
+    apply vcg
+    apply vcg_compat
+    apply isep_solver
+    apply (simp_all add: rbt_lookup_rbt_insert)
+    done
 
 
 lemma delete_map_rule:
-"
-  llvm_htriple
-  (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
-  (delete ki ti)
-  (\<lambda>r. rbt_map_assn (m |` (-{k})) r ** \<upharpoonleft>key_assn k ki)
-"
-  apply vcg
-  apply vcg_compat
-  apply isep_solver
-  apply (simp_all add: rbt_lookup_rbt_delete)
-  done
+  "
+    llvm_htriple
+    (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
+    (delete ki ti)
+    (\<lambda>r. rbt_map_assn (m |` (-{k})) r ** \<upharpoonleft>key_assn k ki)
+  "
+    apply vcg
+    apply vcg_compat
+    apply isep_solver
+    apply (simp_all add: rbt_lookup_rbt_delete)
+    done
 
 
 lemmas rbt_map_rules[vcg_rules] = 
@@ -96,7 +106,7 @@ lemma rbt_map_finite:
   "pure_part(rbt_map_assn m ti) \<Longrightarrow> finite (dom m)"
   apply auto
   unfolding pure_part_def
-  by (metis (full_types) finite_dom_rbt_lookup pure_partI pure_part_pure_conj_eq pure_part_split_conjE)
+  by (metis (full_types) finite_dom_rbt_lookup pure_partI pure_part_pure pure_part_split_conjE)
 
 
 declare rbt_map_assn.simps[simp del]

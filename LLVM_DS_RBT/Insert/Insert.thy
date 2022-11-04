@@ -4,16 +4,16 @@ begin
 
 
 fun rbt_insert_ad' where
-  "rbt_insert_ad' k\<^sub>n v\<^sub>n rbt.Empty = Branch color.R rbt.Empty k\<^sub>n v\<^sub>n rbt.Empty"
-| "rbt_insert_ad' k\<^sub>n v\<^sub>n (Branch color.B l k v r) = (
+  "rbt_insert_ad' k\<^sub>n v\<^sub>n rbt.Empty = rbt.Branch color.R rbt.Empty k\<^sub>n v\<^sub>n rbt.Empty"
+| "rbt_insert_ad' k\<^sub>n v\<^sub>n (rbt.Branch color.B l k v r) = (
     if k\<^sub>n < k then rbt_balance (rbt_insert_ad' k\<^sub>n v\<^sub>n l) k v r
     else if k\<^sub>n > k then rbt_balance l k v (rbt_insert_ad' k\<^sub>n v\<^sub>n r)
-    else Branch color.B l k\<^sub>n v\<^sub>n r
+    else rbt.Branch color.B l k\<^sub>n v\<^sub>n r
   )"
-| "rbt_insert_ad' k\<^sub>n v\<^sub>n (Branch color.R l k v r) = (
-    if k\<^sub>n < k then Branch color.R (rbt_insert_ad' k\<^sub>n v\<^sub>n l) k v r
-    else if k\<^sub>n > k then Branch color.R l k v (rbt_insert_ad' k\<^sub>n v\<^sub>n r)
-    else Branch color.R l k\<^sub>n v\<^sub>n r
+| "rbt_insert_ad' k\<^sub>n v\<^sub>n (rbt.Branch color.R l k v r) = (
+    if k\<^sub>n < k then rbt.Branch color.R (rbt_insert_ad' k\<^sub>n v\<^sub>n l) k v r
+    else if k\<^sub>n > k then rbt.Branch color.R l k v (rbt_insert_ad' k\<^sub>n v\<^sub>n r)
+    else rbt.Branch color.R l k\<^sub>n v\<^sub>n r
   )"
 
 
@@ -86,9 +86,9 @@ partial_function (M) insert' ::
 lemma insert'_correct:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn tree treei ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
+    (rbt_assn tree treei ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
     (insert' ki vi treei)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_insert_ad' k v tree) r)
+    (\<lambda>r. rbt_assn (rbt_insert_ad' k v tree) r)
   "
 proof (induction k v tree arbitrary: treei ki v rule: rbt_insert_ad'.induct)
   case (1 k\<^sub>n v\<^sub>n)
@@ -142,9 +142,9 @@ lemma rbt_insert_ad'_non_empty:
 lemma insert_correct':
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn tree treei ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
+    (rbt_assn tree treei ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
     (insert ki vi treei)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_insert_ad k v tree) r)
+    (\<lambda>r. rbt_assn (rbt_insert_ad k v tree) r)
   "
   unfolding insert_def rbt_insert_ad_def
   supply insert'_correct[vcg_rules]
@@ -153,7 +153,6 @@ lemma insert_correct':
   subgoal using rbt_insert_ad'_non_empty by fast
   subgoal
     apply simp
-    unfolding rbt_assn_branch_def
     apply vcg
     done
   done
@@ -162,9 +161,9 @@ lemma insert_correct':
 lemma insert_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn tree treei ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
+    (rbt_assn tree treei ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
     (insert ki vi treei)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_insert k v tree) r)
+    (\<lambda>r. rbt_assn (rbt_insert k v tree) r)
   " 
   using insert_correct' rbt_insert_ad_correct by metis
 

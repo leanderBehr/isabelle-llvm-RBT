@@ -40,11 +40,11 @@ abbreviation "string_nth \<equiv> arl_nth_wrap :: string ptr \<Rightarrow> _"
 abbreviation "string_list_nth \<equiv> arl_nth_wrap :: (string, 64) array_list ptr \<Rightarrow> _"
 
 
-abbreviation "map_new \<equiv> empty_wrap :: (string, 64 word) rbti ptr \<Rightarrow> unit llM"
-abbreviation "map_free \<equiv> free_wrap :: (string, 64 word) rbti ptr \<Rightarrow> unit llM"
-abbreviation "map_lookup \<equiv> lookup_wrap :: (string, 64 word) rbti ptr \<Rightarrow> _ \<Rightarrow> _\<Rightarrow> unit llM"
-abbreviation "map_insert \<equiv> insert_wrap :: (string, 64 word) rbti ptr \<Rightarrow> _ \<Rightarrow> _\<Rightarrow> unit llM"
-abbreviation "map_delete \<equiv> delete_wrap :: (string, 64 word) rbti ptr  \<Rightarrow> _\<Rightarrow> unit llM"
+abbreviation "map_new \<equiv> map.empty_wrap :: (string, 64 word) rbti ptr \<Rightarrow> unit llM"
+abbreviation "map_free \<equiv> map.free_wrap :: (string, 64 word) rbti ptr \<Rightarrow> unit llM"
+abbreviation "map_lookup \<equiv> map.lookup_wrap :: (string, 64 word) rbti ptr \<Rightarrow> _ \<Rightarrow> _\<Rightarrow> unit llM"
+abbreviation "map_insert \<equiv> map.insert_wrap :: (string, 64 word) rbti ptr \<Rightarrow> _ \<Rightarrow> _\<Rightarrow> unit llM"
+abbreviation "map_delete \<equiv> map.delete_wrap :: (string, 64 word) rbti ptr  \<Rightarrow> _\<Rightarrow> unit llM"
 
 
 export_llvm

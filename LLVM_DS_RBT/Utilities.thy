@@ -21,31 +21,39 @@ lemma pure_part_split_conjE:
 
 lemma rbt_assn_non_null_def:
   assumes 
-    "pure_part (\<upharpoonleft>rbt_assn t ti)"
+    "pure_part (rbt_assn t ti)"
   shows
     "ti = null \<longleftrightarrow> (t = rbt.Empty)"
   using assms
   apply (cases t)
-  subgoal by simp
-  subgoal unfolding rbt_assn_branch_def by fastforce
+  subgoal by (auto elim: pure_part_split_conjE)
+  subgoal by auto
   done
 
 lemma rbt_assn_non_null_unfold:
   assumes 
     "ti \<noteq> null"
-    "pure_part (\<upharpoonleft>rbt_assn t ti)"
+    "pure_part (rbt_assn t ti)"
   obtains c l k v r where
   "t = (rbt.Branch c l k v r)"
-  using assms rbt_assn_non_null_def
-  by (cases t; auto)
+  using assms by (cases t; auto)
+
+
+lemma rbt_assn_cplx_non_null_unfold:
+  assumes 
+    "ti \<noteq> null"
+    "pure_part (rbt_assn_cplx t ptrs ex ti)"
+  obtains c l k v r where
+  "t = (rbt.Branch c l k v r)"
+  using assms by (cases t; auto)
 
 
 lemma non_null_rbt_assn_sepD:
-  "ti \<noteq> null \<Longrightarrow> \<upharpoonleft>rbt_assn t ti \<turnstile> (EXS c l k v r. \<upharpoonleft>rbt_assn (rbt.Branch c l k v r) ti)"
+  "ti \<noteq> null \<Longrightarrow> rbt_assn t ti \<turnstile> (EXS c l k v r. rbt_assn (rbt.Branch c l k v r) ti)"
   apply (cases t)
   subgoal by simp
-  subgoal by isep_solver
-  done                  
+  subgoal by (simp, isep_solver)
+  done
 
 
 lemma extract_pure: "STATE asf X s \<Longrightarrow> (pure_part X \<Longrightarrow> thesis) \<Longrightarrow> thesis"
@@ -114,9 +122,9 @@ definition "is_red node_p \<equiv> do {
 lemma is_red_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn t ti)
+    (rbt_assn t ti)
     (is_red ti)
-    (\<lambda>r. \<upharpoonleft>bool.assn (rbt_is_red t) r ** \<upharpoonleft>rbt_assn t ti) 
+    (\<lambda>r. \<upharpoonleft>bool.assn (rbt_is_red t) r ** rbt_assn t ti) 
   "
 proof(cases t)
   case Empty
@@ -126,7 +134,7 @@ proof(cases t)
 next
   case (Branch col lhs k v rhs)
   then show ?thesis
-    apply (simp add: rbt_assn_branch_def rbt_is_red_def is_red_def)
+    apply (simp add: rbt_is_red_def is_red_def)
     apply (cases col)
     apply vcg
     done
@@ -142,16 +150,18 @@ definition "left node_p \<equiv> do {
 lemma left_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ni)
+    (rbt_assn (Branch col lhs k v rhs) ni)
     (left ni)
     (\<lambda>lhsi.
+      (
       EXS coli ki vi rhsi. 
         \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ni **
         color_assn col coli **
-        \<upharpoonleft>rbt_assn lhs lhsi **
+        rbt_assn lhs lhsi **
         \<upharpoonleft>key_assn k ki **
         \<upharpoonleft>value_assn v vi **  
-        \<upharpoonleft>rbt_assn rhs rhsi
+        rbt_assn rhs rhsi
+      )
     )
   "
   unfolding left_def
@@ -167,16 +177,18 @@ definition "right node_p \<equiv> do {
 lemma right_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ni)
+    (rbt_assn (Branch col lhs k v rhs) ni)
     (right ni)
     (\<lambda>rhsi.
+      (
       EXS coli lhsi ki vi. 
         \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ni **
         color_assn col coli **
-        \<upharpoonleft>rbt_assn lhs lhsi **
+        rbt_assn lhs lhsi **
         \<upharpoonleft>key_assn k ki **
         \<upharpoonleft>value_assn v vi **  
-        \<upharpoonleft>rbt_assn rhs rhsi
+        rbt_assn rhs rhsi
+      )
     )
   "
   unfolding right_def
@@ -189,9 +201,9 @@ definition "is_branch node_p \<equiv> Mreturn (from_bool (node_p \<noteq> null))
 lemma is_branch_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn t ti)
+    (rbt_assn t ti)
     (is_branch ti)
-    (\<lambda>r. \<upharpoonleft>bool.assn(rbt_is_branch t) r ** \<upharpoonleft>rbt_assn t ti) 
+    (\<lambda>r. \<upharpoonleft>bool.assn(rbt_is_branch t) r ** rbt_assn t ti) 
   "
   unfolding is_branch_def rbt_is_branch_def
   apply (cases t; vcg)
@@ -213,9 +225,9 @@ definition "is_black node_p \<equiv>
 lemma is_black_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn t ti)
+    (rbt_assn t ti)
     (is_black ti)
-    (\<lambda>r. \<upharpoonleft>bool.assn (rbt_is_black t) r ** \<upharpoonleft>rbt_assn t ti) 
+    (\<lambda>r. \<upharpoonleft>bool.assn (rbt_is_black t) r ** rbt_assn t ti) 
   "
   unfolding is_black_def rbt_is_black_def
   apply (cases t; (auto split: color.splits))
@@ -233,9 +245,9 @@ definition "is_black_branch node_p \<equiv>
 lemma is_black_branch_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn t ti)
+    (rbt_assn t ti)
     (is_black_branch ti)
-    (\<lambda>r. \<upharpoonleft>bool.assn(rbt_is_black t \<and> rbt_is_branch t) r ** \<upharpoonleft>rbt_assn t ti) 
+    (\<lambda>r. \<upharpoonleft>bool.assn(rbt_is_black t \<and> rbt_is_branch t) r ** rbt_assn t ti) 
   "
   unfolding is_black_branch_def rbt_is_black_def rbt_is_branch_def
   apply (cases t; (auto split: color.splits))
@@ -267,6 +279,9 @@ lemmas [llvm_inline] =
   new_def
 
 
+end
+
+
 datatype ColorPattern = CP_Var | CP_R | CP_B
 datatype RbtPattern = RVar | Empty | Branch ColorPattern RbtPattern RbtPattern
 
@@ -292,6 +307,11 @@ fun matches_rbt_pattern ::
 | "matches_rbt_pattern (Branch c l r) rbt.Empty = False"
 | "matches_rbt_pattern (Branch cp lp rp) (rbt.Branch c l _ _ r) = 
   (matches_color_pattern cp c \<and> matches_rbt_pattern lp l \<and> matches_rbt_pattern rp r)"
+
+
+context rbt_impl
+begin
+interpretation rbt_impl_deps .
 
 
 fun matches_rbt_pattern_i ::
@@ -325,17 +345,11 @@ lemma matches_color_pattern_correct [vcg_rules]:
   done
 
 
-lemma H3: "pure_part (\<upharpoonleft>rbt_assn t ti) \<Longrightarrow> (ti = null) = (t = rbt.Empty)"
-  apply (cases ti)
-  apply auto
-  done
-
-
 method STATE_extract_pure = 
   rule extract_pure,
   (auto)[1],
   ((erule pure_part_split_conjE)+)?
-term bool.assn
+
 
 lemma 
   Hack_1:
@@ -355,9 +369,9 @@ lemma
 lemma matches_rbt_pattern_correct [vcg_rules]:
 "
   llvm_htriple
-  (\<upharpoonleft>rbt_assn t ti)
+  (rbt_assn t ti)
   (matches_rbt_pattern_i pat ti)
-  (\<lambda>r. \<upharpoonleft>bool.assn (matches_rbt_pattern pat t) r ** \<upharpoonleft>rbt_assn t ti)
+  (\<lambda>r. \<upharpoonleft>bool.assn (matches_rbt_pattern pat t) r ** rbt_assn t ti)
 "
 proof(induction pat arbitrary: t ti)
   case RVar
@@ -392,7 +406,7 @@ next
     subgoal
       apply vcg
       apply STATE_extract_pure
-      apply (rule rbt_assn_non_null_unfold, auto)
+      apply (cases t, auto)
       apply vcg
       apply (subst Hack_1)
       apply vcg_compat

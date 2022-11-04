@@ -19,32 +19,36 @@ definition "check_3 lhs_p rhs_p \<equiv> is_red lhs_p &&! (do {r \<leftarrow> ri
 definition "check_4 lhs_p rhs_p \<equiv> is_red rhs_p &&! (do {r \<leftarrow> right rhs_p; is_red r})"
 definition "check_5 lhs_p rhs_p \<equiv> is_red rhs_p &&! (do {l \<leftarrow> left rhs_p; is_red l})"
 
+(*unfolds rbt_assn during frame inference,
+  introducing new variables that the schematic variable of the frame does not depend on,
+  making the frame inference impossible, except for trivial solutions*)
+declare rbt_assn.simps(2)[simp del]
 
 lemma check_1_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi)
     (check_1 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_1 lhs rhs) r)
+    (\<lambda>r. rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_1 lhs rhs) r)
   "
   unfolding rbt_check_1_def check_1_def sc_and_def
-  apply vcg
-  subgoal unfolding rbt_is_red_def by vcg
-  subgoal by vcg
+  apply vcg 
+  unfolding rbt_is_red_def
+   apply vcg
   done
 
 
 lemma check_2_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi)
     (check_2 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn (rbt_check_2 lhs rhs) r)
+    (\<lambda>r. rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn (rbt_check_2 lhs rhs) r)
   "
   unfolding rbt_check_2_def check_2_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn_branch_def rbt_is_red_def rbt_left_def
+    unfolding rbt_is_red_def rbt_left_def rbt_assn.simps
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -54,14 +58,14 @@ lemma check_2_correct [vcg_rules]:
 lemma check_3_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi)
     (check_3 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_3 lhs rhs) r)
+    (\<lambda>r. rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_3 lhs rhs) r)
   "
   unfolding rbt_check_3_def check_3_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn_branch_def rbt_is_red_def rbt_right_def
+    unfolding rbt_assn.simps rbt_is_red_def rbt_right_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -71,14 +75,14 @@ lemma check_3_correct [vcg_rules]:
 lemma check_4_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi)
     (check_4 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_4 lhs rhs) r)
+    (\<lambda>r. rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_4 lhs rhs) r)
   "
   unfolding rbt_check_4_def check_4_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn_branch_def rbt_is_red_def rbt_right_def
+    unfolding rbt_assn.simps rbt_is_red_def rbt_right_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -88,14 +92,14 @@ lemma check_4_correct [vcg_rules]:
 lemma check_5_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi)
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi)
     (check_5 lhsi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_5 lhs rhs) r)
+    (\<lambda>r. rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>bool.assn(rbt_check_5 lhs rhs) r)
   "
   unfolding rbt_check_5_def check_5_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn_branch_def rbt_is_red_def rbt_left_def
+    unfolding rbt_assn.simps rbt_is_red_def rbt_left_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -126,12 +130,13 @@ definition "balance_ad_case_1 lhs_p k v rhs_p \<equiv> do {
   }"
 
 
+
 lemma balance_ad_case_1_correct [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_1 lhs rhs))
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_1 lhs rhs))
     (balance_ad_case_1 lhsi ki vi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_1 lhs k v rhs) r)
+    (\<lambda>r. rbt_assn (rbt_balance_ad_case_1 lhs k v rhs) r)
   "
   unfolding balance_ad_case_1_def rbt_balance_ad_case_1_def new_def
   apply vcg
@@ -161,15 +166,17 @@ definition "balance_ad_case_2 lhs_p k v rhs_p \<equiv> do {
 lemma balance_ad_case_2_correct [vcg_rules]: 
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_2 lhs rhs))
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_2 lhs rhs))
     (balance_ad_case_2 lhsi ki vi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_2 lhs k v rhs) r)
+    (\<lambda>r. rbt_assn (rbt_balance_ad_case_2 lhs k v rhs) r)
   "
   unfolding balance_ad_case_2_def rbt_balance_ad_case_2_def new_def
   apply vcg
   apply (erule rbt_check_2_unfold)
   apply vcg
   done
+
+find_theorems rbt_assn is_rbt
 
 
 definition "balance_ad_case_3 lhs_p k v rhs_p \<equiv> do {
@@ -193,9 +200,9 @@ definition "balance_ad_case_3 lhs_p k v rhs_p \<equiv> do {
 lemma balance_ad_case_3_correct [vcg_rules]: 
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_3 lhs rhs))
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_3 lhs rhs))
     (balance_ad_case_3 lhsi ki vi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_3 lhs k v rhs) r)
+    (\<lambda>r. rbt_assn (rbt_balance_ad_case_3 lhs k v rhs) r)
   "
   unfolding balance_ad_case_3_def rbt_balance_ad_case_3_def new_def
   apply vcg
@@ -227,9 +234,9 @@ definition "balance_ad_case_4 l_p k v r_p \<equiv> do {
 lemma balance_ad_case_4_correct [vcg_rules]: 
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_4 lhs rhs))
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_4 lhs rhs))
     (balance_ad_case_4 lhsi ki vi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_4 lhs k v rhs) r)
+    (\<lambda>r. rbt_assn (rbt_balance_ad_case_4 lhs k v rhs) r)
   "
   unfolding balance_ad_case_4_def rbt_balance_ad_case_4_def new_def
   apply vcg
@@ -261,9 +268,9 @@ definition "balance_ad_case_5 l_p k v r_p \<equiv> do {
 lemma balance_ad_case_5_correct [vcg_rules]: 
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_5 lhs rhs))
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_check_5 lhs rhs))
     (balance_ad_case_5 lhsi ki vi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_5 lhs k v rhs) r)
+    (\<lambda>r. rbt_assn (rbt_balance_ad_case_5 lhs k v rhs) r)
   "
   unfolding balance_ad_case_5_def rbt_balance_ad_case_5_def new_def
   apply vcg
@@ -278,9 +285,9 @@ definition "balance_ad_case_6 l_p k v r_p \<equiv> new (RBT_NODE 1 l_p k v r_p)"
 lemma balance_ad_case_6_correct [vcg_rules]: 
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn lhs lhsi ** \<upharpoonleft>rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
+    (rbt_assn lhs lhsi ** rbt_assn rhs rhsi ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
     (balance_ad_case_6 lhsi ki vi rhsi)
-    (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_balance_ad_case_6 lhs k v rhs) r)
+    (\<lambda>r. rbt_assn (rbt_balance_ad_case_6 lhs k v rhs) r)
   "
   unfolding balance_ad_case_6_def rbt_balance_ad_case_6_def
   by vcg
@@ -321,13 +328,13 @@ lemmas [llvm_code] = balance_def
 lemma balance_correct':
   "llvm_htriple
   (
-    \<upharpoonleft>rbt_assn tree_l tree_li **
-    \<upharpoonleft>rbt_assn tree_r tree_ri **   
+    rbt_assn tree_l tree_li **
+    rbt_assn tree_r tree_ri **   
     \<upharpoonleft>key_assn k ki **
     \<upharpoonleft>value_assn v vi
   )
   (balance tree_li ki vi tree_ri)
-  (\<lambda>ri. \<upharpoonleft>rbt_assn (rbt_balance_ad tree_l k v tree_r) ri) 
+  (\<lambda>ri. rbt_assn (rbt_balance_ad tree_l k v tree_r) ri) 
   "
 proof -
   show ?thesis
@@ -339,13 +346,13 @@ qed
 lemma balance_correct [vcg_rules]:
   "llvm_htriple
   (
-    \<upharpoonleft>rbt_assn tree_l tree_li **
-    \<upharpoonleft>rbt_assn tree_r tree_ri **   
+    rbt_assn tree_l tree_li **
+    rbt_assn tree_r tree_ri **   
     \<upharpoonleft>key_assn k ki **
     \<upharpoonleft>value_assn v vi
   )
   (balance tree_li ki vi tree_ri)
-  (\<lambda>ri. \<upharpoonleft>rbt_assn (rbt_balance tree_l k v tree_r) ri) 
+  (\<lambda>ri. rbt_assn (rbt_balance tree_l k v tree_r) ri) 
   "
   by (metis balance_correct' rbt_balance_ad_correct)
 

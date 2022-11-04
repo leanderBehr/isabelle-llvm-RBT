@@ -122,7 +122,7 @@ next
       apply vcg_rl back back
        apply vcg_compat
        apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
-        apply (auto simp add: SOLVE_AUTO_DEFER_def)
+        apply (auto simp add: SOLVE_AUTO_DEFER_def)    
       apply vcg_solve
       apply vcg 
        apply vcg_compat

@@ -59,8 +59,7 @@ lemma is_pure_pureI:
   by (simp add: extract_pure_assn pure_true_conv)
 
 
-lemma 
-  pure_pure_asm_prefixI:
+lemma pure_pure_asm_prefixI:
   "\<flat>\<^sub>passn x y \<Longrightarrow> \<box> \<turnstile> \<upharpoonleft>assn x y"
   by (metis (full_types) dr_assn_pure_asm_prefix_def entails_refl extract_pure_assn pure_true_conv)
 

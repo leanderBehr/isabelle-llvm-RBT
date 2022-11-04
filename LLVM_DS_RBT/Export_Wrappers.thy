@@ -33,7 +33,7 @@ definition lookup_wrap :: "_ ptr \<Rightarrow> _ ptr \<Rightarrow> _ ptr \<Right
     do {
       rbt \<leftarrow> ll_load rbt_p;
       key \<leftarrow> ll_load key_p;
-      res \<leftarrow> lookup rbt key;
+      res \<leftarrow> lookup value_copy rbt key;
       ll_store res res_p
     }
   "

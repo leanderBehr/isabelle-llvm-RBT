@@ -67,15 +67,13 @@ naive_insert tree_p k v = do {
 }"
 
 
-lemma naive_insert_correct [vcg_rules]:
+lemma naive_insert_correct :
   "llvm_htriple
-  (\<upharpoonleft>rbt_assn tree treei ** \<upharpoonleft>key_assn k\<^sub>n ki ** \<upharpoonleft>value_assn v vi)
+  (rbt_assn tree treei ** \<upharpoonleft>key_assn k\<^sub>n ki ** \<upharpoonleft>value_assn v vi)
   (naive_insert treei ki vi)
-  (\<lambda>r. \<upharpoonleft>rbt_assn (rbt_naive_insert tree k\<^sub>n v) r)"
+  (\<lambda>r. rbt_assn (rbt_naive_insert tree k\<^sub>n v) r)"
 proof(induction tree arbitrary: treei)
   case Empty
-
-  note [simp] = rbt_assn_branch_def
 
   from Empty show ?case
     apply (subst naive_insert.simps)
@@ -85,7 +83,6 @@ next
   case (Branch col lhs k\<^sub>t v rhs)
 
   note [vcg_rules] = Branch.IH
-  note [simp] = rbt_assn_branch_def
 
   show ?case
     apply (subst naive_insert.simps)
@@ -100,12 +97,11 @@ lemmas [llvm_code] = naive_insert.simps
 lemma naive_insert_correct_mem [vcg_rules]:
   "k\<^sub>n \<notin> set (RBT_Impl.keys tree) \<Longrightarrow>
   llvm_htriple
-  (rbt_assn_mem tree ptrs treei ** \<upharpoonleft>key_assn k\<^sub>n ki ** \<upharpoonleft>value_assn v vi)
+  (rbt_assn_cplx tree ptrs {} treei ** \<upharpoonleft>key_assn k\<^sub>n ki ** \<upharpoonleft>value_assn v vi)
   (naive_insert treei ki vi)
-  (\<lambda>r. EXS n. rbt_assn_mem (rbt_naive_insert tree k\<^sub>n v) (ptrs(k\<^sub>n := Some n)) r)"
+  (\<lambda>r. EXS n. rbt_assn_cplx (rbt_naive_insert tree k\<^sub>n v) (ptrs(k\<^sub>n := Some n)) {} r)"
 proof(induction tree arbitrary: treei)
   case Empty
-  note naive_insert_correct[vcg_rules del]
   then show ?case 
     apply (subst naive_insert.simps)
     apply vcg
@@ -113,7 +109,6 @@ proof(induction tree arbitrary: treei)
 next
   case (Branch c lhs k v rhs)
 
-  note naive_insert_correct[vcg_rules del]
   note Branch(1-2)[vcg_rules]
 
   from Branch(3) show ?case
@@ -122,7 +117,7 @@ next
     subgoal (*k\<^sub>n < k*)
       apply (simp add: fun_upd_def)
       apply vcg_compat
-      apply (isep_solver_keep isep_intro: ptrs_upd_rbt_assn_mem_sepI)
+      apply (isep_solver_keep isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
         apply simp_all
       done
     subgoal (*k\<^sub>n \<ge> k*)
@@ -130,7 +125,7 @@ next
       subgoal (*k\<^sub>n > k*)
         apply (simp add: fun_upd_def)
         apply vcg_compat
-        apply (isep_solver_keep isep_intro: ptrs_upd_rbt_assn_mem_sepI)
+        apply (isep_solver_keep isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
           apply simp_all
         done
       subgoal (*k\<^sub>n = k -- contradiction*) by vcg

@@ -6,9 +6,9 @@ theory Setup
 begin
 
 
-subsection \<open>RBT_NODE Datatype\<close>
+subsection \<open>RBT NODE Datatype\<close>
 
-
+text_raw \<open>\snip{rbtnodedef}{1}{2}{%\<close>
 datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
   RBT_NODE
   (color: "8 word")
@@ -16,15 +16,12 @@ datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
   (key: 'key) 
   (val: 'value)
   (right: "('key,'value) rbt_node ptr")
-
+text_raw \<open>}%endsnip\<close>
 
 hide_const (open) color left key val right
 
 
 type_synonym ('k, 'v) rbti = "('k, 'v) rbt_node ptr"  
-
-
-text \<open>Abstract type rbt represented by rbti where null represents rbt.Empty\<close>
 
 
 subsubsection \<open>Encoding to heap-representable\<close>
@@ -230,6 +227,7 @@ lemmas [llvm_inline, simp] =
 
 subsection \<open>Color Assertion\<close>
 
+
 fun color_pred where 
   "color_pred color.R rep = (rep = 0)"
 | "color_pred color.B rep = (rep = 1)"
@@ -241,15 +239,15 @@ abbreviation "color_assn c ci \<equiv> \<up>(color_pred c ci)"
 lemma color_assn_R_0 [fri_red_rules]:
   "is_sep_red \<box> \<box> \<box> (color_assn color.R 0)"
   apply (rule is_sep_redI)
-  apply isep_solver
-  by simp
+  apply isep_solver_keep
+  by simp_all
 
 
 lemma color_assn_B_1 [fri_red_rules]:
   "is_sep_red \<box> \<box> \<box> (color_assn color.B 1)"
   apply (rule is_sep_redI)
-  apply isep_solver
-  by simp
+  apply isep_solver_keep
+  by simp_all
 
 
 subsection \<open>Linorder Locale\<close>
@@ -301,8 +299,7 @@ locale rbt_impl =
     key_assn and
     key_delete :: "'ki \<Rightarrow> unit llM" and
     value_assn :: "('v, 'vi) dr_assn" and
-    value_delete :: "'vi \<Rightarrow> unit llM" and
-    value_copy :: "'vi \<Rightarrow> 'vi llM" +
+    value_delete :: "'vi \<Rightarrow> unit llM" +
   assumes
     key_delete_rule [vcg_rules]: 
     "
@@ -317,87 +314,93 @@ locale rbt_impl =
       (\<upharpoonleft>value_assn v vi)
       (value_delete vi)
       (\<lambda>_. \<box>)
-    " and
-    value_coyp_rule [vcg_rules]:
-    "
-      llvm_htriple
-      (\<upharpoonleft>value_assn v vi)
-      (value_copy vi)
-      (\<lambda>r. \<upharpoonleft>value_assn v r ** \<upharpoonleft>value_assn v vi)
     "
 begin
 interpretation rbt_impl_deps .
 
 
 subsection \<open>RBT Assertion\<close>
+  
 
-fun rbt_assn_mem where
-  "rbt_assn_mem rbt.Empty ptrs p = \<up>(p = null)"
-| "rbt_assn_mem (rbt.Branch col lhs k v rhs) ptrs p =
+fun rbt_assn_cplx where
+  "rbt_assn_cplx rbt.Empty ptrs ex p = \<up>(p = null)"
+| "rbt_assn_cplx (rbt.Branch col lhs k v rhs) ptrs ex p =
   (
-    \<up>(ptrs k = Some p) **
-    (
-      EXS coli lhsi ki vi rhsi. 
-        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
-        color_assn col coli **
-        rbt_assn_mem lhs ptrs lhsi **
-        \<upharpoonleft>key_assn k ki **
-        \<upharpoonleft>value_assn v vi **
-        rbt_assn_mem rhs ptrs rhsi
-    )
+    EXS coli lhsi ki vi rhsi. 
+      \<up>(ptrs k = Some (p, vi)) **
+      \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
+      color_assn col coli **
+      rbt_assn_cplx lhs ptrs ex lhsi **
+      \<upharpoonleft>key_assn k ki **
+      (if k \<in> ex then \<box> else \<upharpoonleft>value_assn v vi) **
+      rbt_assn_cplx rhs ptrs ex rhsi
   )
   "
 
 
-fun rbt_assn' :: "
+fun rbt_assn_cplx_full where "rbt_assn_cplx_full t ptrs ex ti = (rbt_assn_cplx t ptrs ex ti ** \<up>(is_rbt t))"
+
+
+fun rbt_assn :: "
   ('k, 'v) rbt \<Rightarrow>
   ('ki, 'vi) rbti \<Rightarrow>
   ll_assn
 " where
-  "rbt_assn' rbt.Empty p = \<up>(p=null)"
-| "rbt_assn' (rbt.Branch col lhs k v rhs) p = (
+  "rbt_assn rbt.Empty p = \<up>(p=null)"
+| "rbt_assn (rbt.Branch col lhs k v rhs) p = (
     EXS coli lhsi ki vi rhsi. 
       \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
       color_assn col coli **
-      rbt_assn' lhs lhsi **
+      rbt_assn lhs lhsi **
       \<upharpoonleft>key_assn k ki **
       \<upharpoonleft>value_assn v vi **
-      rbt_assn' rhs rhsi
+      rbt_assn rhs rhsi
   )"
 
 
-lemma "rbt_assn_mem t ptrs ti \<turnstile> rbt_assn' t ti"
+fun rbt_assn_full where "rbt_assn_full t ti = (rbt_assn t ti ** \<up>(is_rbt t))"
+
+
+lemma rbt_assn_cplx_entails_rbt_assn:
+  "rbt_assn_cplx t ptrs {} ti \<turnstile> rbt_assn t ti"
   apply (induction t arbitrary: ti)
    apply simp
   subgoal premises prems
     apply simp
+    apply isep_elim_ex
     apply (isep_solver_keep isep_intro: prems)
     done
   done
 
 
-lemma 
-  ptrs_upd_rbt_assn_mem_sepI:
+lemma rbt_assn_cpxl_full_entails_rbt_assn_full:
+  "rbt_assn_cplx_full t ptrs {} ti \<turnstile> rbt_assn_full t ti"
+  apply simp
+  apply (isep_solver_keep isep_dest: rbt_assn_cplx_entails_rbt_assn)
+  apply simp
+  done
+
+
+lemma ptrs_upd_rbt_assn_cplx_sepI:
   "kn \<notin> set(RBT_Impl.keys t) \<Longrightarrow>
-   rbt_assn_mem t ptrs ti \<turnstile> rbt_assn_mem t (\<lambda>x. if x = kn then p else ptrs x) ti"
+   rbt_assn_cplx t ptrs ex ti \<turnstile> rbt_assn_cplx t (\<lambda>x. if x = kn then p else ptrs x) ex ti"
 proof (induction t arbitrary: ti p)
   case Empty show ?case by simp
 next
   case (Branch c l k v r)
   from Branch(3) show ?case
-    apply auto    
+    apply (auto split del: if_split) (*don't split if, it matches exactly*)
     apply isep_solver_keep
     apply isep_intro_ex
     apply (isep_solver_keep isep_intro: Branch(1-2))
-    apply simp_all
-    done
+    by simp_all
 qed
 
 
 lemma
-  ptrs_add_left_rbt_assn_mem_sepI:
+  ptrs_add_left_rbt_assn_cplx_sepI:
   "dom ptrs2 \<inter> set (RBT_Impl.keys t) = {} \<Longrightarrow>
-  rbt_assn_mem t ptrs1 ti \<turnstile> rbt_assn_mem t (ptrs1 ++ ptrs2) ti"
+  rbt_assn_cplx t ptrs1 ex ti \<turnstile> rbt_assn_cplx t (ptrs1 ++ ptrs2) ex ti"
   proof (induction t arbitrary: ti)
     case Empty
     then show ?case by simp
@@ -412,21 +415,17 @@ lemma
     note IH_r = Branch(2)[OF r_int]
 
     show ?case
-      apply simp
+      apply (simp split del: if_split)
       apply isep_solver_keep
-      subgoal
-        apply isep_intro_ex
-        apply (isep_solver_keep isep_dest: IH_l IH_r)
-        done
-      subgoal using Branch(3) by simp
-    done
+      apply isep_intro_ex
+      apply (isep_solver_keep isep_dest: IH_l IH_r)
+      using Branch(3) by simp
 qed
 
 
-lemma
-  ptrs_add_right_rbt_assn_mem_sepI:
+lemma ptrs_add_right_rbt_assn_cplx_sepI:
   "dom ptrs1 \<inter> set (RBT_Impl.keys t) = {} \<Longrightarrow>
-  rbt_assn_mem t ptrs2 ti \<turnstile> rbt_assn_mem t (ptrs1 ++ ptrs2) ti"
+  rbt_assn_cplx t ptrs2 ex ti \<turnstile> rbt_assn_cplx t (ptrs1 ++ ptrs2) ex ti"
 proof (induction t arbitrary: ti)
   case Empty
   then show ?case by simp
@@ -441,18 +440,15 @@ next
   note IH_r = Branch(2)[OF r_int]
 
   show ?case
-    apply simp
+    apply (simp split del: if_split)
     apply isep_solver_keep
-    subgoal
-      apply isep_intro_ex
-      apply (isep_solver_keep isep_dest: IH_l IH_r)
-      done
-    subgoal using Branch(3) by simp
-    done
+     apply isep_intro_ex
+     apply (isep_solver_keep isep_dest: IH_l IH_r)
+    using Branch(3) by simp
 qed
 
-lemma 
-  rbt_sorted_key_uniqI:
+
+lemma rbt_sorted_key_uniqI:
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys l)"
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys r)"
   apply simp_all
@@ -460,19 +456,20 @@ lemma
   by blast+
 
 
-lemma 
-  rbt_sorted_subtrees_disjoint:
+lemma rbt_sorted_subtrees_disjoint:
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> set (RBT_Impl.keys l) \<inter> set (RBT_Impl.keys r) = {}"
   apply simp
   unfolding rbt_less_prop rbt_greater_prop
   by fastforce
 
 
-lemma "rbt_sorted t \<Longrightarrow> rbt_assn' t ti \<turnstile> (EXS ptrs. rbt_assn_mem t ptrs ti ** \<up>(dom ptrs = set (RBT_Impl.keys t)))"
+lemma rbt_assn_entails_rbt_assn_cplx:
+  "rbt_sorted t \<Longrightarrow> rbt_assn t ti \<turnstile> (EXS ptrs. rbt_assn_cplx t ptrs {} ti ** \<up>(dom ptrs = set (RBT_Impl.keys t)))"
 proof(induction t arbitrary: ti)
   case Empty
   then show ?case
     apply simp
+    apply isep_intro_ex
     apply isep_solver
     apply simp
     done
@@ -484,14 +481,17 @@ next
     apply (isep_solver_keep isep_dest: Branch(1-2))
       apply simp
     subgoal for x xa xb xc xd ptrs1 ptrs2
-      apply (isep_intro_ex_with "(ptrs1 ++ ptrs2)(k \<mapsto> ti)")
+      apply (isep_intro_ex_with "(ptrs1 ++ ptrs2)(k \<mapsto> (ti, ?x))")
       apply simp
       apply isep_intro_ex
       apply (simp add: fun_upd_def)
-      apply (isep_solver isep_intro: ptrs_upd_rbt_assn_mem_sepI ptrs_add_left_rbt_assn_mem_sepI ptrs_add_right_rbt_assn_mem_sepI)
-          apply blast
-         apply (metis Branch(3) rbt_sorted_key_uniqI(1))
-        apply (metis Branch(3) rbt_sorted_key_uniqI(2))
+      apply (isep_solver isep_intro:
+          ptrs_upd_rbt_assn_cplx_sepI
+          ptrs_add_left_rbt_assn_cplx_sepI
+          ptrs_add_right_rbt_assn_cplx_sepI)
+            apply auto
+         apply (meson Branch.prems rbt_sorted_key_uniqI(1))
+        apply (meson Branch.prems rbt_sorted_key_uniqI(2))
       using rbt_sorted_subtrees_disjoint Branch(3) apply fast+
       done
     using Branch(3) apply auto
@@ -499,103 +499,16 @@ next
 qed
 
 
-fun rbt_val_assn where
-  "rbt_val_assn (Branch col lhs k v rhs) (RBT_NODE coli lhsi ki vi rhsi) = 
-    (
-     color_assn col coli **
-      rbt_assn' lhs lhsi **
-        \<upharpoonleft>key_assn k ki **
-        \<upharpoonleft>value_assn v vi **  
-      rbt_assn' rhs rhsi
-    )" |
-  "rbt_val_assn _ _ = sep_false"
+lemma [simp]: "rbt_assn t null = \<up>(t=rbt.Empty)"
+  by (cases t; simp add: pure_true_conv)
 
 
-lemma "rbt_assn' (Branch col lhs k v rhs) p =
-    (EXS n. \<upharpoonleft>ll_bpto n p ** rbt_val_assn (Branch col lhs k v rhs) n)"
-  apply (auto simp add: entails_eq_iff)
-  subgoal
-    apply isep_elim_ex
-    apply isep_intro_ex
-    apply isep_solver_keep
-    apply simp
-    done
-  subgoal
-    apply isep_elim_ex
-    subgoal for x
-      apply (cases x, simp)
-      apply isep_solver
-      done
-    done
-  done
+lemma [simp]: "rbt_assn_full t null = \<up>(t=rbt.Empty)"
+  by (cases t; simp add: pure_true_conv)
 
 
-definition "rbt_assn \<equiv> mk_assn rbt_assn'"
-
-
-lemma [simp]: "\<upharpoonleft>rbt_assn t null = \<up>(t=rbt.Empty)"
-  unfolding rbt_assn_def
-  by (cases t; auto)
-
-
-lemma [simp]: "\<upharpoonleft>rbt_assn rbt.Empty p = \<up>(p=null)"
-  unfolding rbt_assn_def by simp
-
-
-lemma rbt_assn_branch_def: 
-  "\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) p =
-  (
-    EXS coli lhsi ki vi rhsi. 
-      \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
-      color_assn col coli **
-      \<upharpoonleft>rbt_assn lhs lhsi **
-      \<upharpoonleft>key_assn k ki **
-      \<upharpoonleft>value_assn v vi **  
-      \<upharpoonleft>rbt_assn rhs rhsi
-  )"
-  unfolding rbt_assn_def
-  by simp
-
-
-lemma close_rbt_assn_entails:
-  "
-  (
-    \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
-    color_assn col coli **
-    \<upharpoonleft>rbt_assn lhs lhsi **
-    \<upharpoonleft>key_assn k ki **
-    \<upharpoonleft>value_assn v vi **
-    \<upharpoonleft>rbt_assn rhs rhsi
-  ) \<turnstile> 
-  \<upharpoonleft>rbt_assn (rbt.Branch col lhs k v rhs) ti
-  "
-  unfolding rbt_assn_branch_def
-  by isep_solver
-
-
-lemma entails_to_state_elim:
-  assumes
-    "PRE \<turnstile> POST"
-    "STATE asf X s"
-    "FRAME X PRE Y"
-    "STATE asf (POST ** Y) s \<Longrightarrow> thesis"
-  shows thesis
-  using assms
-  using FRAME_def STATE_monoI entails_mp by blast
-
-
-lemma entails_to_ENTAILS_elim:
-  assumes
-    "PRE \<turnstile> POST"
-    "FRAME P PRE Y"
-    "ENTAILS (POST**Y) Q"
-  shows "ENTAILS P Q"
-  using assms        
-  using ENTAILS_def gen_drule by blast
-
-
-lemmas close_rbt_assn = entails_to_state_elim[OF close_rbt_assn_entails]
-                        entails_to_ENTAILS_elim[OF close_rbt_assn_entails]
+lemma [simp]: "rbt_assn_cplx t ptrs ex null = \<up>(t=rbt.Empty)"
+  by (cases t; simp add: pure_true_conv)
 
 
 subsection \<open>RBT Load Rule\<close>
@@ -604,20 +517,40 @@ subsection \<open>RBT Load Rule\<close>
 lemma load_rbt [vcg_rules]:
   "
     llvm_htriple
-    (\<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ti)
+    (rbt_assn (Branch col lhs k v rhs) ti)
     (ll_load ti)
-    (\<lambda>r. 
+    (\<lambda>r.
       EXS coli lhsi ki vi rhsi.
         \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
         color_assn col coli **
-        \<upharpoonleft>rbt_assn lhs lhsi **
+        rbt_assn lhs lhsi **
         \<upharpoonleft>key_assn k ki **
         \<upharpoonleft>value_assn v vi **  
-        \<upharpoonleft>rbt_assn rhs rhsi **
+        rbt_assn rhs rhsi **
         \<up>(r = RBT_NODE coli lhsi ki vi rhsi)
     )
   "
-  unfolding rbt_assn_branch_def
+  by vcg
+
+
+lemma load_rbt_cplx [vcg_rules]:
+  "
+    llvm_htriple
+    (rbt_assn_cplx (Branch col lhs k v rhs) ptrs ex ti)
+    (ll_load ti)
+    (\<lambda>r.
+      EXS coli lhsi ki vi rhsi.
+        \<up>(ptrs k = Some (ti, vi)) **
+        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
+        color_assn col coli **
+        rbt_assn_cplx lhs ptrs ex lhsi **
+        \<upharpoonleft>key_assn k ki **
+        (if k \<in> ex then \<box> else \<upharpoonleft>value_assn v vi) **  
+        rbt_assn_cplx rhs ptrs ex rhsi **
+        \<up>(r = RBT_NODE coli lhsi ki vi rhsi)
+    )
+  "
+  unfolding rbt_assn_cplx.simps
   by vcg
 
 
@@ -632,10 +565,9 @@ lemma empty_correct [vcg_rules]:
   "llvm_htriple
    \<box>
    empty
-   (\<lambda> r. \<upharpoonleft>rbt_assn rbt.Empty r)"
+   (\<lambda> r. rbt_assn rbt.Empty r)"
   unfolding empty_def
   by vcg
-
 
 
 subsection "Reduction Rules"
@@ -645,48 +577,53 @@ lemma unfold_rbt_assn_red_rule [fri_red_rules]:
   "
     is_sep_red
     \<box>
-    (color_assn c ci ** \<upharpoonleft>rbt_assn l li \<and>* \<upharpoonleft>key_assn k ki \<and>* \<upharpoonleft>value_assn v vi \<and>* \<upharpoonleft>rbt_assn r ri)
+    (color_assn c ci ** rbt_assn l li \<and>* \<upharpoonleft>key_assn k ki \<and>* \<upharpoonleft>value_assn v vi \<and>* rbt_assn r ri)
     (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
-    (\<upharpoonleft>rbt_assn (rbt.Branch c l k v r) ti)
+    (rbt_assn (rbt.Branch c l k v r) ti)
   "
   apply (rule is_sep_redI)
-  unfolding rbt_assn_branch_def
+  apply simp
   subgoal premises prems for Ps Qs
+    apply (isep_solver isep_dest: prems)
+    (*
     apply (sep_drule prems)
-    (*apply isep_solver*)
     apply (simp only: fri_extract_simps entails_lift_extract_simps cong: entails_pre_cong)
     apply clarify
     apply fri
+    *)
     done
   done
 
 
-lemma 
-  H:
-  "(\<And>x. llvm_htriple (pre x) comm (\<lambda>r. post x r)) \<Longrightarrow>
-  llvm_htriple (EXS x. pre x) comm (\<lambda>r. EXS x. post x r)"
-  unfolding htriple_def wpa_def NEMonad.wp_def Sep_Generic_Wp.wp_def STATE_def
-  by blast
-
-lemma load_rbt':
+lemma unfold_rbt_assn_cplx_red_rule [fri_red_rules]: 
   "
-    llvm_htriple
-    (EXS col. \<upharpoonleft>rbt_assn (Branch col lhs k v rhs) ti)
-    (ll_load ti)
-    (\<lambda>r. 
-      EXS col. (EXS coli lhsi ki vi rhsi.
-        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
-        color_assn col coli **
-        \<upharpoonleft>rbt_assn lhs lhsi **
-        \<upharpoonleft>key_assn k ki **
-        \<upharpoonleft>value_assn v vi **  
-        \<upharpoonleft>rbt_assn rhs rhsi **
-        \<up>(r = RBT_NODE coli lhsi ki vi rhsi))
+    is_sep_red
+    \<box>
+    (
+      \<up>(ptrs k = Some (ti, vi)) **
+      color_assn c ci **
+      rbt_assn_cplx l ptrs ex li **
+      \<upharpoonleft>key_assn k ki **
+      (if k \<in> ex then \<box> else \<upharpoonleft>value_assn v vi) **
+      rbt_assn_cplx r ptrs ex ri
     )
+    (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
+    (rbt_assn_cplx (rbt.Branch c l k v r) ptrs ex ti)
   "
-  apply (rule H)
-  using load_rbt .
-  
+  apply (rule is_sep_redI)
+  subgoal premises prems
+    apply (isep_drule drule: prems)
+    unfolding rbt_assn_cplx.simps
+    apply isep_solver_keep
+    done
+  done
+
+
+section \<open>Pure Part Simps\<close>
+
+
+lemmas pure_part_simps = pure_part_split_conj
+
 
 end
 
