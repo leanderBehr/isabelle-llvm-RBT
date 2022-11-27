@@ -9,6 +9,7 @@ context rbt_impl
 begin
 interpretation rbt_impl_deps .
 
+subsection \<open>STATE pure part extraction\<close>
 
 lemma pure_part_split_conjE:
   fixes A B
@@ -60,7 +61,7 @@ lemma extract_pure: "STATE asf X s \<Longrightarrow> (pure_part X \<Longrightarr
   by (meson STATE_def pure_partI)
 
 
-subsubsection \<open>Macros\<close>
+subsection \<open>Macros\<close>
 
 
 definition If_ll :: 
@@ -106,7 +107,7 @@ definition sc_or (infixl "||!" 30) where
 lemmas [simp, llvm_pre_simp] = If_ll_def sc_and_def sc_or_def
 
 
-subsection \<open>Functions\<close>
+subsection \<open>Pattern Matching Emulation\<close>
 
 
 definition "is_red node_p \<equiv> do {
@@ -281,32 +282,32 @@ lemmas [llvm_inline] =
 
 end
 
-
+text_raw \<open>\snip{patterndef}{1}{2}{%\<close>
 datatype ColorPattern = CP_Var | CP_R | CP_B
-datatype RbtPattern = RVar | Empty | Branch ColorPattern RbtPattern RbtPattern
+datatype RbtPattern = RP_Var | RP_Empty | RP_Branch ColorPattern RbtPattern RbtPattern
+text_raw \<open>}%endsnip\<close>
 
-
-fun matches_color_pattern_i ::
+fun ll_matches_color ::
   "ColorPattern \<Rightarrow> 8 word \<Rightarrow> 1 word llM" where
-  "matches_color_pattern_i CP_Var c = Mreturn ll_True"
-| "matches_color_pattern_i CP_R c = Mreturn (from_bool (c = 0))"
-| "matches_color_pattern_i CP_B c = Mreturn (from_bool (c = 1))"
+  "ll_matches_color CP_Var c = Mreturn ll_True"
+| "ll_matches_color CP_R c = Mreturn (from_bool (c = 0))"
+| "ll_matches_color CP_B c = Mreturn (from_bool (c = 1))"
 
 
-fun matches_color_pattern ::
+fun matches_color ::
   "ColorPattern \<Rightarrow> color \<Rightarrow> bool" where
-  "matches_color_pattern CP_Var c = True"
-| "matches_color_pattern CP_R c = (c = color.R)"
-| "matches_color_pattern CP_B c = (c = color.B)"
+  "matches_color CP_Var c = True"
+| "matches_color CP_R c = (c = color.R)"
+| "matches_color CP_B c = (c = color.B)"
   
 
-fun matches_rbt_pattern ::
+fun matches_rbt ::
   "RbtPattern \<Rightarrow> ('k, 'v) rbt \<Rightarrow> bool" where
-  "matches_rbt_pattern RVar t = True"
-| "matches_rbt_pattern Empty t = (t = rbt.Empty)"
-| "matches_rbt_pattern (Branch c l r) rbt.Empty = False"
-| "matches_rbt_pattern (Branch cp lp rp) (rbt.Branch c l _ _ r) = 
-  (matches_color_pattern cp c \<and> matches_rbt_pattern lp l \<and> matches_rbt_pattern rp r)"
+  "matches_rbt RP_Var t = True"
+| "matches_rbt RP_Empty t = (t = rbt.Empty)"
+| "matches_rbt (RP_Branch c l r) rbt.Empty = False"
+| "matches_rbt (RP_Branch cp lp rp) (rbt.Branch c l _ _ r) = 
+  (matches_color cp c \<and> matches_rbt lp l \<and> matches_rbt rp r)"
 
 
 context rbt_impl
@@ -314,31 +315,30 @@ begin
 interpretation rbt_impl_deps .
 
 
-fun matches_rbt_pattern_i ::
+text_raw \<open>\snip{llmatchesrbtdef}{1}{2}{%\<close>
+fun ll_matches_rbt ::
   "RbtPattern \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> 1 word llM" where
-  "matches_rbt_pattern_i RVar t = Mreturn ll_True"
-| "matches_rbt_pattern_i Empty t = Mreturn (from_bool (t = null))"
-| "matches_rbt_pattern_i (Branch c l r) t = do {
-    if t = null then return ll_False
+  "ll_matches_rbt RP_Var _ = (return ll_True)"
+| "ll_matches_rbt RP_Empty n_p = (return from_bool (n_p = null))"
+| "ll_matches_rbt (RP_Branch c l r) n_p = do {
+    if n_p = null then return ll_False
     else do {
-      node \<leftarrow> ll_load t;
-      case node of (RBT_NODE ci li ki v ri) \<Rightarrow> 
-      do {
-        c_check \<leftarrow> matches_color_pattern_i c ci;
-        l_check \<leftarrow> matches_rbt_pattern_i l li;
-        r_check \<leftarrow> matches_rbt_pattern_i r ri;
-        return c_check && l_check && r_check
-      }
+      n \<leftarrow> ll_load n_p;
+      case n of (RBT_NODE ci li _ _ ri) \<Rightarrow>
+        ll_matches_color c ci &&!
+        ll_matches_rbt l li &&!  
+        ll_matches_rbt r ri
     }
   }"
+text_raw \<open>}%endsnip\<close>
 
 
-lemma matches_color_pattern_correct [vcg_rules]:
+lemma matches_color_correct [vcg_rules]:
 "
   llvm_htriple
   (color_assn c ci)
-  (matches_color_pattern_i pat ci)
-  (\<lambda>r. \<upharpoonleft>bool.assn (matches_color_pattern pat c) r)
+  (ll_matches_color pat ci)
+  (\<lambda>r. \<upharpoonleft>bool.assn (matches_color pat c) r)
 "
   apply(cases pat; cases c)
   apply vcg
@@ -366,34 +366,34 @@ lemma
   done
   
 
-lemma matches_rbt_pattern_correct [vcg_rules]:
+lemma matches_rbt_correct [vcg_rules]:
 "
   llvm_htriple
   (rbt_assn t ti)
-  (matches_rbt_pattern_i pat ti)
-  (\<lambda>r. \<upharpoonleft>bool.assn (matches_rbt_pattern pat t) r ** rbt_assn t ti)
+  (ll_matches_rbt pat ti)
+  (\<lambda>r. \<upharpoonleft>bool.assn (matches_rbt pat t) r ** rbt_assn t ti)
 "
 proof(induction pat arbitrary: t ti)
-  case RVar
+  case RP_Var
   then show ?case 
     apply vcg
     apply (subst Hack_1) (*!FIX!*)
     apply vcg
     done
 next
-  case Empty
+  case RP_Empty
   then show ?case
     apply vcg
     apply (subst Hack_1) (*!FIX!*)
     apply vcg_compat
     apply isep_extract_pure
     apply (auto simp add: rbt_assn_non_null_def bool_assn_pure_eq)
-     apply (isep_solver_keep | simp)+
+     apply (sepwith simp)+
     done
 next
-  case (Branch x1 pat1 pat2)
+  case (RP_Branch x1 pat1 pat2)
 
-  note [vcg_rules] = Branch
+  note [vcg_rules] = RP_Branch
   
   show "?case"
     apply vcg
@@ -404,66 +404,25 @@ next
       apply vcg
       done
     subgoal
+      supply load_rbt_non_null[vcg_rules]
       apply vcg
-      apply STATE_extract_pure
-      apply (cases t, auto)
-      apply vcg
-      apply (subst Hack_1)
-      apply vcg_compat
-      apply (isep_rule rule: bool_assn_conj_cong_sepI)
-      apply (isep_rule rule: bool_assn_conj_cong_sepI)
-      apply (rule ENTAILSD)
-      apply vcg
+        apply (all \<open>subst Hack_1\<close>)
+        apply vcg
       done
     done
 qed
 
 
-lemma matches_rbt_pattern_var_E:
-  assumes 
-    "matches_rbt_pattern RVar t" and 
-    "thesis"
-  shows "thesis"
-  using assms by simp
-
-
-lemma matches_rbt_pattern_empty_E:
-  assumes 
-    "matches_rbt_pattern Empty t" and 
-    "t = rbt.Empty \<Longrightarrow> thesis"
-  shows "thesis"
-  using assms by simp
-
-
-lemma matches_rbt_pattern_branch_E:
-  assumes                  
-    "matches_rbt_pattern (Branch cp lp rp) t" 
-  obtains c l k v r
-  where 
-    "t = rbt.Branch c l k v r" and
-    "matches_color_pattern cp c" and
-    "matches_rbt_pattern lp l" and
-    "matches_rbt_pattern rp r"
-  using assms by (cases t, auto)
-
-
-lemmas matches_rbt_pattern_unfold_elims = 
-  matches_rbt_pattern_var_E
-  matches_rbt_pattern_empty_E
-  matches_rbt_pattern_branch_E
-
-
-lemmas [simp del] = matches_rbt_pattern_i.simps
+lemmas [simp del] = ll_matches_rbt.simps
 
 
 lemmas [llvm_pre_simp] =
-  matches_rbt_pattern_i.simps
-  matches_color_pattern_i.simps
-  
-
+  ll_matches_rbt.simps
+  ll_matches_color.simps
+ 
 
 method resolve_rbt_pat_mat =
-  (auto elim!: matches_rbt_pattern.elims(1-2))[1]
+  (auto elim!: matches_rbt.elims(1-2))[1]
 
 
 end
