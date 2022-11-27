@@ -19,10 +19,6 @@ definition "check_3 lhs_p rhs_p \<equiv> is_red lhs_p &&! (do {r \<leftarrow> ri
 definition "check_4 lhs_p rhs_p \<equiv> is_red rhs_p &&! (do {r \<leftarrow> right rhs_p; is_red r})"
 definition "check_5 lhs_p rhs_p \<equiv> is_red rhs_p &&! (do {l \<leftarrow> left rhs_p; is_red l})"
 
-(*unfolds rbt_assn during frame inference,
-  introducing new variables that the schematic variable of the frame does not depend on,
-  making the frame inference impossible, except for trivial solutions*)
-declare rbt_assn.simps(2)[simp del]
 
 lemma check_1_correct [vcg_rules]:
   "
@@ -48,7 +44,7 @@ lemma check_2_correct [vcg_rules]:
   unfolding rbt_check_2_def check_2_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_is_red_def rbt_left_def rbt_assn.simps
+    unfolding rbt_is_red_def rbt_left_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -65,7 +61,7 @@ lemma check_3_correct [vcg_rules]:
   unfolding rbt_check_3_def check_3_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn.simps rbt_is_red_def rbt_right_def
+    unfolding rbt_is_red_def rbt_right_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -82,7 +78,7 @@ lemma check_4_correct [vcg_rules]:
   unfolding rbt_check_4_def check_4_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn.simps rbt_is_red_def rbt_right_def
+    unfolding rbt_is_red_def rbt_right_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -99,7 +95,7 @@ lemma check_5_correct [vcg_rules]:
   unfolding rbt_check_5_def check_5_def sc_and_def
   apply vcg
   subgoal
-    unfolding rbt_assn.simps rbt_is_red_def rbt_left_def
+    unfolding rbt_is_red_def rbt_left_def
     apply vcg_try_solve
     done 
   subgoal by vcg
@@ -336,23 +332,20 @@ lemma balance_correct':
   (balance tree_li ki vi tree_ri)
   (\<lambda>ri. rbt_assn (rbt_balance_ad tree_l k v tree_r) ri) 
   "
-proof -
-  show ?thesis
-    unfolding balance_def
-    by vcg
-qed
+  unfolding balance_def
+  by vcg
 
 
 lemma balance_correct [vcg_rules]:
   "llvm_htriple
   (
-    rbt_assn tree_l tree_li **
-    rbt_assn tree_r tree_ri **   
+    rbt_assn l li **
+    rbt_assn r ri **   
     \<upharpoonleft>key_assn k ki **
     \<upharpoonleft>value_assn v vi
   )
-  (balance tree_li ki vi tree_ri)
-  (\<lambda>ri. rbt_assn (rbt_balance tree_l k v tree_r) ri) 
+  (balance li ki vi ri)
+  (\<lambda>res. rbt_assn (rbt_balance l k v r) res) 
   "
   by (metis balance_correct' rbt_balance_ad_correct)
 
