@@ -7,22 +7,24 @@ begin
 interpretation rbt_impl_deps .
 
 
+text_raw \<open>\snip{freedef}{1}{2}{%\<close>
 partial_function (M) free :: "
-  ('ki, 'vi::llvm_rep) rbti \<Rightarrow> unit llM 
+  ('ki, 'vi) rbti \<Rightarrow> unit llM 
 " where "
-  free tree_p = do {
-    if tree_p = null
+  free n_p = do {
+    if n_p = null
     then return ()
     else do {
-      tree \<leftarrow> ll_load tree_p;
-      key_delete (rbt_node.key tree);
-      value_delete (rbt_node.val tree);
-      ll_free tree_p;
-      free (rbt_node.left tree);
-      free (rbt_node.right tree)
+      n \<leftarrow> ll_load n_p;
+      key_delete (rbt_node.key n);
+      value_delete (rbt_node.val n);
+      ll_free n_p;
+      free (rbt_node.left n);
+      free (rbt_node.right n)
     }
   }
 "
+text_raw \<open>}%endsnip\<close>
 
 
 lemma free_correct [vcg_rules]: "
