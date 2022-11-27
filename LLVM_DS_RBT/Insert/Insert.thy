@@ -49,14 +49,12 @@ partial_function (M) insert' ::
       do {
         if col = 0
         then do {
-          c1 \<leftarrow> lt_impl k\<^sub>n k;
-          if c1 = 1
-          then  do { l\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n l; new (RBT_NODE 0 l\<^sub>n k v r) }
-          else do {
-            c2 \<leftarrow> lt_impl k k\<^sub>n;
-            if c2 = 1
-            then do { r\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n r; new (RBT_NODE 0 l k v r\<^sub>n) }
-            else do {
+          if! lt_impl k\<^sub>n k
+          then! do { l\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n l; new (RBT_NODE 0 l\<^sub>n k v r) }
+          else! do {
+            if! lt_impl k k\<^sub>n
+            then! do { r\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n r; new (RBT_NODE 0 l k v r\<^sub>n) }
+            else! do {
               key_delete k;
               value_delete v;
               new (RBT_NODE 0 l k\<^sub>n v\<^sub>n r)
@@ -64,14 +62,12 @@ partial_function (M) insert' ::
           }
         }
         else do {
-          c1 \<leftarrow> lt_impl k\<^sub>n k;
-          if c1 = 1                         
-          then do { l\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n l; balance l\<^sub>n k v r }
-          else do {
-            c2 \<leftarrow> lt_impl k k\<^sub>n;
-            if c2 = 1
-            then do { r\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n r; balance l k v r\<^sub>n }
-            else do {
+          if! lt_impl k\<^sub>n k                         
+          then! do { l\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n l; balance l\<^sub>n k v r }
+          else! do {
+            if! lt_impl k k\<^sub>n
+            then! do { r\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n r; balance l k v r\<^sub>n }
+            else! do {
               key_delete k;
               value_delete v;
               new (RBT_NODE 1 l k\<^sub>n v\<^sub>n r)
@@ -122,9 +118,7 @@ lemmas [llvm_code] = insert'.simps
 
 definition insert where "insert k v tree \<equiv> do {
   r_p \<leftarrow> insert' k v tree;
-  r \<leftarrow> ll_load r_p;
-  r_colored \<leftarrow> (set_color r 1);
-  ll_store r_colored r_p;
+  set_color_p 1 r_p;
   return r_p
 }"
 
