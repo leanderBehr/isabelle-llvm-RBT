@@ -115,7 +115,7 @@ next
     apply (subst naive_insert.simps)
     apply vcg
     subgoal (*k\<^sub>n < k*)
-      apply (simp add: fun_upd_def)
+      apply (simp add: fun_upd_def rbt_assn_cplx.simps(2))
       apply vcg_compat
       apply (isep_solver_keep isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
         apply simp_all
@@ -123,7 +123,7 @@ next
     subgoal (*k\<^sub>n \<ge> k*)
       apply vcg
       subgoal (*k\<^sub>n > k*)
-        apply (simp add: fun_upd_def)
+        apply (simp add: fun_upd_def rbt_assn_cplx.simps(2))
         apply vcg_compat
         apply (isep_solver_keep isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
           apply simp_all

@@ -37,8 +37,7 @@ lemma
   done
 
 
-lemma 
-  entails_assumption_rule_dyn :
+lemma entails_refl_dyn:
   "\<lbrakk>P = Q; PS \<turnstile> QS \<rbrakk> \<Longrightarrow> P ** PS \<turnstile> Q ** QS"
   "\<lbrakk>P = Q; \<box> \<turnstile> QS\<rbrakk> \<Longrightarrow> P \<turnstile> Q ** QS"
   "\<lbrakk>P = Q; \<box> \<turnstile> \<box>\<rbrakk> \<Longrightarrow> P \<turnstile> Q"
@@ -108,7 +107,7 @@ lemma arl_mems_len_rule [vcg_rules]:
   apply vcg_compat
   apply isep_extract_pure
   apply (isep_rule rule: pure_pure_asm_prefixI, (auto dest: list_assn_pure_partD)[1])
-  apply isep_solver_keep
+  apply sep
   done
 
 
@@ -123,8 +122,7 @@ lemma arl_mems_nth_rule [vcg_rules]:
   unfolding arl_mems_assn_ex_def
   apply vcg
   apply vcg_compat
-  apply isep_solver_keep
-   apply (rule entails_assumption_rule_dyn)
+  apply (sepwith ignore)
     apply ((auto dest!: list_assn_pure_partD))
   unfolding idxe_map_def
   by (simp add: restrict_map_insert)

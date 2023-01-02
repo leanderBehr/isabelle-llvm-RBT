@@ -4,7 +4,6 @@ theory Map_Interface
     "Insert/Insert"
     "Delete/Delete"
     "Separation_Logic_Solver/Methods"
-    "HOL-Library.RBT_Mapping"
 begin
 
 
@@ -45,7 +44,7 @@ lemma free_map_rule:
     llvm_htriple
     (rbt_map_assn m ti)
     (free ti)
-    (\<lambda>r. \<box>)
+    (\<lambda>_. \<box>)
   " by vcg 
 
 
@@ -67,7 +66,7 @@ lemma insert_map_rule:
   "
     apply vcg
     apply vcg_compat
-    apply isep_solver
+    apply (sepEwith simp)
     apply (simp_all add: rbt_lookup_rbt_insert)
     done
 
@@ -81,7 +80,7 @@ lemma delete_map_rule:
   "
     apply vcg
     apply vcg_compat
-    apply isep_solver
+    apply (sepEwith simp)
     apply (simp_all add: rbt_lookup_rbt_delete)
     done
 
@@ -101,13 +100,11 @@ lemmas rbt_tree_rules[vcg_rules del] =
   insert_correct
   delete_correct
 
-
+find_theorems Ex pure_part
 lemma rbt_map_finite: 
   "pure_part(rbt_map_assn m ti) \<Longrightarrow> finite (dom m)"
-  apply auto
-  unfolding pure_part_def
-  by (metis (full_types) finite_dom_rbt_lookup pure_partI pure_part_pure pure_part_split_conjE)
-
+  by (auto elim!: pure_part_exE pure_part_split_conjE)
+  
 
 declare rbt_map_assn.simps[simp del]
 

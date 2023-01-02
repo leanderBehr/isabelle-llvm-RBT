@@ -83,17 +83,13 @@ partial_function (M) lookup ::
     else do {
       node \<leftarrow> ll_load node_p;
       k_old \<leftarrow> return rbt_node.key node;
-      k_lt \<leftarrow> lt_impl k k_old;
-      if k_lt = 1
-      then lookup value_copy (rbt_node.left node) k
-      else do {
-        k_gt \<leftarrow> lt_impl k_old k;
-        if k_gt = 1
-        then lookup value_copy (rbt_node.right node) k
-        else do {
-          val_copy \<leftarrow> value_copy (rbt_node.val node);
-          return (OPTION_I val_copy 1)
-        }
+      if!  lt_impl k k_old
+      then! lookup value_copy (rbt_node.left node) k
+      else! if! lt_impl k_old k
+      then! lookup value_copy (rbt_node.right node) k
+      else! do {
+        val_copy \<leftarrow> value_copy (rbt_node.val node);
+        return (OPTION_I val_copy 1)
       }
     }
   }"
@@ -180,12 +176,12 @@ next
 
   note [vcg_rules] = Branch.IH
 
-  show ?case
+  from `k\<notin>ex` show ?case
     apply (subst lookup.simps)
     apply vcg
-    apply (simp add: `k\<notin>ex`)
     unfolding value_option_assn_def
-    apply vcg
+    apply vcg_compat
+    apply (sep | simp)+
     done
 qed
 
@@ -297,7 +293,6 @@ lemma rbt_lookup_some_keys:
   using rbt_lookup_iff_keys assms
   by blast
 
-find_theorems rbt_assn_cplx RBT_Impl.keys
 
 lemma rbt_assn_cplx_join:
       "kn \<in> rbt_key_set t \<Longrightarrow> rbt_sorted t \<Longrightarrow>
@@ -308,20 +303,12 @@ proof(induction t arbitrary: ti)
   then show ?case by simp
 next
   case (Branch c l k v r)
-
-  have H1: "(x::'a::linorder) < y \<Longrightarrow> \<not>(y < x)" for x y by simp
-
   from Branch(3-4) show ?case
-    
+    unfolding rbt_assn_cplx_unfold
     apply (rule rbt_key_set_cases)
 
     subgoal
-      apply simp
-      apply isep_elim_ex
-      apply isep_intro_ex
-      apply isep_solver_keep
-      apply simp
-      apply isep_solver_keep
+      apply (sepE | simp)+
       done
 
     subgoal
@@ -338,7 +325,7 @@ next
       apply isep_elim_ex
       apply isep_intro_ex
       apply (isep_drule drule: Branch(2))
-      using Branch(4) apply (simp_all add: H1)
+      using Branch(4) apply (simp_all add: less_not_sym)
       apply isep_assumption+
       done
 
@@ -378,7 +365,7 @@ lemma lookup_ptr_to_option_correct_cplx [vcg_rules]:
     unfolding value_option_assn_def
     apply vcg_compat
     apply (rule rbt_lookup_some_keys, simp, simp)
-    apply (isep_solver_keep isep_dest: rbt_assn_cplx_join | simp)+
+    apply (sep isep_dest: rbt_assn_cplx_join | simp)+
     done
   done
 

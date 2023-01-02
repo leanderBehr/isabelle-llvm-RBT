@@ -16,9 +16,9 @@ subsection \<open>Balance Left\<close>
 subsubsection \<open>Patterns\<close>
 
 
-abbreviation "bl_pat_1 \<equiv> Branch CP_R RVar RVar"
-abbreviation "bl_pat_2 \<equiv> Branch CP_B RVar RVar"
-abbreviation "bl_pat_3 \<equiv> Branch CP_R (Branch CP_B RVar RVar) RVar"
+abbreviation "bl_pat_1 \<equiv> RP_Branch CP_R RP_Var RP_Var"
+abbreviation "bl_pat_2 \<equiv> RP_Branch CP_B RP_Var RP_Var"
+abbreviation "bl_pat_3 \<equiv> RP_Branch CP_R (RP_Branch CP_B RP_Var RP_Var) RP_Var"
 
 
 subsubsection \<open>Adjusted Function\<close>
@@ -27,13 +27,13 @@ subsubsection \<open>Adjusted Function\<close>
 fun rbt_balance_left_ad where
   "rbt_balance_left_ad l key val r =
     (
-      if matches_rbt_pattern bl_pat_1 l
+      if matches_rbt bl_pat_1 l
       then case l of (rbt.Branch color.R a k x b) \<Rightarrow>
         rbt.Branch color.R (rbt.Branch color.B a k x b) key val r
-      else if matches_rbt_pattern bl_pat_2 r
+      else if matches_rbt bl_pat_2 r
       then case r of (rbt.Branch color.B a s y b) \<Rightarrow> 
         rbt_balance l key val (rbt.Branch color.R a s y b)
-      else if matches_rbt_pattern bl_pat_3 r
+      else if matches_rbt bl_pat_3 r
       then case r of (rbt.Branch color.R (rbt.Branch color.B a s y b) t z c) \<Rightarrow>
         rbt.Branch color.R (rbt.Branch color.B l key val a) s y (rbt_balance b t z (paint color.R c))
       else rbt.Empty
@@ -85,11 +85,11 @@ definition "bl_case_3 l_p k v r_p \<equiv>
 
 definition "balance_left l_p k v r_p \<equiv> 
   do {
-    if! matches_rbt_pattern_i bl_pat_1 l_p
+    if! ll_matches_rbt bl_pat_1 l_p
     then! bl_case_1 l_p k v r_p
-    else! if! matches_rbt_pattern_i bl_pat_2 r_p
+    else! if! ll_matches_rbt bl_pat_2 r_p
     then! bl_case_2 l_p k v r_p
-    else! if! matches_rbt_pattern_i bl_pat_3 r_p
+    else! if! ll_matches_rbt bl_pat_3 r_p
     then! bl_case_3 l_p k v r_p
     else! do { 
       key_delete k;
@@ -139,11 +139,8 @@ lemma balance_left_correct':
       subgoal (*case 3*)
         apply resolve_rbt_pat_mat
         apply vcg
-        subgoal (*paint non-null case*)
-          apply STATE_extract_pure
-          apply (erule rbt_assn_non_null_unfold, auto)
-          apply vcg
-          done
+        supply load_rbt_non_null[vcg_rules]
+        apply vcg
         done
       subgoal (*case 4*) by vcg
       done
@@ -166,9 +163,9 @@ subsection \<open>Balance Right\<close>
 subsubsection \<open>Patterns\<close>
 
 
-abbreviation "br_pat_1 \<equiv> Branch CP_R RVar RVar"
-abbreviation "br_pat_2 \<equiv> Branch CP_B RVar RVar"
-abbreviation "br_pat_3 \<equiv> Branch CP_R RVar (Branch CP_B RVar RVar)"
+abbreviation "br_pat_1 \<equiv> RP_Branch CP_R RP_Var RP_Var"
+abbreviation "br_pat_2 \<equiv> RP_Branch CP_B RP_Var RP_Var"
+abbreviation "br_pat_3 \<equiv> RP_Branch CP_R RP_Var (RP_Branch CP_B RP_Var RP_Var)"
 
 
 subsubsection \<open>Adjusted Function\<close>
@@ -177,13 +174,13 @@ subsubsection \<open>Adjusted Function\<close>
 fun rbt_balance_right_ad where   
   "rbt_balance_right_ad l key val r =
     (
-      if matches_rbt_pattern br_pat_1 r
+      if matches_rbt br_pat_1 r
       then case r of (rbt.Branch color.R a k x b) \<Rightarrow>
         rbt.Branch color.R l key val (rbt.Branch color.B a k x b)
-      else if matches_rbt_pattern br_pat_2 l
+      else if matches_rbt br_pat_2 l
       then case l of (rbt.Branch color.B a s y b) \<Rightarrow> 
         rbt_balance (rbt.Branch color.R a s y b) key val r
-      else if matches_rbt_pattern br_pat_3 l
+      else if matches_rbt br_pat_3 l
       then case l of (rbt.Branch color.R a k x (rbt.Branch color.B b s y c)) \<Rightarrow>
         rbt.Branch color.R (rbt_balance (paint color.R a) k x b) s y (rbt.Branch color.B c key val r)
       else rbt.Empty
@@ -236,11 +233,11 @@ definition "br_case_3 l_p k v r_p \<equiv>
 
 definition "balance_right l_p k v r_p \<equiv>
   do {
-    if! matches_rbt_pattern_i br_pat_1 r_p
+    if! ll_matches_rbt br_pat_1 r_p
     then! br_case_1 l_p k v r_p
-    else! if! matches_rbt_pattern_i br_pat_2 l_p
+    else! if! ll_matches_rbt br_pat_2 l_p
     then! br_case_2 l_p k v r_p
-    else! if! matches_rbt_pattern_i br_pat_3 l_p
+    else! if! ll_matches_rbt br_pat_3 l_p
     then! br_case_3 l_p k v r_p
     else! do { 
       key_delete k;
@@ -251,13 +248,18 @@ definition "balance_right l_p k v r_p \<equiv>
   }
 "
 
+lemma neq_Red: "(c \<noteq> color.R) = (c = color.B)"
+  using color.exhaust by blast
 
-lemma balance_right_correct':
+method resolve_rbt_pat_mat' =
+  ((erule matches_rbt.elims(2-3) | simp add: neq_Red)+)[1]
+
+lemma balance_right_correct': 
   "
     llvm_htriple
     (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
     (balance_right li ki vi ri)
-    (\<lambda>x. rbt_assn (rbt_balance_right_ad l k v r) x)
+    (\<lambda>x. rbt_assn (rbt_balance_right l k v r) x)
   "
   unfolding
     balance_right_def
@@ -271,26 +273,24 @@ lemma balance_right_correct':
     done
   subgoal (*case 2+*)
     apply vcg
-    subgoal (*case 2*) 
-      apply resolve_rbt_pat_mat
-      apply vcg
+    subgoal (*case 2*)
+      apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
+       apply vcg
       done
     subgoal (*case 3+*)
       apply vcg
       subgoal (*case 3*)
-        apply resolve_rbt_pat_mat        
-        apply vcg
-        subgoal (*paint non-null*)
-          apply STATE_extract_pure
-          apply (erule rbt_assn_non_null_unfold, auto)
-          apply vcg
-          done
+        apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
+         supply load_rbt_non_null[vcg_rules]
+         apply vcg
         done
-      subgoal (*case 4*) by vcg
+      subgoal (*case 4*) 
+        apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
+             apply vcg
+        done
       done
     done
   done
-
 
 lemma balance_right_correct [vcg_rules]:
   "
@@ -299,7 +299,7 @@ lemma balance_right_correct [vcg_rules]:
     (balance_right li ki vi ri)
     (\<lambda>x. rbt_assn (rbt_balance_right l k v r) x)
   "
-  using balance_right_correct' rbt_balance_right_ad_correct by metis
+  using balance_right_correct' .
 
 
 lemmas [llvm_inline] = 

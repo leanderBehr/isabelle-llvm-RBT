@@ -30,9 +30,9 @@ next
   case (Branch c k l v r)
   then show ?case
     apply auto
-    subgoal by (auto dest!: pure_part_split_conj elim!: pure_part_exE)
-    subgoal by (auto dest!: pure_part_split_conj elim!: pure_part_exE)
-    subgoal by (auto dest!: pure_part_split_conj elim!: pure_part_exE)
+    subgoal by (auto simp: rbt_assn_cplx_unfold dest!: pure_part_split_conj elim!: pure_part_exE)
+    subgoal by (auto simp: rbt_assn_cplx_unfold dest!: pure_part_split_conj elim!: pure_part_exE)
+    subgoal by (auto simp: rbt_assn_cplx_unfold dest!: pure_part_split_conj elim!: pure_part_exE)
     done
 qed
 
@@ -44,7 +44,7 @@ lemma rbt_assn_cplx_ptrs_domI:
 
 lemma rbt_assn_cplx_extra_ex [simp]:
   "k \<notin> set (RBT_Impl.keys t) \<Longrightarrow> rbt_assn_cplx t ptrs (insert k ex) ti = rbt_assn_cplx t ptrs ex ti"
-  by (induction t arbitrary: ti, auto)
+  by (induction t arbitrary: ti, auto simp: rbt_assn_cplx_unfold)
 
 
 lemma rbt_key_set_cases:
@@ -82,7 +82,7 @@ next
   case (Branch c l k v r)
   from Branch(3-5) show ?case
     apply -
-
+    unfolding rbt_assn_cplx_unfold
     apply (rule rbt_key_set_cases, assumption, assumption)
 
     subgoal unfolding rbt_ptr_load_def by vcg
@@ -115,6 +115,60 @@ lemma rbt_ptr_load_correct :
     "
   using assms rbt_ptr_load_correct' rbt_lookup_iff_keys(3)
   by (smt (verit, del_insts) entails_eq_iff htriple_ent_post option.sel)
+
+
+definition rbt_ptr_store :: "('ki, 'vi) rbti \<Rightarrow> 'vi \<Rightarrow> unit llM" where
+  "rbt_ptr_store p v = do {n \<leftarrow> ll_load p; value_delete (rbt_node.val n); set_value_p v p}"
+
+lemma rbt_ptr_store_correct' [vcg_rules]:
+  assumes
+    "rbt_sorted t" and
+    "kn \<in> rbt_key_set t" and
+    "kn \<notin> ex"
+  shows
+    "
+    llvm_htriple
+    (rbt_assn_cplx t ptrs ex ti ** \<upharpoonleft>value_assn vn vni)
+    (rbt_ptr_store (fst (the (ptrs kn))) vni)
+    (\<lambda>_. rbt_assn_cplx (rbt_map_entry kn (\<lambda>_. vn) t) 
+          (ptrs(kn := Some ((fst (the (ptrs kn))), vni))) ex ti)
+    "
+  using assms
+proof(induction t arbitrary: ti)
+  case Empty
+  then show ?case
+    unfolding rbt_ptr_store_def
+    apply vcg
+    done
+next
+  case (Branch c lhs k v rhs)
+  from Branch(3-5) show ?case
+    apply -
+    unfolding rbt_assn_cplx_unfold
+    apply (rule rbt_key_set_cases, assumption, assumption)
+
+    subgoal
+      unfolding rbt_ptr_store_def
+      apply vcg
+      apply vcg_compat
+      apply (sepEwith simp isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
+      apply simp
+      done
+    subgoal
+      supply Branch(1)[vcg_rules]
+      apply vcg
+      apply vcg_compat
+      apply (sepEwith simp isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
+      done
+    subgoal
+      supply Branch(2)[vcg_rules]
+      apply vcg
+      apply (auto simp: rbt_assn_cplx_unfold; vcg_compat)
+       apply (sepEwith simp isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
+      apply (sepEwith simp isep_intro: ptrs_upd_rbt_assn_cplx_sepI)
+      done
+    done
+qed
 
 
 end

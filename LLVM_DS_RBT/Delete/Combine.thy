@@ -8,11 +8,11 @@ begin
 interpretation rbt_impl_deps .
 
 
-abbreviation "is_black_b x \<equiv> matches_rbt_pattern (Branch CP_B RVar RVar) x"
-abbreviation "is_red_b x \<equiv> matches_rbt_pattern (Branch CP_R RVar RVar) x"
+abbreviation "is_black_b x \<equiv> matches_rbt (RP_Branch CP_B RP_Var RP_Var) x"
+abbreviation "is_red_b x \<equiv> matches_rbt (RP_Branch CP_R RP_Var RP_Var) x"
 
-abbreviation "is_black_b_i x \<equiv> matches_rbt_pattern_i (Branch CP_B RVar RVar) x"
-abbreviation "is_red_b_i x \<equiv> matches_rbt_pattern_i (Branch CP_R RVar RVar) x"
+abbreviation "is_black_b_i x \<equiv> ll_matches_rbt (RP_Branch CP_B RP_Var RP_Var) x"
+abbreviation "is_red_b_i x \<equiv> ll_matches_rbt (RP_Branch CP_R RP_Var RP_Var) x"
 
 
 partial_function (M) combine ::

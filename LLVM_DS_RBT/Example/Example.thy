@@ -77,8 +77,7 @@ lemma arl_mems_nth_rule [vcg_rules]:
   unfolding arl_mems_assn_ex_def
   apply vcg
   apply vcg_compat
-  apply isep_solver_keep
-   apply (rule entails_assumption_rule_dyn)
+  apply (sepwith ignore)
     apply ((auto dest!: list_assn_pure_partD))
   unfolding idxe_map_def
   by (simp add: restrict_map_insert)
@@ -168,9 +167,9 @@ lemma string_assn_arl_mems_assnI:
 "\<upharpoonleft>string_dr_assn str (stri::(8 word, 'l::len2) array_list)
    \<turnstile> arl_mems_assn' snat.assn str stri ** \<up>(4 < LENGTH('l))"
   unfolding string_dr_assn_eq arl_mems_assn_def'
-  apply isep_solver_keep
+  apply (sepwith ignore)
   apply isep_intro_ex
-  apply isep_solver_keep
+  apply (sepwith ignore)
   unfolding LLVM_DS_List_Assn.list_assn_def
   apply (simp_all add: pure_true_conv)
 proof -
@@ -196,7 +195,7 @@ lemma
   "arl_mems_assn' snat.assn str (stri::(8 word, 'l::len2) array_list) **
    \<up>(4 < LENGTH('l)) \<turnstile> \<upharpoonleft>string_dr_assn str stri"
     unfolding string_dr_assn_eq arl_mems_assn_def'
-    apply isep_solver_keep
+    apply (sepEwith ignore)
     subgoal unfolding LLVM_DS_List_Assn.list_assn_def
       apply simp
       apply (rule pure_entails_boxI sep_is_pure_assn_conjI | simp)+
@@ -217,7 +216,7 @@ lemma arl_mems_assn_update:
   apply isep_extract_pure
   apply (isep_drule drule: LLVM_DS_List_Assn.list_assn_update[where i=i]) 
   using assms apply (auto simp: idxe_map_def dest: list_assn_pure_partD)
-  apply isep_solver
+  apply sep
   done
 
 
@@ -236,7 +235,7 @@ proof(induction "length strs - i" arbitrary: i ii)
     apply (subst make_index_mapping'.simps)
     apply vcg
     apply vcg_compat
-    apply isep_solver
+    apply (sepEwith ignore)
     unfolding is_index_mapping_def
     by simp
 next
@@ -253,14 +252,14 @@ next
        apply (isep_drule drule: string_assn_arl_mems_assnI)
        apply isep_extract_pure
        apply (isep_rule rule: sep_pureI, simp)
-       apply isep_solver_keep
+       apply (sepEwith ignore)
       apply vcg_solve
       apply vcg_rl
        apply vcg_compat
 
        apply (isep_rule rule: arl_mems_assn_string_assnI)
        apply (isep_rule rule: pure_pure_asm_prefixI, simp)        
-       apply isep_solver
+       apply (sepEwith simp)
        apply simp
 
       apply vcg_solve
@@ -272,13 +271,12 @@ next
 
 
       apply (isep_drule drule: arl_mems_assn_string_assnI)
-        apply isep_solver
-        apply simp 
+        apply (sepEwith simp)
        apply isep_assumption
 
       apply (isep_drule drule: arl_mems_assn_update)
         apply simp_all
-      apply isep_solver
+      apply (sepEwith simp)
       unfolding is_index_mapping_def list_index_mapping_def map_comp_def
       apply auto
       by (simp add: drop_Suc_nth)
@@ -305,7 +303,7 @@ lemma make_index_mapping''_rule:
   apply vcg_try_solve
   apply vcg_compat
   unfolding is_index_mapping_def apply simp
-    apply (isep_solver, simp)
+    apply (sepEwith simp)
   subgoal for asf x r ra s ia iia si (*step*)
     apply vcg
       (*arl copy*)
@@ -314,7 +312,7 @@ lemma make_index_mapping''_rule:
      apply (isep_drule drule: string_assn_arl_mems_assnI)
      apply isep_extract_pure
      apply (isep_rule rule: sep_pureI, simp)
-     apply isep_solver_keep
+     apply (sepEwith ignore)
     (*done*)
     apply vcg_solve
     (*insert*)
@@ -322,8 +320,7 @@ lemma make_index_mapping''_rule:
      apply vcg_compat
      apply (isep_rule rule: arl_mems_assn_string_assnI)
      apply (isep_rule rule: pure_pure_asm_prefixI, simp)        
-     apply isep_solver
-     apply simp
+     apply (sepEwith simp)
     (*done*)
     apply vcg_solve
     apply vcg
@@ -333,13 +330,12 @@ lemma make_index_mapping''_rule:
 
 
       apply (isep_drule drule: arl_mems_assn_string_assnI)
-        apply isep_solver
-        apply simp 
+        apply (sepEwith simp)
        apply isep_assumption
 
       apply (isep_drule drule: arl_mems_assn_update)
         apply simp_all
-      apply isep_solver
+      apply (sepwith ignore)
       unfolding is_index_mapping_def list_index_mapping_def map_comp_def
       apply (simp add: take_Suc_conv_app_nth)
       done

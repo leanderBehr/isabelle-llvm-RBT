@@ -79,7 +79,7 @@ proof(induction "length xs - i" arbitrary: i ii ys1 ys2)
       apply vcg
       apply vcg_compat
       apply isep_intro_ex
-      apply (isep_solver_keep isep_intro: list_assn_empty | simp)+
+      apply (sep isep_intro: list_assn_empty | simp)+
       apply (auto dest: list_assn_pure_partD)
       done
     done
@@ -93,45 +93,30 @@ next
     subgoal for asf r sa
       apply vcg_rl
        apply vcg_compat
-       apply isep_solver_keep
-      using Suc(2) apply auto[1]
+      using Suc(2) apply - apply (sepwith simp)
       apply vcg_solve
       apply vcg
       apply vcg_rl
         apply vcg_compat
         apply (isep_rule rule: pure_pure_asm_prefixI, simp)
-        apply isep_solver_keep
+        apply (sepwith ignore)
           apply (isep_drule drule: list_assn_push_back)
           apply (drule list_assn_pure_partD)+
           apply (simp add: list_update_append take_update_last take_Suc_conv_app_nth)
           apply (subst upd_conv_take_nth_drop, linarith)
           apply simp
           apply isep_assumption
-      apply (rule frame_assumption_rule_dyn(3))
+          apply (rule frame_assumption_rule_dyn(3))
            apply simp
           apply isep_assumption
          apply (auto dest: list_assn_pure_partD)
-      subgoal premises prems
-      proof -
-        from prems have 1: "length xs > i" by (auto dest: list_assn_pure_partD)
-        with prems(11) have 2: "length ys1 = i" by (auto dest: list_assn_pure_partD)
-        from 1 2 prems(2) have "length ys2 > 0" by linarith
-        with prems(2) show "Suc (length ys1 + (length ys2 - Suc 0)) = length xs" by linarith
-      qed
-
-      subgoal using Suc by simp
-
-      apply vcg_solve
-      apply vcg
-      done
-
+      apply vcg_solve apply vcg done
     subgoal
       apply vcg
       apply vcg_compat
-      apply isep_intro_ex
-      apply isep_solver_keep
+      apply sepE
       apply (auto dest!: list_assn_pure_partD)
-    done
+      done
   done
 qed
 
@@ -170,9 +155,9 @@ lemma arl_copy_rule [vcg_rules]:
   apply vcg_rl          
   unfolding arl_mems_assn_def'
    apply vcg_compat
-   apply (isep_solver_keep isep_intro: snat_assn_z_z)
+   apply (sepwith ignore isep_intro: snat_assn_z_z)
     apply simp
-    apply (isep_solver_keep isep_intro: list_assn_empty)
+    apply (sep isep_intro: list_assn_empty)
    apply (auto dest: list_assn_pure_partD)
   apply vcg_solve
   apply vcg

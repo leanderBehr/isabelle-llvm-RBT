@@ -12,6 +12,7 @@ method is_sep_goal =
   succeeds 
   \<open>(match conclusion in "?X \<turnstile> ?Y" \<Rightarrow> succeed \<bar> "?P -- ?PR \<tturnstile> ?Q -- ?QR" \<Rightarrow> succeed \<bar> _ \<Rightarrow> fail)\<close>
 
+method is_non_sep_goal = fails \<open>is_sep_goal\<close>
 
 method any_succeed methods m = fails \<open>all \<open>fails m\<close>\<close>
 
@@ -333,7 +334,7 @@ lemma pure_entails_boxI:
 method entails_box_solver = rule pure_entails_boxI, (auto intro!: sep_is_pure_assn_conjI)[1]
 
 
-lemma frame_pureI: "\<lbrakk>pure_part P \<Longrightarrow> P -- Pr \<tturnstile> Q -- Qr\<rbrakk> \<Longrightarrow>  P -- Pr \<tturnstile> Q -- Qr"
+lemma frame_pureI: "\<lbrakk>pure_part P \<Longrightarrow> P -- Pr \<tturnstile> Q -- Qr\<rbrakk> \<Longrightarrow> P -- Pr \<tturnstile> Q -- Qr"
   unfolding frame_def
   using entails_pureI pure_part_split_conj by auto
 
@@ -348,10 +349,10 @@ method thin_duplicates = thin_duplicate+
 method isep_extract_pure =
   changed \<open>
     (rule entails_pureI | rule frame_pureI),
-    star \<open>erule conjE | drule pure_part_split_conj\<close>,
+    star \<open>erule conjE | determ \<open>drule pure_part_split_conj\<close>\<close>,
     thin_duplicates?
   \<close>
-
+  
 
 subsection "Solver"
 
@@ -378,6 +379,51 @@ method isep_solver_keep declares isep_red isep_intro isep_dest =
         )
       )+)[1]
 
+  
+method_setup append = \<open>
+  let 
+    fun APPEND_LIST tacs = fold_rev (curry (op APPEND)) tacs (no_tac);
+  in
+   Scan.repeat1 Method.text_closure >>
+   (fn ms => fn ctxt => fn facts => let
+      val tacs = map (fn m => method_evaluate m ctxt facts) ms
+    in
+      SIMPLE_METHOD (APPEND_LIST tacs) facts
+    end)
+  end
+\<close>
+
+
+locale separation_logic_solver
+begin
+method sep declares isep_red isep_intro isep_dest = 
+    ((
+      is_sep_goal,
+      (
+        isep_extract_pure |
+        isep_normalize |
+        entails_box_solver |
+        (isep_elim_ex, isep_extract_pure) |
+        isep_assumption | 
+        append 
+          \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
+          \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
+          \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>
+      )
+    )+)[1]
+
+method sepE declares isep_red isep_intro isep_dest = ( (sep | (is_sep_goal, isep_intro_ex))+ )[1]
+
+method sepwith methods m declares isep_red isep_intro isep_dest = ( (sep | (is_non_sep_goal, m))+ )[1]
+method sepEwith methods m declares isep_red isep_intro isep_dest = ( (sepE | (is_non_sep_goal, m))+ )[1]
+
+method ignore = has_any_sep_goal, defer_tac
+
+method sep_solves = is_non_sep_goal
+
+end 
+
+interpretation separation_logic_solver .
 
 method isep_solver 
   declares isep_red isep_intro isep_dest = 
