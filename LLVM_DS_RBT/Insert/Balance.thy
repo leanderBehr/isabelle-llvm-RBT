@@ -126,7 +126,6 @@ definition "balance_ad_case_1 lhs_p k v rhs_p \<equiv> do {
   }"
 
 
-
 lemma balance_ad_case_1_correct [vcg_rules]:
   "
     llvm_htriple

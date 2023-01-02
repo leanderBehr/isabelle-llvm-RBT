@@ -6,6 +6,7 @@ theory Balance_LR
     "../Free"
 begin
 
+
 context rbt_impl
 begin
 interpretation rbt_impl_deps .
@@ -168,31 +169,6 @@ abbreviation "br_pat_2 \<equiv> RP_Branch CP_B RP_Var RP_Var"
 abbreviation "br_pat_3 \<equiv> RP_Branch CP_R RP_Var (RP_Branch CP_B RP_Var RP_Var)"
 
 
-subsubsection \<open>Adjusted Function\<close>
-
-
-fun rbt_balance_right_ad where   
-  "rbt_balance_right_ad l key val r =
-    (
-      if matches_rbt br_pat_1 r
-      then case r of (rbt.Branch color.R a k x b) \<Rightarrow>
-        rbt.Branch color.R l key val (rbt.Branch color.B a k x b)
-      else if matches_rbt br_pat_2 l
-      then case l of (rbt.Branch color.B a s y b) \<Rightarrow> 
-        rbt_balance (rbt.Branch color.R a s y b) key val r
-      else if matches_rbt br_pat_3 l
-      then case l of (rbt.Branch color.R a k x (rbt.Branch color.B b s y c)) \<Rightarrow>
-        rbt.Branch color.R (rbt_balance (paint color.R a) k x b) s y (rbt.Branch color.B c key val r)
-      else rbt.Empty
-    )"
-  
-lemma rbt_balance_right_ad_correct:
-  "rbt_balance_right_ad l k v r = rbt_balance_right l k v r"
-  apply (induction l k v r rule: RBT_Impl.balance_right.induct)
-  apply auto
-  done
-
-
 subsubsection \<open>Concrete Implementation\<close>
 
 
@@ -254,7 +230,7 @@ lemma neq_Red: "(c \<noteq> color.R) = (c = color.B)"
 method resolve_rbt_pat_mat' =
   ((erule matches_rbt.elims(2-3) | simp add: neq_Red)+)[1]
 
-lemma balance_right_correct': 
+lemma balance_right_correct [vcg_rules]: 
   "
     llvm_htriple
     (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
@@ -291,15 +267,6 @@ lemma balance_right_correct':
       done
     done
   done
-
-lemma balance_right_correct [vcg_rules]:
-  "
-    llvm_htriple
-    (rbt_assn l li ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** rbt_assn r ri)
-    (balance_right li ki vi ri)
-    (\<lambda>x. rbt_assn (rbt_balance_right l k v r) x)
-  "
-  using balance_right_correct' .
 
 
 lemmas [llvm_inline] = 

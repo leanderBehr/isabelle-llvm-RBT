@@ -1,5 +1,5 @@
 theory Shifts
-  imports Frame
+  imports Frame Append
 begin
 
 
@@ -15,9 +15,9 @@ lemma shift_frame_conc: "P -- PR \<tturnstile> ((As ** A) ** Bs) -- QR \<Longrig
   by simp
 
 
-method all_entails_prem_shifts methods M = M | (rule shift_entails_prem, all_entails_prem_shifts M)
-method all_frame_prem_shifts methods M = M | (rule shift_frame_prem, all_frame_prem_shifts M)
-method all_frame_conc_shifts methods M = M | (rule shift_frame_conc, all_frame_conc_shifts M)
+method all_entails_prem_shifts methods M = append \<open>M\<close> \<open>rule shift_entails_prem, all_entails_prem_shifts M\<close>
+method all_frame_prem_shifts methods M = append \<open>M\<close> \<open>rule shift_frame_prem, all_frame_prem_shifts M\<close>
+method all_frame_conc_shifts methods M = append \<open>M\<close> \<open>rule shift_frame_conc, all_frame_conc_shifts M\<close>
 
 
 end

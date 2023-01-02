@@ -116,11 +116,13 @@ qed
 lemmas [llvm_code] = insert'.simps
 
 
-definition insert where "insert k v tree \<equiv> do {
-  r_p \<leftarrow> insert' k v tree;
-  set_color_p 1 r_p;
-  return r_p
-}"
+definition insert where 
+  "insert k v tree \<equiv>
+  do {
+    r_p \<leftarrow> insert' k v tree;
+    set_color_p 1 r_p;
+    return r_p
+  }"
 
 
 lemma rbt_balance_non_empty:

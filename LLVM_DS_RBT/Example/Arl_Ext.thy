@@ -1,11 +1,11 @@
 theory Arl_Ext
   imports
-    "Isabelle_LLVM.LLVM_DS_Array_List"
     "../Setup"
-    "Isabelle_LLVM.LLVM_DS_List_Assn"
     "../Separation_Logic_Solver/Methods"
     "../Bool_Assn_Setup"
-begin          
+
+    "Isabelle_LLVM.LLVM_DS_All"
+begin
 
 
 hide_const Proto_EOArray.list_assn

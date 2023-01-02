@@ -1,6 +1,7 @@
 theory Methods
-  imports 
+  imports
     Shifts
+    Append
     "HOL-Eisbach.Eisbach_Tools"
 begin
 
@@ -345,7 +346,6 @@ lemma dupl_D:  "P \<Longrightarrow> P \<Longrightarrow> True" ..
 method thin_duplicate = (determ \<open>drule(1) dupl_D, thin_tac True\<close>)
 method thin_duplicates = thin_duplicate+ 
 
-
 method isep_extract_pure =
   changed \<open>
     (rule entails_pureI | rule frame_pureI),
@@ -393,28 +393,32 @@ method_setup append = \<open>
   end
 \<close>
 
-
 locale separation_logic_solver
 begin
+method backtrackable_plus methods m = m, (append \<open>(backtrackable_plus m)?\<close> \<open>is_non_sep_goal\<close>)
+
 method sep declares isep_red isep_intro isep_dest = 
     ((
-      is_sep_goal,
+      print_headgoal,
+      is_sep_goal, print_term ISSEP,
       (
-        isep_extract_pure |
-        isep_normalize |
-        entails_box_solver |
-        (isep_elim_ex, isep_extract_pure) |
-        isep_assumption | 
-        append 
+        isep_extract_pure, print_term EXTRACT |
+        isep_normalize, print_term NORM |
+        entails_box_solver, print_term BOX |
+        (isep_elim_ex, isep_extract_pure, print_term EL_EX) |
+        isep_assumption, print_term ASSUM | 
+        ((append
           \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
           \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
-          \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>
+          \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>),
+          print_term SEP_RULE
+        )
       )
     )+)[1]
 
 method sepE declares isep_red isep_intro isep_dest = ( (sep | (is_sep_goal, isep_intro_ex))+ )[1]
 
-method sepwith methods m declares isep_red isep_intro isep_dest = ( (sep | (is_non_sep_goal, m))+ )[1]
+method sepwith methods m declares isep_red isep_intro isep_dest = ( (print_term SW, changed\<open>sep?,(is_non_sep_goal, m)?\<close>)+ )[1]
 method sepEwith methods m declares isep_red isep_intro isep_dest = ( (sepE | (is_non_sep_goal, m))+ )[1]
 
 method ignore = has_any_sep_goal, defer_tac
@@ -425,6 +429,7 @@ end
 
 interpretation separation_logic_solver .
 
+
 method isep_solver 
   declares isep_red isep_intro isep_dest = 
   solves_sep_goals \<open>isep_solver_keep\<close>
@@ -434,7 +439,7 @@ lemma
   assumes 
     d1: "A \<turnstile> B" and d2: "B \<turnstile> C" and d3: "C \<turnstile> D" and trap1: "T \<turnstile> D" and trap2: "T \<turnstile> C" and trap3: "T \<turnstile> B"
   shows "A \<turnstile> D"
-  by (isep_solver isep_intro: trap1 trap2 trap3 d1 d2 d3)
+  by (sep isep_intro: trap1 trap2 trap3 d1 d2 d3)
 
 
 lemma 
@@ -442,16 +447,16 @@ lemma
     r1: "K ** L \<turnstile> X ** Z" and r2: "M ** N \<turnstile> Y ** W" and
     dr1:"A ** B \<turnstile> K ** N" and dr2:"C ** D \<turnstile> L ** M" 
   shows "A ** B ** C ** D \<turnstile> X ** Y ** Z ** W"
-  apply (isep_solver_keep isep_intro: r1 r2 isep_dest: dr1 dr2)
-  done 
+  apply (sep isep_intro: r1 r2 isep_dest: dr1 dr2)
+  done
 
 
 lemma 
   assumes
     trap: "False \<Longrightarrow> A \<turnstile> B" and rule: "True \<Longrightarrow> A \<turnstile> B"
   shows "A \<turnstile> B"
-   apply (isep_solver isep_intro: trap rule)
-  back ..
+  apply (sepwith \<open>ignore, print_term IG\<close> isep_intro: trap rule) back
+  ..
 
 lemma sep_pureI [isep_intro]: "B \<Longrightarrow> \<box> \<turnstile> \<up>B"
   by (simp add: pure_true_conv)
@@ -471,5 +476,9 @@ lemma frame_FRAME_INFERI: "P \<tturnstile> Q -- R \<Longrightarrow> FRAME_INFER 
 
 method vcg_compat = ((simp only: PRECOND_def ENTAILS_def FRI_END_def) | (no_inst_rule entails_FRAME_INFERI frame_FRAMEI frame_FRAME_INFERI))+
 
+
+schematic_goal "ff A ** ff B \<tturnstile> ff ?X -- ?R"
+  apply isep_assumption back
+  done
 
 end

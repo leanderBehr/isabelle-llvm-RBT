@@ -56,32 +56,28 @@ partial_function (M) del ::
     t \<leftarrow> ll_load t_p;
     case t of (RBT_NODE c a y s b) \<Rightarrow>
     do {
-      le \<leftarrow> lt_impl x y;
-      if le = 1 then
+      if! lt_impl x y
+      then!
       do {
-        cond \<leftarrow> is_black_b_i a;
+        cond \<leftarrow> ll_is_black_br a;
         l_del \<leftarrow> del x a;
         if cond = 1
         then do { ll_free t_p; balance_left l_del y s b }
         else do { set_left_p l_del t_p; set_color_p 0 t_p; return t_p }
       }
-      else
-      do {
-        ge \<leftarrow> lt_impl y x;
-        if ge = 1
-        then do {
-          cond \<leftarrow> is_black_b_i b;
-          r_del \<leftarrow> del x b;
-          if cond = 1
-          then do { ll_free t_p; balance_right a y s (r_del) }
-          else do { set_right_p r_del t_p; set_color_p 0 t_p; return t_p }
-        }
-        else do {
+      else! if! lt_impl y x
+      then! do {
+        cond \<leftarrow> ll_is_black_br b;
+        r_del \<leftarrow> del x b;
+        if cond = 1
+        then do { ll_free t_p; balance_right a y s (r_del) }
+        else do { set_right_p r_del t_p; set_color_p 0 t_p; return t_p }
+      }
+      else! do {
           key_delete y;
           value_delete s;
           ll_free t_p;
           combine a b
-        }
       }
     }
   }

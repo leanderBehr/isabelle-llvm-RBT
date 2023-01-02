@@ -25,7 +25,9 @@ export_llvm
   "M_CONST bench_rbt.free_wrap" is rbt_free
   "M_CONST bench_rbt.lookup_wrap" is rbt_lookup
   "M_CONST bench_rbt.insert_wrap" is rbt_insert
+  "M_CONST bench_rbt.insert_opt_wrap" is rbt_insert_opt
   "M_CONST bench_rbt.delete_wrap" is rbt_delete
+  "M_CONST bench_rbt.delete_opt_wrap" is rbt_delete_opt
   defines \<open>
     typedef struct {
        uint8_t color;
