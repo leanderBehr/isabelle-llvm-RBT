@@ -110,7 +110,8 @@ lemmas [simp, llvm_pre_simp] = If_ll_def sc_and_def sc_or_def
 subsection \<open>Pattern Matching Emulation\<close>
 
 
-definition "is_red node_p \<equiv> do {
+definition is_red :: "_ \<Rightarrow> 1 word llM" where
+  "is_red node_p \<equiv> do {
     if node_p = null
     then return 0
     else do {
@@ -149,6 +150,17 @@ definition "left node_p \<equiv> do {
 
 
 lemma left_correct [vcg_rules]:
+"
+  llvm_htriple
+  (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p)
+  (left n_p)
+  (\<lambda>res. \<up>(res = li) ** \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p)
+"
+  unfolding left_def
+  by vcg
+
+
+lemma left_correct_unfolding [vcg_rules]:
   "
     llvm_htriple
     (rbt_assn (Branch col lhs k v rhs) ni)
@@ -176,6 +188,17 @@ definition "right node_p \<equiv> do {
 
 
 lemma right_correct [vcg_rules]:
+"
+  llvm_htriple
+  (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p)
+  (right n_p)
+  (\<lambda>res. \<up>(res = ri) ** \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p)
+"
+  unfolding right_def
+  by vcg
+
+
+lemma right_correct_unfolding [vcg_rules]:
   "
     llvm_htriple
     (rbt_assn (Branch col lhs k v rhs) ni)
@@ -338,7 +361,7 @@ lemma matches_color_correct [vcg_rules]:
   llvm_htriple
   (color_assn c ci)
   (ll_matches_color pat ci)
-  (\<lambda>r. \<upharpoonleft>bool.assn (matches_color pat c) r)
+  (\<lambda>r. \<upharpoonleft>bool.assn (matches_color pat c) r ** color_assn c ci)
 "
   apply(cases pat; cases c)
   apply vcg
