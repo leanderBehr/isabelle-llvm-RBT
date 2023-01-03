@@ -112,7 +112,6 @@ next
     done
 qed
 
-
 lemma insert_opt_correct_ext [vcg_rules]:
   "
     llvm_htriple
@@ -140,9 +139,13 @@ lemma insert_opt_correct_ext [vcg_rules]:
   apply vcg
   apply (subgoal_tac "rbt_sorted (rbt_of (ATBranch color.B x23 x24 1 li ki vi ri al ar))")
    apply vcg_compat 
-   apply (sepEwith ignore | simp)+
-  subgoal supply ptr_of_key_subsetD[dest!] by auto
+   apply (sepE | find_sep)+
+      apply simp
+      apply sep
   subgoal using ins_rbt_sorted rbt_of.simps(2) rbt_sorted.simps(2) by metis
+  subgoal by simp
+  subgoal by blast
+  subgoal by (auto dest!: ptr_of_key_subsetD)
   done
 
 end

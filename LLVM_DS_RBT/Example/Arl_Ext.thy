@@ -122,7 +122,7 @@ lemma arl_mems_nth_rule [vcg_rules]:
   unfolding arl_mems_assn_ex_def
   apply vcg
   apply vcg_compat
-  apply (sepwith ignore)
+  apply (sep | find_sep)+
     apply ((auto dest!: list_assn_pure_partD))
   unfolding idxe_map_def
   by (simp add: restrict_map_insert)

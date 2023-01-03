@@ -74,17 +74,19 @@ next
     apply vcg
     subgoal
       apply vcg_compat
-      apply (sep | simp?,ignore)+
-      apply (cases "rbt_lookup (rbt_of al) kn")
-      apply (auto simp add: ptr_of_key.simps)
+      apply sep
+       apply (cases "rbt_lookup (rbt_of al) kn")
+        apply (auto simp add: ptr_of_key.simps)
+      apply (sepwith simp)
       done
 
     apply vcg
     subgoal
       apply vcg_compat
-      apply (sep | simp?,ignore)+
+      apply sep
       apply (cases "rbt_lookup (rbt_of ar) kn")
       apply (auto simp add: ptr_of_key.simps)
+      apply (sepwith simp)
       done
 
     apply vcg

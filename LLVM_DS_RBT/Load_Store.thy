@@ -108,7 +108,7 @@ next
     with less ATBranch(3-5) show ?thesis
       apply vcg
       apply vcg_compat
-      apply (sepEwith ignore)
+      apply (sepE | find_sep)+
 
       subgoal by blast
 
@@ -132,6 +132,7 @@ next
       apply vcg
       apply vcg_compat
       apply (sepEwith \<open>auto simp add: value_of_key.simps\<close>)
+      apply simp
       done
   next
     case greater
@@ -141,7 +142,7 @@ next
     with greater ATBranch(3-5) show ?thesis
       apply vcg
       apply vcg_compat
-      apply (sepEwith ignore)
+      apply (sepE | find_sep)+
 
       subgoal by blast
 

@@ -94,7 +94,7 @@ lemma [simp]: "i < length xs \<Longrightarrow> [] < drop i xs" by simp
 
 
 lemma list_le'_rule:
-"
+  "
   llvm_htriple
   (string_assn xs xsi ** string_assn ys ysi ** \<upharpoonleft>snat.assn i ii)
   (list_le' xsi ysi ii)
@@ -108,7 +108,7 @@ proof(induction "min (length xs) (length ys) - i" arbitrary: i ii)
     subgoal by simp (*unreachable recursive path*)
      apply vcg
     done
-    
+
 next
   case (Suc x)
   from Suc(2) have precond: "x = min (length xs) (length ys) - (i+1)" by simp
@@ -121,27 +121,25 @@ next
     subgoal for asf x xa r ra s
       apply vcg_rl back back
        apply vcg_compat
-       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
-        apply (auto simp add: SOLVE_AUTO_DEFER_def)    
-      apply vcg_solve
-      apply vcg 
+       apply (sep isep_intro: pure_pure_asm_prefixI | find_sep)+
+        apply (auto simp add: SOLVE_AUTO_DEFER_def)
+       apply vcg_solve
+       apply vcg 
        apply vcg_compat
 
-       apply (sepEwith ignore isep_intro: pure_pure_asm_prefixI)
-           apply (auto simp add: postfix_le)
+       apply (sepE isep_intro: pure_pure_asm_prefixI | find_sep)+
+             apply (auto simp add: postfix_le)
       apply vcg_solve
       apply vcg
       apply vcg_rl back back
        apply vcg_compat
-       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
-        apply auto[2]
-
+       apply (sepwith blast isep_intro: pure_pure_asm_prefixI)
       apply vcg_solve
       apply vcg
       apply vcg_rl
        apply vcg_compat
-       apply (sepEwith ignore isep_intro: pure_pure_asm_prefixI)
-           apply simp_all
+       apply (sepEwith simp isep_intro: pure_pure_asm_prefixI)
+        apply simp_all
       subgoal
       proof -
         assume assms:
@@ -166,6 +164,7 @@ next
           unfolding snat.assn_def
           by (smt (verit, del_insts) Suc_eq_plus1 Suc_pred add_cancel_right_right assms(1) len_gt_0 max_snat_def plus_1_eq_Suc sel_mk_pure_assn(3) snat.assn_def snat_eq_unat_aux2 snat_invar_alt snat_lt_max_snat snat_zero unatSuc unat_1 word_overflow_unat)
       qed
+       apply (sepEwith blast) 
       apply vcg_solve
       apply vcg
       done
@@ -211,7 +210,7 @@ lemmas list_le''.simps[llvm_code]
 
 
 lemma list_le''_rule:
-"
+  "
   llvm_htriple
   (string_assn xs xsi ** string_assn ys ysi ** \<upharpoonleft>snat.assn i ii)
   (list_le'' xsi ysi ii)
@@ -233,20 +232,18 @@ next
     subgoal for asf x xa r ra s
       apply vcg_rl back back
        apply vcg_compat
-       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
+       apply (sep isep_intro: pure_pure_asm_prefixI | find_sep)+
         apply (auto simp add: SOLVE_AUTO_DEFER_def)
-      apply vcg_solve
-      apply vcg
+       apply vcg_solve
+       apply vcg
        apply vcg_compat
-       apply (sepEwith ignore isep_intro: pure_pure_asm_prefixI)
-        apply (auto simp add: postfix_le)
+       apply (sepE isep_intro: pure_pure_asm_prefixI | find_sep)+
+             apply (auto simp add: postfix_le)
       apply vcg_solve
       apply vcg
       apply vcg_rl back back
        apply vcg_compat
-       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
-        apply auto[2]
-
+       apply (sepwith blast isep_intro: pure_pure_asm_prefixI)
       apply vcg_solve
       apply vcg
       supply Suc(1)[vcg_rules]
@@ -267,7 +264,7 @@ lemmas list_le_def[llvm_code, llvm_inline]
 
 
 lemma list_le_rule:
-"
+  "
   llvm_htriple
   (string_assn xs xsi ** string_assn ys ysi)
   (list_le xsi ysi)

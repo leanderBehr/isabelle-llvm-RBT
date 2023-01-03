@@ -77,7 +77,7 @@ lemma arl_mems_nth_rule [vcg_rules]:
   unfolding arl_mems_assn_ex_def
   apply vcg
   apply vcg_compat
-  apply (sepwith ignore)
+  apply (sep | find_sep)+
     apply ((auto dest!: list_assn_pure_partD))
   unfolding idxe_map_def
   by (simp add: restrict_map_insert)
@@ -167,9 +167,9 @@ lemma string_assn_arl_mems_assnI:
 "\<upharpoonleft>string_dr_assn str (stri::(8 word, 'l::len2) array_list)
    \<turnstile> arl_mems_assn' snat.assn str stri ** \<up>(4 < LENGTH('l))"
   unfolding string_dr_assn_eq arl_mems_assn_def'
-  apply (sepwith ignore)
+  apply (sep | find_sep)+
   apply isep_intro_ex
-  apply (sepwith ignore)
+  apply (sep | find_sep)+
   unfolding LLVM_DS_List_Assn.list_assn_def
   apply (simp_all add: pure_true_conv)
 proof -
@@ -195,7 +195,7 @@ lemma
   "arl_mems_assn' snat.assn str (stri::(8 word, 'l::len2) array_list) **
    \<up>(4 < LENGTH('l)) \<turnstile> \<upharpoonleft>string_dr_assn str stri"
     unfolding string_dr_assn_eq arl_mems_assn_def'
-    apply (sepEwith ignore)
+    apply (sepE | find_sep)+
     subgoal unfolding LLVM_DS_List_Assn.list_assn_def
       apply simp
       apply (rule pure_entails_boxI sep_is_pure_assn_conjI | simp)+
@@ -235,7 +235,7 @@ proof(induction "length strs - i" arbitrary: i ii)
     apply (subst make_index_mapping'.simps)
     apply vcg
     apply vcg_compat
-    apply (sepEwith ignore)
+    apply (sepE | find_sep)+
     unfolding is_index_mapping_def
     by simp
 next
@@ -252,7 +252,7 @@ next
        apply (isep_drule drule: string_assn_arl_mems_assnI)
        apply isep_extract_pure
        apply (isep_rule rule: sep_pureI, simp)
-       apply (sepEwith ignore)
+       apply (sepE | find_sep)+
       apply vcg_solve
       apply vcg_rl
        apply vcg_compat
@@ -312,7 +312,7 @@ lemma make_index_mapping''_rule:
      apply (isep_drule drule: string_assn_arl_mems_assnI)
      apply isep_extract_pure
      apply (isep_rule rule: sep_pureI, simp)
-     apply (sepEwith ignore)
+     apply (sepE | find_sep)+
     (*done*)
     apply vcg_solve
     (*insert*)
@@ -335,7 +335,7 @@ lemma make_index_mapping''_rule:
 
       apply (isep_drule drule: arl_mems_assn_update)
         apply simp_all
-      apply (sepwith ignore)
+    apply (sep | find_sep)+
       unfolding is_index_mapping_def list_index_mapping_def map_comp_def
       apply (simp add: take_Suc_conv_app_nth)
       done

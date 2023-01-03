@@ -228,14 +228,14 @@ next
     apply vcg
     subgoal
       apply vcg_compat
-      apply (sepwith ignore)
+      apply (sep | find_sep)+
       unfolding rbt_greater_prop apply auto
       done
 
     apply vcg
     subgoal
       apply vcg_compat
-      apply (sepwith ignore)
+      apply (sep | find_sep)+
       unfolding rbt_less_prop apply auto
       done
 
@@ -424,9 +424,9 @@ lemma lookup_ptr_to_option_correct [vcg_rules]:
   apply (rule htriple_ent_pre_post[OF lookup_ptr_to_option_correct_cplx'])
   using copy_rule apply simp
     apply simp
-   apply (sepEwith ignore isep_dest: rbt_assn_entails_rbt_assn_cplx)
-   apply simp
-  apply (sepEwith ignore isep_dest: rbt_assn_cplx_entails_rbt_assn)
+   apply (sepE isep_dest: rbt_assn_entails_rbt_assn_cplx | find_sep)+
+   apply simp_all
+  apply (sepE isep_dest: rbt_assn_cplx_entails_rbt_assn)
   done
 
 

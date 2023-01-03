@@ -99,7 +99,7 @@ next
       apply vcg_rl
         apply vcg_compat
         apply (isep_rule rule: pure_pure_asm_prefixI, simp)
-        apply (sepwith ignore)
+        apply (sep | find_sep)+
           apply (isep_drule drule: list_assn_push_back)
           apply (drule list_assn_pure_partD)+
           apply (simp add: list_update_append take_update_last take_Suc_conv_app_nth)
@@ -117,7 +117,7 @@ next
       apply sepE
       apply (auto dest!: list_assn_pure_partD)
       done
-  done
+    done
 qed
 
 
@@ -142,7 +142,7 @@ lemma snat_assn_z_z:
 
 
 lemma arl_copy_rule [vcg_rules]:
-"
+  "
   llvm_htriple
   (arl_mems_assn' el_assn xs (xsi::('ai, 'l::len2) array_list) ** \<up>(LENGTH('l) > 4))
   (arl_copy xsi)
@@ -155,7 +155,7 @@ lemma arl_copy_rule [vcg_rules]:
   apply vcg_rl          
   unfolding arl_mems_assn_def'
    apply vcg_compat
-   apply (sepwith ignore isep_intro: snat_assn_z_z)
+   apply (sep isep_intro: snat_assn_z_z | find_sep)+
     apply simp
     apply (sep isep_intro: list_assn_empty)
    apply (auto dest: list_assn_pure_partD)

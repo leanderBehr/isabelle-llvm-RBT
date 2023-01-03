@@ -25,7 +25,7 @@ type_synonym ('k, 'v) rbti = "('k, 'v) rbt_node ptr"
 
 
 subsubsection \<open>Encoding to heap-representable\<close>
-   
+
 
 instantiation rbt_node :: (llvm_rep, llvm_rep) llvm_rep
 begin
@@ -218,11 +218,11 @@ lemmas [llvm_inline, simp] =
   set_value_def
   set_right_def
 
-  set_color_p_def
-  set_left_p_def
-  set_key_p_def
-  set_value_p_def
-  set_right_p_def
+set_color_p_def
+set_left_p_def
+set_key_p_def
+set_value_p_def
+set_right_p_def
 
 
 subsection \<open>Color Assertion\<close>
@@ -294,22 +294,22 @@ locale rbt_impl =
     key_type_i :: "'ki :: llvm_rep itself" and
     value_type :: "'v itself" and
     value_type_i :: "'vi :: llvm_rep itself" and    
-    
-    lt_impl and
-    key_assn and
-    key_delete :: "'ki \<Rightarrow> unit llM" and
-    value_assn :: "('v, 'vi) dr_assn" and
-    value_delete :: "'vi \<Rightarrow> unit llM" +
-  assumes
-    key_delete_rule [vcg_rules]: 
-    "
+
+lt_impl and
+key_assn and
+key_delete :: "'ki \<Rightarrow> unit llM" and
+value_assn :: "('v, 'vi) dr_assn" and
+value_delete :: "'vi \<Rightarrow> unit llM" +
+assumes
+  key_delete_rule [vcg_rules]: 
+  "
       llvm_htriple
       (\<upharpoonleft>key_assn k ki)
       (key_delete ki)
       (\<lambda>_. \<box>)
     " and
-    value_delete_rule [vcg_rules]:
-    "
+  value_delete_rule [vcg_rules]:
+  "
       llvm_htriple
       (\<upharpoonleft>value_assn v vi)
       (value_delete vi)
@@ -320,7 +320,7 @@ interpretation rbt_impl_deps .
 
 
 subsection \<open>RBT Assertion\<close>
-  
+
 
 fun rbt_assn_cplx where
   "rbt_assn_cplx rbt.Empty ptrs ex p = \<up>(p = null)"
@@ -399,23 +399,23 @@ lemma
   ptrs_add_left_rbt_assn_cplx_sepI:
   "dom ptrs2 \<inter> rbt_key_set t = {} \<Longrightarrow>
   rbt_assn_cplx t ptrs1 ex ti \<turnstile> rbt_assn_cplx t (ptrs1 ++ ptrs2) ex ti"
-  proof (induction t arbitrary: ti)
-    case Empty
-    then show ?case by (simp add: rbt_assn_cplx_unfold)
-  next
-    case (Branch c l k v r)
+proof (induction t arbitrary: ti)
+  case Empty
+  then show ?case by (simp add: rbt_assn_cplx_unfold)
+next
+  case (Branch c l k v r)
 
-    from Branch(3) have l_int: "dom ptrs2 \<inter> set (RBT_Impl.keys l) = {}" by auto
-    from Branch(3) have r_int: "dom ptrs2 \<inter> set (RBT_Impl.keys r) = {}" by auto
+  from Branch(3) have l_int: "dom ptrs2 \<inter> set (RBT_Impl.keys l) = {}" by auto
+  from Branch(3) have r_int: "dom ptrs2 \<inter> set (RBT_Impl.keys r) = {}" by auto
 
 
-    note IH_l = Branch(1)[OF l_int]
-    note IH_r = Branch(2)[OF r_int]
+  note IH_l = Branch(1)[OF l_int]
+  note IH_r = Branch(2)[OF r_int]
 
-    show ?case
-      apply (simp add: rbt_assn_cplx_unfold split del: if_split)
-      apply (sepEwith ignore isep_dest: IH_l IH_r)
-      using Branch(3) by simp
+  show ?case
+    apply (simp add: rbt_assn_cplx_unfold split del: if_split)
+    apply (sepE isep_dest: IH_l IH_r | find_sep)+
+    using Branch(3) by simp
 qed
 
 
@@ -437,7 +437,7 @@ next
 
   show ?case
     apply (simp add: rbt_assn_cplx_unfold split del: if_split)
-    apply (sepEwith ignore isep_dest: IH_l IH_r)
+    apply (sepE isep_dest: IH_l IH_r | find_sep)+
     using Branch(3) by simp
 qed
 
@@ -445,7 +445,7 @@ qed
 lemma rbt_sorted_key_uniqI:
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys l)"
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys r)"
-  apply simp_all
+   apply simp_all
   unfolding rbt_less_prop rbt_greater_prop
   by blast+
 
@@ -470,22 +470,25 @@ next
   case (Branch c l k v r)
   show ?case
     apply (simp add: rbt_assn_unfold rbt_assn_cplx_unfold)
-    apply (sepwith ignore isep_dest: Branch(1-2))
+    apply (sep isep_dest: Branch(1-2) | find_sep)+
       apply simp
     subgoal for x xa xb xc xd ptrs1 ptrs2
       apply (isep_intro_ex_with "(ptrs1 ++ ptrs2)(k \<mapsto> (ti, ?x))")
       apply simp
       apply isep_intro_ex
       apply (simp add: fun_upd_def)
-      apply (sepwith ignore
-          isep_intro:
-          ptrs_upd_rbt_assn_cplx_sepI
-          ptrs_add_left_rbt_assn_cplx_sepI
-          ptrs_add_right_rbt_assn_cplx_sepI
-          ; sep_solves)
-            apply auto
-         apply (meson Branch.prems rbt_sorted_key_uniqI(1))
-        apply (meson Branch.prems rbt_sorted_key_uniqI(2))
+      apply 
+        (
+          (sep
+            isep_intro:
+            ptrs_upd_rbt_assn_cplx_sepI
+            ptrs_add_left_rbt_assn_cplx_sepI
+            ptrs_add_right_rbt_assn_cplx_sepI | find_sep)+;
+          sep_solves
+          )
+      apply auto
+      apply (meson Branch.prems rbt_sorted_key_uniqI(1))
+      apply (meson Branch.prems rbt_sorted_key_uniqI(2))
       using rbt_sorted_subtrees_disjoint Branch(3) apply fast+
       done
     using Branch(3) apply auto
@@ -589,7 +592,7 @@ lemma unfold_rbt_assn_red_rule [fri_red_rules]:
   apply (simp add: rbt_assn_unfold)
   subgoal premises prems for Ps Qs
     apply (sepE isep_dest: prems)
-    (*
+      (*
     apply (sep_drule prems)
     apply (simp only: fri_extract_simps entails_lift_extract_simps cong: entails_pre_cong)
     apply clarify

@@ -363,30 +363,40 @@ locale separation_logic_solver
 begin
 method backtrackable_plus methods m = m, (append \<open>(backtrackable_plus m)?\<close> \<open>is_non_sep_goal\<close>)
 
-method sep declares isep_red isep_intro isep_dest = 
-    ((
-      print_headgoal,
-      is_sep_goal,
-      (
-        isep_extract_pure |
-        isep_normalize |
-        entails_box_solver |
-        (isep_elim_ex, isep_extract_pure) |
-        isep_assumption | 
-        ((append
-          \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
-          \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
-          \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>)
-        )
+method sep_step =
+  is_sep_goal,
+  (
+    isep_extract_pure |
+    isep_normalize |
+    entails_box_solver |
+    (isep_elim_ex, isep_extract_pure) |
+    isep_assumption | 
+    (
+      append
+      \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
+      \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
+      \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>
       )
-    )+)[1]
+    )
 
-method sepE declares isep_red isep_intro isep_dest = ( (sep | (is_sep_goal, isep_intro_ex))+ )[1]
+method sep_step_filter methods filter declares isep_red isep_intro isep_dest =
+  sep_step;(is_sep_goal | filter)
 
-method sepwith methods m declares isep_red isep_intro isep_dest = ( (print_term SW, changed\<open>sep?,(is_non_sep_goal, m)?\<close>)+ )[1]
-method sepEwith methods m declares isep_red isep_intro isep_dest = ( (sepE | (is_non_sep_goal, m))+ )[1]
+method sepE_step_filter methods filter declares isep_red isep_intro isep_dest = 
+  (sep_step_filter filter | (is_sep_goal, isep_intro_ex))[1]
 
-method ignore = has_any_sep_goal, defer_tac
+method sepE_step declares isep_red isep_intro isep_dest = sepE_step_filter succeed
+
+method sep declares isep_red isep_intro isep_dest = (sep_step+)[1]
+method sepE declares isep_red isep_intro isep_dest = (sepE_step+)[1]
+
+method sepwith methods filter declares isep_red isep_intro isep_dest =
+  ((sep_step_filter filter)+)[1]
+
+method sepEwith methods filter declares isep_red isep_intro isep_dest =
+  ((sepE_step_filter filter)+)[1]
+
+method find_sep = (has_any_sep_goal, is_non_sep_goal, defer_tac)+
 
 method sep_solves = is_non_sep_goal
 
@@ -414,8 +424,7 @@ lemma
   assumes
     trap: "False \<Longrightarrow> A \<turnstile> B" and rule: "True \<Longrightarrow> A \<turnstile> B"
   shows "A \<turnstile> B"
-  apply (sepwith \<open>ignore, print_term IG\<close> isep_intro: trap rule) back
-  ..
+  apply (sep isep_intro: trap rule | find_sep)+ back ..
 
 lemma sep_pureI [isep_intro]: "B \<Longrightarrow> \<box> \<turnstile> \<up>B"
   by (simp add: pure_true_conv)

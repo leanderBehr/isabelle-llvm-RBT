@@ -127,7 +127,7 @@ lemma value_ex_join_red:
   apply (rule entails_trans[OF _ prems(5)])
     apply (isep_drule drule: value_ex_join_ent)
     using prems(1-4) apply auto[3]
-    apply (sepEwith ignore)
+    apply sepE
     done
   done
 

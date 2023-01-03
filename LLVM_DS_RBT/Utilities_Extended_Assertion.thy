@@ -31,6 +31,7 @@ next
     apply vcg_compat
     apply isep_extract_pure
     apply (simp add: bool_assn_pure_eq)
+    apply auto[]
     apply (sepwith \<open>auto elim: rbt_of.elims\<close>)+
     done
 next

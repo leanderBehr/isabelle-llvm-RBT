@@ -384,8 +384,7 @@ lemma
   bool_assn_conj_cong_sepI:
   "\<upharpoonleft>bool.assn A X ** \<upharpoonleft>bool.assn B Y \<turnstile> \<upharpoonleft>bool.assn (A \<and> B) (X && Y)"
   apply (auto simp only: bool_assn_pure_eq)
-  apply (sepwith ignore)
-  apply auto
+  apply (sepwith auto)
   done
   
 
