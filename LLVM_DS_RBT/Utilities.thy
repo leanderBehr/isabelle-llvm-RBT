@@ -53,7 +53,7 @@ lemma non_null_rbt_assn_sepD:
   "ti \<noteq> null \<Longrightarrow> rbt_assn t ti \<turnstile> (EXS c l k v r. rbt_assn (rbt.Branch c l k v r) ti)"
   apply (cases t)
   subgoal by simp
-  subgoal by (simp, isep_solver)
+  subgoal by (simp, sepE)
   done
 
 
@@ -384,7 +384,7 @@ lemma
   bool_assn_conj_cong_sepI:
   "\<upharpoonleft>bool.assn A X ** \<upharpoonleft>bool.assn B Y \<turnstile> \<upharpoonleft>bool.assn (A \<and> B) (X && Y)"
   apply (auto simp only: bool_assn_pure_eq)
-  apply isep_solver
+  apply (sepwith ignore)
   apply auto
   done
   

@@ -470,7 +470,7 @@ next
   case (Branch c l k v r)
   show ?case
     apply (simp add: rbt_assn_unfold rbt_assn_cplx_unfold)
-    apply (isep_solver_keep isep_dest: Branch(1-2))
+    apply (sepwith ignore isep_dest: Branch(1-2))
       apply simp
     subgoal for x xa xb xc xd ptrs1 ptrs2
       apply (isep_intro_ex_with "(ptrs1 ++ ptrs2)(k \<mapsto> (ti, ?x))")

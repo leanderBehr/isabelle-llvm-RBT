@@ -353,45 +353,11 @@ method isep_extract_pure =
     thin_duplicates?
   \<close>
   
-
 subsection "Solver"
-
 
 named_theorems isep_intro
 named_theorems isep_dest
 named_theorems isep_red
-
-
-method isep_solver_keep declares isep_red isep_intro isep_dest =
-  ((
-      has_any_sep_goal,
-      isep_extract_pure?,
-      (
-        defer_non_sep_goal+ |
-        isep_normalize |
-        entails_box_solver |
-        isep_elim_ex, isep_extract_pure |  
-        isep_assumption |
-        changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close> |
-        isep_backtracking_rule rule: isep_intro |
-        isep_backtracking_drule drule: isep_dest |
-        solves_sep_goals \<open>isep_intro_ex, isep_solver_keep\<close>
-        )
-      )+)[1]
-
-  
-method_setup append = \<open>
-  let 
-    fun APPEND_LIST tacs = fold_rev (curry (op APPEND)) tacs (no_tac);
-  in
-   Scan.repeat1 Method.text_closure >>
-   (fn ms => fn ctxt => fn facts => let
-      val tacs = map (fn m => method_evaluate m ctxt facts) ms
-    in
-      SIMPLE_METHOD (APPEND_LIST tacs) facts
-    end)
-  end
-\<close>
 
 locale separation_logic_solver
 begin
@@ -400,18 +366,17 @@ method backtrackable_plus methods m = m, (append \<open>(backtrackable_plus m)?\
 method sep declares isep_red isep_intro isep_dest = 
     ((
       print_headgoal,
-      is_sep_goal, print_term ISSEP,
+      is_sep_goal,
       (
-        isep_extract_pure, print_term EXTRACT |
-        isep_normalize, print_term NORM |
-        entails_box_solver, print_term BOX |
-        (isep_elim_ex, isep_extract_pure, print_term EL_EX) |
-        isep_assumption, print_term ASSUM | 
+        isep_extract_pure |
+        isep_normalize |
+        entails_box_solver |
+        (isep_elim_ex, isep_extract_pure) |
+        isep_assumption | 
         ((append
           \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
           \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
-          \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>),
-          print_term SEP_RULE
+          \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>)
         )
       )
     )+)[1]
@@ -428,12 +393,6 @@ method sep_solves = is_non_sep_goal
 end 
 
 interpretation separation_logic_solver .
-
-
-method isep_solver 
-  declares isep_red isep_intro isep_dest = 
-  solves_sep_goals \<open>isep_solver_keep\<close>
-
 
 lemma
   assumes 

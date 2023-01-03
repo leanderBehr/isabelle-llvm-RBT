@@ -228,14 +228,14 @@ next
     apply vcg
     subgoal
       apply vcg_compat
-      apply isep_solver
+      apply (sepwith ignore)
       unfolding rbt_greater_prop apply auto
       done
 
     apply vcg
     subgoal
       apply vcg_compat
-      apply isep_solver
+      apply (sepwith ignore)
       unfolding rbt_less_prop apply auto
       done
 
@@ -317,7 +317,7 @@ next
       apply isep_intro_ex
       apply (isep_drule drule: Branch(1))
       using Branch(4) apply auto
-      apply isep_solver_keep
+      apply sep
       done
 
     subgoal
@@ -424,9 +424,9 @@ lemma lookup_ptr_to_option_correct [vcg_rules]:
   apply (rule htriple_ent_pre_post[OF lookup_ptr_to_option_correct_cplx'])
   using copy_rule apply simp
     apply simp
-   apply (isep_solver_keep isep_dest: rbt_assn_entails_rbt_assn_cplx)
+   apply (sepEwith ignore isep_dest: rbt_assn_entails_rbt_assn_cplx)
    apply simp
-  apply (isep_solver_keep isep_dest: rbt_assn_cplx_entails_rbt_assn)
+  apply (sepEwith ignore isep_dest: rbt_assn_cplx_entails_rbt_assn)
   done
 
 

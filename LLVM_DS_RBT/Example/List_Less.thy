@@ -121,26 +121,26 @@ next
     subgoal for asf x xa r ra s
       apply vcg_rl back back
        apply vcg_compat
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
         apply (auto simp add: SOLVE_AUTO_DEFER_def)    
       apply vcg_solve
       apply vcg 
        apply vcg_compat
 
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepEwith ignore isep_intro: pure_pure_asm_prefixI)
            apply (auto simp add: postfix_le)
       apply vcg_solve
       apply vcg
       apply vcg_rl back back
        apply vcg_compat
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
         apply auto[2]
 
       apply vcg_solve
       apply vcg
       apply vcg_rl
        apply vcg_compat
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepEwith ignore isep_intro: pure_pure_asm_prefixI)
            apply simp_all
       subgoal
       proof -
@@ -233,18 +233,18 @@ next
     subgoal for asf x xa r ra s
       apply vcg_rl back back
        apply vcg_compat
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
         apply (auto simp add: SOLVE_AUTO_DEFER_def)
       apply vcg_solve
       apply vcg
        apply vcg_compat
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepEwith ignore isep_intro: pure_pure_asm_prefixI)
         apply (auto simp add: postfix_le)
       apply vcg_solve
       apply vcg
       apply vcg_rl back back
        apply vcg_compat
-       apply (isep_solver_keep isep_intro: pure_pure_asm_prefixI)
+       apply (sepwith ignore isep_intro: pure_pure_asm_prefixI)
         apply auto[2]
 
       apply vcg_solve
