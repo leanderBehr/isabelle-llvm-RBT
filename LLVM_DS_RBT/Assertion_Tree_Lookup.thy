@@ -157,7 +157,7 @@ lemma ptr_of_key_subsetD:
   apply (simp add: at_ptr_graph_graph_eq)
   unfolding map_le_def Map.graph_def by force
 
-subsection \<open>value_of_key\<close>
+subsection \<open>value of key\<close>
 
 fun value_of_key where
   "value_of_key t ti k = map_option (assn_tree.ll_val \<circ> snd) (p_node_of_key t ti k)"

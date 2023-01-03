@@ -19,7 +19,7 @@ datatype ('k, 'v, 'ki, 'vi) assn_tree =
   (right: "('k, 'v, 'ki, 'vi) assn_tree")
 
 
-subsubsection \<open>rbt_of\<close>
+subsubsection \<open>rbt of\<close>
 
 fun rbt_of :: "('k, 'v, 'ki, 'vi) assn_tree \<Rightarrow> ('k, 'v) rbt"  where
   "rbt_of ATEmpty = rbt.Empty" |
