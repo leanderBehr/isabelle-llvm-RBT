@@ -137,6 +137,10 @@ lemma at_ptr_graph_graph_eq:
   qed
   done
 
+subsection \<open>ptr of key handling\<close>
+
+subsubsection \<open>special case rules without handling updates\<close>
+
 lemma ptr_of_key_eqI [intro!]:
   "\<lbrakk>rbt_sorted (rbt_of t); rbt_sorted (rbt_of t'); at_ptr_graph t p = at_ptr_graph t' p'\<rbrakk>
    \<Longrightarrow> ptr_of_key t p = ptr_of_key t' p'"
@@ -156,6 +160,47 @@ lemma ptr_of_key_subsetD:
     \<Longrightarrow> at_ptr_graph t ti \<subseteq> at_ptr_graph t' ti'"
   apply (simp add: at_ptr_graph_graph_eq)
   unfolding map_le_def Map.graph_def by force
+
+
+subsubsection \<open>general rules\<close>
+
+text \<open>
+  1: @{term "m1 \<subseteq>\<^sub>m m2"} or m1 = m2 to Map.graph m1 ? Map.graph m2
+  2: translate map updates to set operations
+  3: @{term "Map.graph (ptr_of_key t k) = at_ptr_graph t k"}
+\<close>
+
+(*step 1*)
+lemma key_to_ptr_map_subset_eq:
+  "(m1:: 'k \<rightharpoonup> ('ki, 'vi) rbti) \<subseteq>\<^sub>m m2 \<longleftrightarrow> Map.graph m1 \<subseteq> Map.graph m2"
+  unfolding Map.graph_def map_le_def by force
+
+lemma key_to_ptr_map_eq_eq:
+  "(m1:: 'k \<rightharpoonup> ('ki, 'vi) rbti) = m2 \<longleftrightarrow> Map.graph m1 = Map.graph m2"
+  unfolding  map_le_def
+  apply (rule iffI)
+  subgoal by simp
+  subgoal using fun_eq_graphI .
+  done
+
+(*step2, simp for update to Some missing*)
+lemma graph_upd_none_eq:
+  "Map.graph (m1(x:=None)) = Map.graph m1 - {(x, y) |y. True}"
+  unfolding Map.graph_def 
+  by (auto split!: if_splits)
+
+
+(*step3*)
+lemmas map_grap_at_ptr_grap_eq = at_ptr_graph_graph_eq[symmetric]
+
+lemmas ptr_of_key_simps = 
+  (*step1*)
+  key_to_ptr_map_subset_eq
+  key_to_ptr_map_eq_eq
+  (*step2*)
+  graph_upd_none_eq
+  (*step3*)
+  map_grap_at_ptr_grap_eq
 
 subsection \<open>value of key\<close>
 

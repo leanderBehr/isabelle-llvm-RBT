@@ -486,8 +486,9 @@ next
             ptrs_add_right_rbt_assn_cplx_sepI | find_sep)+;
           sep_solves
           )
-      apply auto
-      apply (meson Branch.prems rbt_sorted_key_uniqI(1))
+      apply auto[2]
+      apply (meson Branch.prems rbt_sorted_key_uniqI(1)) 
+      apply (metis Branch.prems Int_commute rbt_sorted_subtrees_disjoint)
       apply (meson Branch.prems rbt_sorted_key_uniqI(2))
       using rbt_sorted_subtrees_disjoint Branch(3) apply fast+
       done

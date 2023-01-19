@@ -65,8 +65,7 @@ method has_rule uses rule = (match rule in _ \<Rightarrow> succeed) | (print_ter
 method star methods m = (m+)?
 
 
-method_setup no_inst_rule = 
-  \<open>Attrib.thms >> (fn thms => fn ctxt => SIMPLE_METHOD' (match_tac ctxt thms THEN_ALL_NEW Goal.norm_hhf_tac ctxt))\<close>
+
 
 
 method_setup no_inst_drule = 
@@ -163,6 +162,9 @@ method entails_rev_assumption = rule degenerate_frameD, frame_rev_assumption, (r
 
 subsubsection "Combined"
   
+
+method is_entails = match conclusion in "?P \<turnstile> ?Q" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
+method is_frame = match conclusion in "?P -- ?PR \<tturnstile> ?Q -- ?QR" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
 
 method is_pre_frame = match conclusion in "?P -- ?PR \<tturnstile> ?Q" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
 method is_post_frame = match conclusion in "?P \<tturnstile> ?Q -- ?QR" (cut) \<Rightarrow> succeed \<bar> _ (cut) \<Rightarrow> fail
@@ -363,6 +365,29 @@ locale separation_logic_solver
 begin
 method backtrackable_plus methods m = m, (append \<open>(backtrackable_plus m)?\<close> \<open>is_non_sep_goal\<close>)
 
+definition "TAG x = x"
+
+lemma entails_TAGG: 
+"A \<turnstile> B ** TAG C \<Longrightarrow> A \<turnstile> B ** C" unfolding TAG_def by simp
+
+lemma frame_TAGG: 
+"A -- Pr \<tturnstile> B ** TAG C -- Qr \<Longrightarrow> A -- Pr \<tturnstile> B ** C -- Qr" unfolding TAG_def by simp
+
+method first_partition_entails methods m =
+  all_entails_conc_shifts \<open>rule entails_TAGG, isep_normalize?, m; (subst TAG_def)?\<close> | m
+
+method first_partition_frame methods m =
+  all_frame_conc_shifts \<open>rule frame_TAGG, isep_normalize?, m; (subst TAG_def)?\<close> | m
+
+
+method first_partition methods m = 
+  is_entails, first_partition_entails m |
+  is_frame, first_partition_frame m
+
+
+lemma "P -- Pr \<tturnstile> A ** B ** C ** D -- Qr"
+  apply (first_partition \<open>print_headgoal, fail\<close>)? oops
+
 method sep_step =
   is_sep_goal,
   (
@@ -372,12 +397,15 @@ method sep_step =
     (isep_elim_ex, isep_extract_pure) |
     isep_assumption | 
     (
-      append
-      \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
-      \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
-      \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>
-      )
+      first_partition
+      \<open>
+        append
+        \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
+        \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
+        \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>
+      \<close>      
     )
+  )
 
 method sep_step_filter methods filter declares isep_red isep_intro isep_dest =
   sep_step;(is_sep_goal | filter)
@@ -408,7 +436,8 @@ lemma
   assumes 
     d1: "A \<turnstile> B" and d2: "B \<turnstile> C" and d3: "C \<turnstile> D" and trap1: "T \<turnstile> D" and trap2: "T \<turnstile> C" and trap3: "T \<turnstile> B"
   shows "A \<turnstile> D"
-  by (sep isep_intro: trap1 trap2 trap3 d1 d2 d3)
+  apply (sep isep_intro: trap1 trap2 trap3 d1 d2 d3; fail) done
+
 
 
 lemma 

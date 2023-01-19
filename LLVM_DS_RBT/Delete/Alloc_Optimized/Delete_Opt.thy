@@ -41,7 +41,7 @@ partial_function (M) del_opt ::
             key_delete y;
             value_delete s;
             ll_free t_p;
-            combine a b
+            combine_opt a b
         }
       }
     }

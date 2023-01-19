@@ -6,7 +6,6 @@ context rbt_impl
 begin
 interpretation rbt_impl_deps .
 
-
 text_raw \<open>\snip{freedef}{1}{2}{%\<close>
 partial_function (M) free :: "
   ('ki, 'vi) rbti \<Rightarrow> unit llM 
@@ -26,21 +25,23 @@ partial_function (M) free :: "
 "
 text_raw \<open>}%endsnip\<close>
 
+lemmas [llvm_code] = free.simps
 
-lemma free_correct [vcg_rules]: "
-  llvm_htriple
-  (rbt_assn tree treei)
-  (free treei)
-  (\<lambda>_. \<box>)
-"
-proof(induction tree arbitrary: treei)
+lemma free_correct [vcg_rules]:
+  "
+    llvm_htriple
+    (rbt_assn t ti)
+    (free ti)
+    (\<lambda>_. \<box>)
+  "
+proof(induction t arbitrary: ti)
   case Empty
   then show ?case
     apply (subst free.simps)
     apply vcg
     done
 next
-  case (Branch col lhs k v rhs)
+  case (Branch c l k v r)
 
   note [vcg_rules] = Branch.IH
   
@@ -50,11 +51,6 @@ next
     done
 qed
 
-
-lemmas [llvm_code] = free.simps
-
-
 end
-
 
 end

@@ -26,8 +26,7 @@ partial_function (M) combine ::
       if rbt_node.color l = rbt_node.color r
       then do {
         combined_p \<leftarrow> combine (rbt_node.right l) (rbt_node.left r);
-        is_red_b \<leftarrow> ll_is_red_br combined_p;
-        if is_red_b = ll_True then
+        if! ll_is_red_br combined_p then!
         do {
             combined \<leftarrow> ll_load combined_p;
             case combined of (RBT_NODE cc cl ck cv cr) \<Rightarrow>
@@ -38,7 +37,7 @@ partial_function (M) combine ::
               return combined_p
             }
         }
-        else do {
+        else! do {
           set_left_p combined_p r_p;
           if rbt_node.color l = 0
           then do {

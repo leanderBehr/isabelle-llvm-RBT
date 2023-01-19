@@ -94,7 +94,6 @@ lemma balance_left_opt_correct [vcg_rules]:
     rotate_right_def
     left_def
     right_def
-
   apply vcg
   subgoal (*case 1*)
     apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)

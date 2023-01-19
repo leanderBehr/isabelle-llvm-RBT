@@ -1,4 +1,4 @@
-theory Utilities_Extended_Assertion
+theory Utilities_Ext
   imports 
     Utilities
     Extended_Assertion
@@ -55,6 +55,14 @@ next
 qed
 
 declare ll_matches_rbt.simps[simp del]
+
+definition "ctx (P::bool) \<equiv> \<up>P"
+
+lemma sep_context_pureI: "B \<Longrightarrow> is_sep_red (\<up>B) \<box> \<box> (ctx B)"
+  unfolding ctx_def
+  apply (rule is_sep_redI)
+  by (simp add: pure_true_conv)
+
 
 end
 

@@ -133,7 +133,7 @@ next
       apply vcg
       apply vcg_rl back back
        apply vcg_compat
-       apply (sepwith blast isep_intro: pure_pure_asm_prefixI)
+       apply (sepwith \<open>auto\<close> isep_intro: pure_pure_asm_prefixI) 
       apply vcg_solve
       apply vcg
       apply vcg_rl
@@ -243,7 +243,7 @@ next
       apply vcg
       apply vcg_rl back back
        apply vcg_compat
-       apply (sepwith blast isep_intro: pure_pure_asm_prefixI)
+       apply (sepwith auto isep_intro: pure_pure_asm_prefixI)
       apply vcg_solve
       apply vcg
       supply Suc(1)[vcg_rules]

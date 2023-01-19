@@ -49,8 +49,11 @@ lemma rbt_of_emptyI [intro!]:
   "rbt_of ATEmpty = rbt.Empty"
   by simp
 
-lemma rbt_of_reorient [simp]: 
+lemma rbt_of_reorient_branch [simp]: 
   "(Branch c l k v r = rbt_of x) = (rbt_of x = Branch c l k v r)" by auto
+
+lemma rbt_of_reorient_empty [simp]:
+  "(rbt.Empty = rbt_of t) = (rbt_of t = rbt.Empty)" by auto
 
 subsection \<open>Assertion\<close>
 
@@ -289,6 +292,16 @@ lemma rbt_assn_ext_right_assn_unfold [fri_red_rules]:
     apply (sep isep_dest: prems)
     done
   done
+
+subsection \<open>Empty Constructor\<close>
+
+lemma empty_correct_ext [vcg_rules]: 
+  "llvm_htriple
+   \<box>
+   empty
+   (\<lambda>res_ti. rbt_assn_ext ATEmpty {} res_ti)"
+  unfolding empty_def
+  by vcg
 
 end
 

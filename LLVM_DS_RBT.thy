@@ -9,5 +9,4 @@ theory LLVM_DS_RBT
   "LLVM_DS_RBT/Example/Export"
   "LLVM_DS_RBT/Bench_Export"
 begin
-
 end
