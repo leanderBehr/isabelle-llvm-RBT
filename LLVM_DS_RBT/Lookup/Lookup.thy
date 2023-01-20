@@ -3,7 +3,6 @@ theory Lookup
     "../Setup"
     "../Bool_Assn_Setup"
     "../Utilities"
-    Rbt_Pointer
     OptionI
 begin
 
@@ -244,21 +243,6 @@ next
 qed
 
 
-definition lookup_ptr_to_option where
-  "lookup_ptr_to_option value_copy t k \<equiv>
-    do {
-      res_p \<leftarrow> lookup_ptr t k;
-      if res_p = null
-      then return (OPTION_I init 0)
-      else do {
-        v \<leftarrow> rbt_ptr_load res_p;
-        v_copy \<leftarrow> value_copy v;
-        return (OPTION_I v_copy 1)
-      }
-    }
-  "
-
-
 lemma H: 
   "(\<And>x. llvm_htriple (P x) C (\<lambda>r. Q x r)) \<Longrightarrow>
   llvm_htriple (EXS x. P x) C (\<lambda>r. EXS x. Q x r) "
@@ -292,143 +276,6 @@ lemma rbt_lookup_some_keys:
   assumes "rbt_sorted t" and "k \<in> rbt_key_set t" obtains v where "rbt_lookup t k = Some v"
   using rbt_lookup_iff_keys assms
   by blast
-
-
-lemma rbt_assn_cplx_join:
-      "kn \<in> rbt_key_set t \<Longrightarrow> rbt_sorted t \<Longrightarrow>
-      rbt_assn_cplx t ptrs {kn} ti ** \<upharpoonleft>value_assn (the (rbt_lookup t kn)) (snd (the (ptrs kn)))
-      \<turnstile> rbt_assn_cplx t ptrs {} ti"
-proof(induction t arbitrary: ti)
-  case Empty
-  then show ?case by simp
-next
-  case (Branch c l k v r)
-  from Branch(3-4) show ?case
-    unfolding rbt_assn_cplx_unfold
-    apply (rule rbt_key_set_cases)
-
-    subgoal
-      apply (sepE | simp)+
-      done
-
-    subgoal
-      apply simp
-      apply isep_elim_ex
-      apply isep_intro_ex
-      apply (isep_drule drule: Branch(1))
-      using Branch(4) apply auto
-      apply sep
-      done
-
-    subgoal
-      apply (simp split del: if_split)
-      apply isep_elim_ex
-      apply isep_intro_ex
-      apply (isep_drule drule: Branch(2))
-      using Branch(4) apply (simp_all add: less_not_sym)
-      apply isep_assumption+
-      done
-
-    done
-qed
-  
-
-lemma lookup_ptr_to_option_correct_cplx [vcg_rules]:
-  assumes
-    copy_rule [vcg_rules]:
-    "\<And>v vi.
-      llvm_htriple
-      (\<upharpoonleft>value_assn v vi)
-      (value_copy vi)
-      (\<lambda>r. \<upharpoonleft>value_assn v vi ** \<upharpoonleft>value_assn v r)
-    "   
-  shows
-    "
-      rbt_sorted t \<Longrightarrow>
-      llvm_htriple
-      (rbt_assn_cplx t ptrs {} ti ** \<upharpoonleft>key_assn kn ki)
-      (lookup_ptr_to_option value_copy ti ki)
-      (\<lambda>opt.
-        \<upharpoonleft>value_option_assn (rbt_lookup t kn) opt **
-        rbt_assn_cplx t ptrs {} ti **
-        \<upharpoonleft>key_assn kn ki)
-    "
-  unfolding lookup_ptr_to_option_def
-  apply vcg
-  subgoal
-    unfolding value_option_assn_def
-    apply (simp add: rbt_lookup_none_keys)
-    apply vcg
-    done
-  apply vcg
-  subgoal
-    unfolding value_option_assn_def
-    apply vcg_compat
-    apply (rule rbt_lookup_some_keys, simp, simp)
-    apply (sep isep_dest: rbt_assn_cplx_join | simp)+
-    done
-  done
-
-
-lemma htriple_ent_pre_post:
-  "\<lbrakk>htriple P' c Q'; P \<turnstile> P'; \<And>r. Q' r \<turnstile> Q r\<rbrakk> \<Longrightarrow> htriple P c Q"
-  using htriple_ent_pre htriple_ent_post by blast
-
-
-lemma lookup_ptr_to_option_correct_cplx' [vcg_rules]:
-  assumes
-    copy_rule [vcg_rules]:
-    "\<And>v vi.
-      llvm_htriple
-      (\<upharpoonleft>value_assn v vi)
-      (value_copy vi)
-      (\<lambda>r. \<upharpoonleft>value_assn v vi ** \<upharpoonleft>value_assn v r)
-    "   
-  shows
-    "
-      rbt_sorted t \<Longrightarrow>
-      llvm_htriple
-      (EXS ptrs. rbt_assn_cplx t ptrs {} ti ** \<upharpoonleft>key_assn kn ki)
-      (lookup_ptr_to_option value_copy ti ki)
-      (\<lambda>opt. EXS ptrs.
-        \<upharpoonleft>value_option_assn (rbt_lookup t kn) opt **
-        rbt_assn_cplx t ptrs {} ti **
-        \<upharpoonleft>key_assn kn ki)
-    "
-  apply (rule H)
-  using copy_rule lookup_ptr_to_option_correct_cplx by simp
-
-
-lemma lookup_ptr_to_option_correct [vcg_rules]:
-  assumes
-    copy_rule [vcg_rules]:
-    "\<And>v vi.
-      llvm_htriple
-      (\<upharpoonleft>value_assn v vi)
-      (value_copy vi)
-      (\<lambda>r. \<upharpoonleft>value_assn v vi ** \<upharpoonleft>value_assn v r)
-    "   
-  shows
-    "
-      rbt_sorted t \<Longrightarrow>
-      llvm_htriple
-      (rbt_assn t ti ** \<upharpoonleft>key_assn kn ki)
-      (lookup_ptr_to_option value_copy ti ki)
-      (\<lambda>opt.
-        \<upharpoonleft>value_option_assn (rbt_lookup t kn) opt **
-        rbt_assn t ti **
-        \<upharpoonleft>key_assn kn ki)
-    "
-  using lookup_ptr_to_option_correct_cplx
-  apply - 
-  apply (rule htriple_ent_pre_post[OF lookup_ptr_to_option_correct_cplx'])
-  using copy_rule apply simp
-    apply simp
-   apply (sepE isep_dest: rbt_assn_entails_rbt_assn_cplx | find_sep)+
-   apply simp_all
-  apply (sepE isep_dest: rbt_assn_cplx_entails_rbt_assn)
-  done
-
 
 end
 

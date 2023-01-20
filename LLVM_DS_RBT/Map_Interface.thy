@@ -100,7 +100,11 @@ lemmas rbt_tree_rules[vcg_rules del] =
   insert_correct
   delete_correct
 
-find_theorems Ex pure_part
+lemma pure_part_exE:
+    assumes "pure_part (\<lambda>s. \<exists>x. P x s)"
+    obtains x where "pure_part (P x)"
+  using assms unfolding pure_part_def by blast
+
 lemma rbt_map_finite: 
   "pure_part(rbt_map_assn m ti) \<Longrightarrow> finite (dom m)"
   by (auto elim!: pure_part_exE pure_part_split_conjE)
