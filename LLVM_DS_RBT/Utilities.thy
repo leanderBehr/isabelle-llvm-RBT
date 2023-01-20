@@ -40,15 +40,6 @@ lemma rbt_assn_non_null_unfold:
   using assms by (cases t; auto)
 
 
-lemma rbt_assn_cplx_non_null_unfold:
-  assumes 
-    "ti \<noteq> null"
-    "pure_part (rbt_assn_cplx t ptrs ex ti)"
-  obtains c l k v r where
-  "t = (rbt.Branch c l k v r)"
-  using assms by (cases t; auto)
-
-
 lemma non_null_rbt_assn_sepD:
   "ti \<noteq> null \<Longrightarrow> rbt_assn t ti \<turnstile> (EXS c l k v r. rbt_assn (rbt.Branch c l k v r) ti)"
   apply (cases t)

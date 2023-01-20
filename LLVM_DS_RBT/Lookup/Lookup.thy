@@ -143,48 +143,6 @@ next
 qed
 
 
-lemma lookup_correct_mem [vcg_rules]:
-  assumes
-    copy_rule [vcg_rules]:
-    "\<And>v vi.
-      llvm_htriple
-      (\<upharpoonleft>value_assn v vi)
-      (value_copy vi)
-      (\<lambda>r. \<upharpoonleft>value_assn v vi ** \<upharpoonleft>value_assn v r)
-    " and
-    "k \<notin> ex"
-  shows
-    "
-      llvm_htriple
-      (rbt_assn_cplx t ptrs ex ti ** \<upharpoonleft>key_assn k ki)
-      (lookup value_copy ti ki)
-      (\<lambda>opt.
-        \<upharpoonleft>value_option_assn (rbt_lookup t k) opt **
-        rbt_assn_cplx t ptrs ex ti **
-        \<upharpoonleft>key_assn k ki)
-    "
-proof(induction t arbitrary: ti)
-  case Empty
-  then show ?case
-    unfolding value_option_assn_def
-    apply (subst lookup.simps)
-    apply vcg
-    done
-next
-  case Branch
-
-  note [vcg_rules] = Branch.IH
-
-  from `k\<notin>ex` show ?case
-    apply (subst lookup.simps)
-    apply vcg
-    unfolding value_option_assn_def
-    apply vcg_compat
-    apply (sep | simp)+
-    done
-qed
-
-
 partial_function (M) lookup_ptr ::
   "('ki, 'vi) rbti \<Rightarrow> 'ki \<Rightarrow> ('ki, 'vi) rbti llM" where
   "lookup_ptr node_p k = do {
@@ -202,68 +160,11 @@ partial_function (M) lookup_ptr ::
   }"
 
 
-lemma lookup_ptr_rule [vcg_rules]:
-  "
-    rbt_sorted t \<Longrightarrow>
-    llvm_htriple
-    (rbt_assn_cplx t ptrs ex ti ** \<upharpoonleft>key_assn kn ki)
-    (lookup_ptr ti ki)
-    (\<lambda>ptr. rbt_assn_cplx t ptrs ex ti ** \<upharpoonleft>key_assn kn ki **
-      \<up>(if ptr = null then kn \<notin> rbt_key_set t else ptr = fst (the (ptrs kn)) \<and> kn \<in> rbt_key_set t ))
-  "
-proof(induction t arbitrary: ti)
-  case Empty
-  then show ?case 
-    apply(subst lookup_ptr.simps)
-    apply vcg
-    done
-next
-  case (Branch c l k v r)
-  
-  note Branch[vcg_rules]
-
-  from Branch(3) show ?case
-    apply(subst lookup_ptr.simps)
-    apply vcg
-    subgoal
-      apply vcg_compat
-      apply (sep | find_sep)+
-      unfolding rbt_greater_prop apply auto
-      done
-
-    apply vcg
-    subgoal
-      apply vcg_compat
-      apply (sep | find_sep)+
-      unfolding rbt_less_prop apply auto
-      done
-
-    apply vcg
-    done
-qed
-
-
 lemma H: 
   "(\<And>x. llvm_htriple (P x) C (\<lambda>r. Q x r)) \<Longrightarrow>
   llvm_htriple (EXS x. P x) C (\<lambda>r. EXS x. Q x r) "
   unfolding htriple_def wpa_def STATE_def NEMonad.wp_def Sep_Generic_Wp.wp_def
   by blast
-
-
-(*
-lemma lookup_ptr_rule':
-"
-    rbt_sorted t \<Longrightarrow>
-    llvm_htriple
-    (EXS ptrs ex. rbt_assn_cplx t ptrs ex ti ** \<upharpoonleft>key_assn kn ki)
-    (lookup_ptr ti ki)
-    (\<lambda>ptr. EXS ptrs ex. rbt_assn_cplx t ptrs ex ti ** \<upharpoonleft>key_assn kn ki ** \<up>(if ptr = null then kn \<notin> rbt_key_set t else ptr = the (ptrs kn)))
-"
-  apply (rule H)+
-  apply (rule lookup_ptr_rule)
-  apply assumption
-  done
-*)
 
 
 lemma rbt_lookup_none_keys:

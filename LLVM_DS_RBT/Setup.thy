@@ -321,27 +321,6 @@ interpretation rbt_impl_deps .
 
 subsection \<open>RBT Assertion\<close>
 
-
-fun rbt_assn_cplx where
-  "rbt_assn_cplx rbt.Empty ptrs ex p = \<up>(p = null)"
-| "rbt_assn_cplx (rbt.Branch col lhs k v rhs) ptrs ex p =
-  (
-    EXS coli lhsi ki vi rhsi. 
-      \<up>(ptrs k = Some (p, vi)) **
-      \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) p **
-      color_assn col coli **
-      rbt_assn_cplx lhs ptrs ex lhsi **
-      \<upharpoonleft>key_assn k ki **
-      (if k \<in> ex then \<box> else \<upharpoonleft>value_assn v vi) **
-      rbt_assn_cplx rhs ptrs ex rhsi
-  )
-  "
-declare rbt_assn_cplx.simps(2)[simp del]
-lemmas rbt_assn_cplx_unfold = rbt_assn_cplx.simps(2)
-
-fun rbt_assn_cplx_full where "rbt_assn_cplx_full t ptrs ex ti = (rbt_assn_cplx t ptrs ex ti ** \<up>(is_rbt t))"
-
-
 fun rbt_assn :: "
   ('k, 'v) rbt \<Rightarrow>
   ('ki, 'vi) rbti \<Rightarrow>
@@ -362,86 +341,6 @@ lemmas rbt_assn_unfold = rbt_assn.simps(2)
 
 fun rbt_assn_full where "rbt_assn_full t ti = (rbt_assn t ti ** \<up>(is_rbt t))"
 
-
-lemma rbt_assn_cplx_entails_rbt_assn:
-  "rbt_assn_cplx t ptrs {} ti \<turnstile> rbt_assn t ti"
-  apply (induction t arbitrary: ti)
-  subgoal by (simp add: rbt_assn_unfold rbt_assn_cplx_unfold)
-  subgoal premises prems
-    apply (simp add: rbt_assn_unfold rbt_assn_cplx_unfold)
-    apply (sepE isep_intro: prems)
-    done
-  done
-
-
-lemma rbt_assn_cpxl_full_entails_rbt_assn_full:
-  "rbt_assn_cplx_full t ptrs {} ti \<turnstile> rbt_assn_full t ti"
-  apply simp
-  apply (sepEwith simp isep_dest: rbt_assn_cplx_entails_rbt_assn)
-  done
-
-
-lemma ptrs_upd_rbt_assn_cplx_sepI:
-  "kn \<notin> rbt_key_set t \<Longrightarrow>
-   rbt_assn_cplx t ptrs ex ti \<turnstile> rbt_assn_cplx t (\<lambda>x. if x = kn then p else ptrs x) ex ti"
-proof (induction t arbitrary: ti p)
-  case Empty show ?case by (simp add: rbt_assn_cplx_unfold)
-next
-  case (Branch c l k v r)
-  from Branch(3) show ?case
-    apply (auto simp add: rbt_assn_cplx_unfold split del: if_split) (*don't split if, it matches exactly*)
-    apply (sepEwith simp isep_intro: Branch(1-2))
-    done
-qed
-
-
-lemma
-  ptrs_add_left_rbt_assn_cplx_sepI:
-  "dom ptrs2 \<inter> rbt_key_set t = {} \<Longrightarrow>
-  rbt_assn_cplx t ptrs1 ex ti \<turnstile> rbt_assn_cplx t (ptrs1 ++ ptrs2) ex ti"
-proof (induction t arbitrary: ti)
-  case Empty
-  then show ?case by (simp add: rbt_assn_cplx_unfold)
-next
-  case (Branch c l k v r)
-
-  from Branch(3) have l_int: "dom ptrs2 \<inter> set (RBT_Impl.keys l) = {}" by auto
-  from Branch(3) have r_int: "dom ptrs2 \<inter> set (RBT_Impl.keys r) = {}" by auto
-
-
-  note IH_l = Branch(1)[OF l_int]
-  note IH_r = Branch(2)[OF r_int]
-
-  show ?case
-    apply (simp add: rbt_assn_cplx_unfold split del: if_split)
-    apply (sepE isep_dest: IH_l IH_r | find_sep)+
-    using Branch(3) by simp
-qed
-
-
-lemma ptrs_add_right_rbt_assn_cplx_sepI:
-  "dom ptrs1 \<inter> set (RBT_Impl.keys t) = {} \<Longrightarrow>
-  rbt_assn_cplx t ptrs2 ex ti \<turnstile> rbt_assn_cplx t (ptrs1 ++ ptrs2) ex ti"
-proof (induction t arbitrary: ti)
-  case Empty
-  then show ?case by (simp add: rbt_assn_cplx_unfold)
-next
-  case (Branch c l k v r)
-
-  from Branch(3) have l_int: "dom ptrs1 \<inter> set (RBT_Impl.keys l) = {}" by auto
-  from Branch(3) have r_int: "dom ptrs1 \<inter> set (RBT_Impl.keys r) = {}" by auto
-
-
-  note IH_l = Branch(1)[OF l_int]
-  note IH_r = Branch(2)[OF r_int]
-
-  show ?case
-    apply (simp add: rbt_assn_cplx_unfold split del: if_split)
-    apply (sepE isep_dest: IH_l IH_r | find_sep)+
-    using Branch(3) by simp
-qed
-
-
 lemma rbt_sorted_key_uniqI:
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys l)"
   "rbt_sorted (Branch c l k v r) \<Longrightarrow> k \<notin> set (RBT_Impl.keys r)"
@@ -457,56 +356,12 @@ lemma rbt_sorted_subtrees_disjoint:
   by fastforce
 
 
-lemma rbt_assn_entails_rbt_assn_cplx:
-  "rbt_sorted t \<Longrightarrow> rbt_assn t ti \<turnstile> (EXS ptrs. rbt_assn_cplx t ptrs {} ti ** \<up>(dom ptrs = set (RBT_Impl.keys t)))"
-proof(induction t arbitrary: ti)
-  case Empty
-  then show ?case
-    apply -
-    apply (sepEwith simp)
-    apply (simp add: rbt_assn_unfold rbt_assn_cplx_unfold)
-    done
-next
-  case (Branch c l k v r)
-  show ?case
-    apply (simp add: rbt_assn_unfold rbt_assn_cplx_unfold)
-    apply (sep isep_dest: Branch(1-2) | find_sep)+
-      apply simp
-    subgoal for x xa xb xc xd ptrs1 ptrs2
-      apply (isep_intro_ex_with "(ptrs1 ++ ptrs2)(k \<mapsto> (ti, ?x))")
-      apply simp
-      apply isep_intro_ex
-      apply (simp add: fun_upd_def)
-      apply 
-        (
-          (sep
-            isep_intro:
-            ptrs_upd_rbt_assn_cplx_sepI
-            ptrs_add_left_rbt_assn_cplx_sepI
-            ptrs_add_right_rbt_assn_cplx_sepI | find_sep)+;
-          sep_solves
-          )
-      apply auto[2]
-      apply (meson Branch.prems rbt_sorted_key_uniqI(1)) 
-      apply (metis Branch.prems Int_commute rbt_sorted_subtrees_disjoint)
-      apply (meson Branch.prems rbt_sorted_key_uniqI(2))
-      using rbt_sorted_subtrees_disjoint Branch(3) apply fast+
-      done
-    using Branch(3) apply auto
-    done
-qed
-
-
 lemma [simp]: "rbt_assn t null = \<up>(t=rbt.Empty)"
   by (cases t; simp add: rbt_assn_unfold pure_true_conv)
 
 
 lemma [simp]: "rbt_assn_full t null = \<up>(t=rbt.Empty)"
   by (cases t; simp add: pure_true_conv)
-
-
-lemma [simp]: "rbt_assn_cplx t ptrs ex null = \<up>(t=rbt.Empty)"
-  by (cases t; simp add: rbt_assn_cplx_unfold pure_true_conv)
 
 
 subsection \<open>Load Rule\<close>
@@ -557,27 +412,6 @@ lemma load_rbt_non_null:
   done
 
 
-lemma load_rbt_cplx [vcg_rules]:
-  "
-    llvm_htriple
-    (rbt_assn_cplx (Branch col lhs k v rhs) ptrs ex ti)
-    (ll_load ti)
-    (\<lambda>r.
-      EXS coli lhsi ki vi rhsi.
-        \<up>(ptrs k = Some (ti, vi)) **
-        \<upharpoonleft>ll_bpto (RBT_NODE coli lhsi ki vi rhsi) ti **
-        color_assn col coli **
-        rbt_assn_cplx lhs ptrs ex lhsi **
-        \<upharpoonleft>key_assn k ki **
-        (if k \<in> ex then \<box> else \<upharpoonleft>value_assn v vi) **  
-        rbt_assn_cplx rhs ptrs ex rhsi **
-        \<up>(r = RBT_NODE coli lhsi ki vi rhsi)
-    )
-  "
-  unfolding rbt_assn_cplx_unfold
-  by vcg
-
-
 subsection \<open>Reduction Rules\<close>
 
 
@@ -601,31 +435,6 @@ lemma unfold_rbt_assn_red_rule [fri_red_rules]:
     *)
     done
   done
-
-
-lemma unfold_rbt_assn_cplx_red_rule [fri_red_rules]: 
-  "
-    is_sep_red
-    \<box>
-    (
-      \<up>(ptrs k = Some (ti, vi)) **
-      color_assn c ci **
-      rbt_assn_cplx l ptrs ex li **
-      \<upharpoonleft>key_assn k ki **
-      (if k \<in> ex then \<box> else \<upharpoonleft>value_assn v vi) **
-      rbt_assn_cplx r ptrs ex ri
-    )
-    (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
-    (rbt_assn_cplx (rbt.Branch c l k v r) ptrs ex ti)
-  "
-  apply (rule is_sep_redI)
-  subgoal premises prems
-    apply (isep_drule drule: prems)
-    unfolding rbt_assn_cplx_unfold
-    apply sepE
-    done
-  done
-
 
 subsection \<open>Empty Constructor\<close>
 
