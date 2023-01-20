@@ -15,8 +15,7 @@ definition "load p \<equiv> do { n \<leftarrow> ll_load p; return rbt_node.val n
 lemma rbt_ptr_load_correct [vcg_rules]:
   assumes
     "rbt_sorted (rbt_of t)" and
-    "(kn, VALUE_EX) \<notin> ex" and
-    "(kn, PTO_EX) \<notin> ex"
+    "(kn, VALUE_EX) \<notin> ex"
   shows
     "
     llvm_htriple
@@ -44,13 +43,13 @@ next
     moreover from less ATBranch have "kn \<guillemotleft>| rbt_of ar" by (auto intro: rbt_greater_trans)
     moreover from less have "k \<noteq> kn" by blast
 
-    ultimately show ?thesis using ATBranch(3-5)
+    ultimately show ?thesis using ATBranch(3-4)
       supply ptr_of_key.simps[simp]      
       apply vcg
       done
   next
     case equal
-    with ATBranch(3-5) show ?thesis
+    with ATBranch(3-4) show ?thesis
       unfolding load_def
       supply ptr_of_key.simps[simp]
       apply vcg
@@ -62,7 +61,7 @@ next
     moreover from greater ATBranch have "rbt_of al |\<guillemotleft> kn" by (auto intro: rbt_less_trans)
     moreover from greater have "k \<noteq> kn" by blast
 
-    ultimately show ?thesis using ATBranch(3-5)
+    ultimately show ?thesis using ATBranch(3-4)
       supply ptr_of_key.simps[simp]
       apply vcg
       apply simp
@@ -80,7 +79,6 @@ lemma store_correct [vcg_rules]:
   assumes
     "rbt_sorted (rbt_of t)" and
     "(kn, VALUE_EX) \<in> ex" and
-    "(kn, PTO_EX) \<notin> ex" and
     "ptr_of_key t ti kn = Some p"
   shows
     "
@@ -103,30 +101,22 @@ next
   proof(cases k kn rule: linorder_cases)
     case less
     note ATBranch(2)[vcg_rules]
-    from less ATBranch(6) have "ptr_of_key r ri kn = Some p"
+    from less ATBranch(5) have "ptr_of_key r ri kn = Some p"
       by (simp add: order_less_not_sym ptr_of_key.simps)
-    with less ATBranch(3-5) show ?thesis
+    with less ATBranch(3-4) show ?thesis
       apply vcg
       apply vcg_compat
-      apply (sepE | find_sep)+
-
-      subgoal by blast
-
-      subgoal for x
-        apply (rule ext)
-        unfolding ptr_of_key.simps
-        by (auto, metis)
-
+      apply (sepEwith \<open>simp add: ptr_of_key_simps\<close> | find_sep)+ 
       apply (rule ext)
-      subgoal for asf sa x xa
+      subgoal for x xa
         apply (drule fun_cong[where x = xa])+
         apply (auto simp add: value_of_key.simps)
         done
       done
   next
     case equal
-    with ATBranch(6) have "p = ti" by (simp add: ptr_of_key.simps) 
-    with ATBranch(3-5) equal show ?thesis
+    with ATBranch(5) have "p = ti" by (simp add: ptr_of_key.simps) 
+    with ATBranch(3-4) equal show ?thesis
       unfolding store_def
       unfolding rbt_assn_ext_unfold
       apply vcg
@@ -137,22 +127,14 @@ next
   next
     case greater
     note ATBranch(1)[vcg_rules]
-    from greater ATBranch(6) have "Some p = ptr_of_key l li kn"
+    from greater ATBranch(5) have "Some p = ptr_of_key l li kn"
       by (auto simp add: ptr_of_key.simps)
-    with greater ATBranch(3-5) show ?thesis
+    with greater ATBranch(3-4) show ?thesis
       apply vcg
       apply vcg_compat
-      apply (sepE | find_sep)+
-
-      subgoal by blast
-
-      subgoal for x
-        apply (rule ext)
-        unfolding ptr_of_key.simps
-        by (auto, metis)
-
+      apply (sepEwith \<open>simp add: ptr_of_key_simps\<close> | find_sep)+ 
       apply (rule ext)
-      subgoal for asf sa x xa
+      subgoal for x xa
         apply (drule fun_cong[where x = xa])+
         apply (auto simp add: value_of_key.simps)
         done
