@@ -1,4 +1,4 @@
-theory Lookup_Extended_Assertion
+theory Lookup_Ext
   imports 
     Lookup
     "../Extended_Assertion"

@@ -1,4 +1,4 @@
-theory Combine_Ext
+theory Combine_Opt_Ext
   imports
     Combine_Opt
     Balance_Opt_LR_Ext

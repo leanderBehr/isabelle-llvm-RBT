@@ -2,7 +2,7 @@ theory Delete_Opt_Ext
   imports 
     Delete_Opt
     Balance_Opt_LR_Ext
-    Combine_Ext
+    Combine_Opt_Ext
     "../../Assertion_Tree_Lookup"
     "../../Utilities_Ext"
 begin

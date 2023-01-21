@@ -3,7 +3,7 @@ theory Load_Store_Example
     Extended_Assertion
     Utilities_Ext
     Assertion_Tree_Lookup
-    Lookup_Extended_Assertion
+    Lookup_Ext
     "Insert/Alloc_Optimized/Insert_Opt_Ext"
     "Delete/Alloc_Optimized/Delete_Opt_Ext"
     Extended_Assertion_Exceptions
