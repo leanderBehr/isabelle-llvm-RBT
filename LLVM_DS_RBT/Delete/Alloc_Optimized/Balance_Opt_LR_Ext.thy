@@ -10,14 +10,6 @@ begin
 context rbt_impl
 begin
 
-definition
-  "balance_left_valid c l k v r \<equiv>
-    \<exists>ln kn vn rn.
-    inv1 (Branch c (Branch color.B ln kn vn rn) k v r) \<and>
-    inv2 (Branch c (Branch color.B ln kn vn rn) k v r) \<and>
-    rbt_sorted (Branch c l k v r)
-  " 
-
 lemma balance_left_opt_ext_correct':
   "
   llvm_htriple
@@ -28,8 +20,12 @@ lemma balance_left_opt_ext_correct':
     \<upharpoonleft>value_assn v vi **
     rbt_assn_ext r {} ri **
     color_assn c ci **
-    \<up>(rbt_sorted (Branch c (rbt_of l) k v (rbt_of r))) ** \<up>(rbt_of l = rbt_del k' l_pre) ** \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) l_pre) ** 
-    \<up>(inv1 (Branch c l_pre k v (rbt_of r))) ** \<up>(inv2 (Branch c l_pre k v (rbt_of r)))
+    \<up>(rbt_sorted (Branch c (rbt_of l) k v (rbt_of r))) **
+    
+    \<up>(rbt_of l = rbt_del k' l_pre) **
+    \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) l_pre) ** 
+    \<up>(inv1 (Branch c l_pre k v (rbt_of r))) **
+    \<up>(inv2 (Branch c l_pre k v (rbt_of r)))
   )
   (balance_left_opt n_p)
   (\<lambda>res_ti. EXS res_t.
@@ -48,7 +44,6 @@ lemma balance_left_opt_ext_correct':
     rotate_right_def
     left_def
     right_def
-    balance_left_valid_def
   supply sep_context_pureI[fri_red_rules]
   apply vcg
   subgoal (*case 1*)
@@ -103,13 +98,6 @@ lemma balance_left_opt_ext_correct':
     done
   done
 
-definition
-  "balance_right_valid c l k v r \<equiv>
-    \<exists>ln kn vn rn.
-    inv1 (Branch c l k v (Branch color.B ln kn vn rn)) \<and>
-    inv2 (Branch c l k v (Branch color.B ln kn vn rn)) \<and>
-    rbt_sorted (Branch c l k v r)
-  "
 
 lemmas balance_left_opt_ext_correct[vcg_rules] = balance_left_opt_ext_correct'[simplified ctx_def]
 
@@ -123,8 +111,12 @@ lemma balance_right_opt_ext_correct':
     \<upharpoonleft>value_assn v vi **
     rbt_assn_ext r {} ri **
     color_assn c ci **
-    \<up>(rbt_sorted (Branch c (rbt_of l) k v (rbt_of r))) ** \<up>(rbt_of r = rbt_del k' r_pre) ** \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) r_pre) ** 
-    \<up>(inv1 (Branch c (rbt_of l) k v r_pre)) ** \<up>(inv2 (Branch c (rbt_of l) k v r_pre))
+    \<up>(rbt_sorted (Branch c (rbt_of l) k v (rbt_of r))) **
+
+    \<up>(rbt_of r = rbt_del k' r_pre) ** 
+    \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) r_pre) **
+    \<up>(inv1 (Branch c (rbt_of l) k v r_pre)) **
+    \<up>(inv2 (Branch c (rbt_of l) k v r_pre))
   )
   (balance_right_opt n_p)
   (\<lambda>res_ti. EXS res_t.
@@ -143,7 +135,6 @@ lemma balance_right_opt_ext_correct':
     rotate_right_def
     left_def
     right_def
-    balance_right_valid_def
   supply sep_context_pureI[fri_red_rules]
   apply vcg
   subgoal (*case 1*)
@@ -232,7 +223,6 @@ lemma balance_left_opt_ext_combine_correct':
     rotate_right_def
     left_def
     right_def
-    balance_left_valid_def
   supply sep_context_pureI[fri_red_rules]
   apply vcg
   subgoal (*case 1*)
