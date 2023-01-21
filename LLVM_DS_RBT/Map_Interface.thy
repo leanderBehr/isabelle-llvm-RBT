@@ -1,8 +1,8 @@
 theory Map_Interface
   imports 
     "Lookup/Lookup"
-    "Insert/Insert"
-    "Delete/Delete"
+    "Insert/Alloc_Optimized/Insert_Opt"
+    "Delete/Alloc_Optimized/Delete_Opt"
     "Separation_Logic_Solver/Methods"
 begin
 
@@ -70,12 +70,39 @@ lemma insert_map_rule:
     apply (simp_all add: rbt_lookup_rbt_insert)
     done
 
+lemma insert_opt_map_rule:
+  "
+    llvm_htriple
+    (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi)
+    (insert_opt ki vi ti)
+    (\<lambda>r. rbt_map_assn (m(k \<mapsto> v)) r)
+  "
+    apply vcg
+    apply vcg_compat
+    apply (sepEwith simp)
+    apply (simp_all add: rbt_lookup_rbt_insert)
+    done
+
 
 lemma delete_map_rule:
   "
     llvm_htriple
     (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
     (delete ki ti)
+    (\<lambda>r. rbt_map_assn (m |` (-{k})) r ** \<upharpoonleft>key_assn k ki)
+  "
+    apply vcg
+    apply vcg_compat
+    apply (sepEwith simp)
+    apply (simp_all add: rbt_lookup_rbt_delete)
+  done
+
+
+lemma delete_opt_map_rule:
+  "
+    llvm_htriple
+    (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
+    (delete_opt ki ti)
     (\<lambda>r. rbt_map_assn (m |` (-{k})) r ** \<upharpoonleft>key_assn k ki)
   "
     apply vcg
@@ -91,7 +118,8 @@ lemmas rbt_map_rules[vcg_rules] =
   lookup_map_rule
   insert_map_rule
   delete_map_rule
-
+  insert_opt_map_rule
+  delete_opt_map_rule
 
 lemmas rbt_tree_rules[vcg_rules del] =
   empty_correct
@@ -99,6 +127,8 @@ lemmas rbt_tree_rules[vcg_rules del] =
   lookup_correct
   insert_correct
   delete_correct
+  insert_opt_correct
+  delete_opt_correct
 
 lemma pure_part_exE:
     assumes "pure_part (\<lambda>s. \<exists>x. P x s)"

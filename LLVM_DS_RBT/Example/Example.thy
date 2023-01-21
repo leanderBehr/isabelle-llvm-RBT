@@ -93,7 +93,7 @@ partial_function (M) make_index_mapping' where [llvm_code]:
       m \<leftarrow> make_index_mapping' strs ip1;
       str \<leftarrow> arl_nth strs i;
       str_copy \<leftarrow> copy.arl_copy str;
-      map.insert str_copy i m
+      map.insert_opt str_copy i m
     }
     else map.empty
   }"
@@ -110,7 +110,7 @@ definition make_index_mapping'' where [llvm_code]:
       {
         str \<leftarrow> arl_nth strs i;
         str_copy \<leftarrow> copy.arl_copy str;
-        map.insert str_copy i m
+        map.insert_opt str_copy i m
       }
     )
     empty_map
