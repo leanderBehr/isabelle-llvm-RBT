@@ -55,8 +55,8 @@ partial_function (M) insert' ::
             if! lt_impl k k\<^sub>n
             then! do { r\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n r; new (RBT_NODE 0 l k v r\<^sub>n) }
             else! do {
-              key_delete k;
-              value_delete v;
+              key_free k;
+              value_free v;
               new (RBT_NODE 0 l k\<^sub>n v\<^sub>n r)
             }
           }
@@ -68,8 +68,8 @@ partial_function (M) insert' ::
             if! lt_impl k k\<^sub>n
             then! do { r\<^sub>n \<leftarrow> insert' k\<^sub>n v\<^sub>n r; balance l k v r\<^sub>n }
             else! do {
-              key_delete k;
-              value_delete v;
+              key_free k;
+              value_free v;
               new (RBT_NODE 1 l k\<^sub>n v\<^sub>n r)
             }
           }

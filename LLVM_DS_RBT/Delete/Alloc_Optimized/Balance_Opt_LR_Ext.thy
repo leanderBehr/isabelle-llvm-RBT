@@ -22,7 +22,7 @@ lemma balance_left_opt_ext_correct':
     color_assn c ci **
     \<up>(rbt_sorted (Branch c (rbt_of l) k v (rbt_of r))) **
     
-    \<up>(rbt_of l = rbt_del k' l_pre) **
+    
     \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) l_pre) ** 
     \<up>(inv1 (Branch c l_pre k v (rbt_of r))) **
     \<up>(inv2 (Branch c l_pre k v (rbt_of r)))
@@ -32,7 +32,8 @@ lemma balance_left_opt_ext_correct':
     rbt_assn_ext res_t {} res_ti **
     \<up>(rbt_of res_t = rbt_balance_left (rbt_of l) k v (rbt_of r)) **
     ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p)
+    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
+    \<up>(value_of_key res_t res_ti = value_of_key (ATBranch c k v ci li ki vi ri l r) n_p)
   )
   "
   unfolding 
@@ -49,6 +50,7 @@ lemma balance_left_opt_ext_correct':
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
               apply auto
+     supply value_of_key_simps[simp]
      apply vcg
     done
   subgoal (*case 2+*)
@@ -57,7 +59,11 @@ lemma balance_left_opt_ext_correct':
     subgoal (*case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
                 apply auto
-       apply vcg
+      subgoal by (timeit vcg_vok)
+      subgoal by (timeit vcg_vok)
+      subgoal by (timeit vcg_vok)
+      subgoal by (timeit vcg_vok)
+
       done
     subgoal (*case 3+*)
       apply vcg
@@ -65,6 +71,7 @@ lemma balance_left_opt_ext_correct':
         apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
                   apply auto
          supply ptr_of_key_simps[simp]
+         supply value_of_key_simps[simp]
          supply load_rbt_non_null[vcg_rules]
          supply ptr_of_key_eqI[rule del]
 
@@ -113,7 +120,6 @@ lemma balance_right_opt_ext_correct':
     color_assn c ci **
     \<up>(rbt_sorted (Branch c (rbt_of l) k v (rbt_of r))) **
 
-    \<up>(rbt_of r = rbt_del k' r_pre) ** 
     \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) r_pre) **
     \<up>(inv1 (Branch c (rbt_of l) k v r_pre)) **
     \<up>(inv2 (Branch c (rbt_of l) k v r_pre))
@@ -123,7 +129,8 @@ lemma balance_right_opt_ext_correct':
     rbt_assn_ext res_t {} res_ti **
     \<up>(rbt_of res_t = rbt_balance_right (rbt_of l) k v (rbt_of r)) **
     ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p)
+    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
+    \<up>(value_of_key res_t res_ti = value_of_key (ATBranch c k v ci li ki vi ri l r) n_p)
   )
   "
   unfolding 
@@ -140,6 +147,7 @@ lemma balance_right_opt_ext_correct':
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
               apply auto
+     supply value_of_key_simps[simp]
      apply vcg
     done
   subgoal (*case 2+*)
@@ -148,7 +156,10 @@ lemma balance_right_opt_ext_correct':
     subgoal (*case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
                 apply auto
-       apply vcg
+      subgoal by (timeit vcg_vok)
+      subgoal by (timeit vcg_vok)
+      subgoal by (timeit vcg_vok)
+      subgoal by (timeit vcg_vok)
       done
     subgoal (*case 3+*)
       apply vcg
@@ -157,6 +168,7 @@ lemma balance_right_opt_ext_correct':
                   apply auto
 
          supply ptr_of_key_simps[simp]
+         supply value_of_key_simps[simp]
          supply load_rbt_non_null[vcg_rules]
          supply ptr_of_key_eqI[rule del]
 
@@ -183,8 +195,7 @@ lemma balance_right_opt_ext_correct':
         done
       subgoal (*case 4*)
         apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
-                  apply (auto elim: matches_rbt.elims)
-        done
+        by (auto elim: matches_rbt.elims)
       done
     done
   done
@@ -211,7 +222,8 @@ lemma balance_left_opt_ext_combine_correct':
     rbt_assn_ext res_t {} res_ti **
     \<up>(rbt_of res_t = rbt_balance_left (rbt_of l) k v (rbt_of r)) **
     ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p)
+    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
+    \<up>(value_of_key res_t res_ti = value_of_key (ATBranch c k v ci li ki vi ri l r) n_p)
   )
   "
   unfolding 
@@ -228,7 +240,8 @@ lemma balance_left_opt_ext_combine_correct':
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
               apply auto
-     apply vcg
+    supply value_of_key_simps[simp]
+    apply vcg
     done
   subgoal (*case 2+*)
     apply vcg
@@ -236,6 +249,7 @@ lemma balance_left_opt_ext_combine_correct':
     subgoal (*case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
                 apply auto
+       supply value_of_key_simps[simp]
        apply vcg
       done
     apply vcg (*all other cases unreachable*)

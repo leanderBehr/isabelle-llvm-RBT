@@ -8,7 +8,7 @@ context rbt_impl
 begin
 
 lemma rbt_less_value_ex_eq_2 [simp]:
-  "rbt_of t |\<guillemotleft> kn \<Longrightarrow> rbt_assn_ext t (ex - {(kn, VALUE_EX)}) ti = rbt_assn_ext t ex ti"
+  "rbt_of t |\<guillemotleft> kn \<Longrightarrow> rbt_assn_ext t (ex - {kn}) ti = rbt_assn_ext t ex ti"
 proof (induction t arbitrary: ti)
   case ATEmpty
   show ?case by simp
@@ -24,11 +24,11 @@ next
 qed
 
 lemma rbt_less_value_ex_eq_1 [simp]:
-  "rbt_of t |\<guillemotleft> kn \<Longrightarrow> rbt_assn_ext t (Set.insert (kn, VALUE_EX) ex) ti = rbt_assn_ext t ex ti"
+  "rbt_of t |\<guillemotleft> kn \<Longrightarrow> rbt_assn_ext t (Set.insert kn ex) ti = rbt_assn_ext t ex ti"
   apply (subst rbt_less_value_ex_eq_2[symmetric]) by simp+
 
 lemma rbt_greater_value_ex_eq_2 [simp]:
-  "kn \<guillemotleft>| rbt_of t \<Longrightarrow> rbt_assn_ext t (ex - {(kn, VALUE_EX)}) ti = rbt_assn_ext t ex ti"
+  "kn \<guillemotleft>| rbt_of t \<Longrightarrow> rbt_assn_ext t (ex - {kn}) ti = rbt_assn_ext t ex ti"
 proof (induction t arbitrary: ti)
   case ATEmpty
   show ?case by simp
@@ -44,18 +44,94 @@ next
 qed
 
 lemma rbt_greater_value_ex_eq_1 [simp]:
-  "kn \<guillemotleft>| rbt_of t \<Longrightarrow> rbt_assn_ext t (Set.insert (kn, VALUE_EX) ex) ti = rbt_assn_ext t ex ti"
+  "kn \<guillemotleft>| rbt_of t \<Longrightarrow> rbt_assn_ext t (Set.insert kn ex) ti = rbt_assn_ext t ex ti"
   apply (subst rbt_greater_value_ex_eq_2[symmetric]) by simp+
+
+lemma value_ex_split_ent:
+  assumes
+    "kn \<notin> ex" and
+    "value_of_key t ti kn = Some vi" and
+    "rbt_sorted (rbt_of t)"
+  shows
+    "
+      rbt_assn_ext t ex ti \<turnstile> rbt_assn_ext t (ex \<union> {kn}) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) vi
+    "
+  using assms
+proof(induction t arbitrary: ti)
+  case ATEmpty
+  then show ?case by (simp add: value_of_key.simps)
+next
+  case (ATBranch c k v ci li ki vi ri l r)
+  then show ?case
+      proof(cases kn k rule: linorder_cases)
+        case less
+
+        note ATBranch(1)[isep_dest]
+
+        from less have "k \<noteq> kn" by simp
+        moreover from less ATBranch(5) have "kn \<guillemotleft>| rbt_of r"
+          using rbt_greater_trans by auto
+
+        ultimately show ?thesis using less ATBranch(3-5)
+          unfolding rbt_assn_ext_unfold
+          apply simp
+          apply (sepwith \<open>simp add: value_of_key.simps\<close>)
+          apply simp
+          done
+      next
+        case equal
+        with ATBranch show ?thesis
+          unfolding rbt_assn_ext_unfold
+          apply -
+          apply (sepEwith \<open>auto intro: rbt_less_trans rbt_greater_trans\<close>)
+          apply (simp add: value_of_key.simps)
+          apply sep
+          done
+      next
+        case greater
+        
+        note ATBranch(2)[isep_dest]
+
+        from greater have "k \<noteq> kn" by simp
+        moreover from greater ATBranch(5) have "rbt_of l |\<guillemotleft> kn"
+          using rbt_less_trans by auto
+
+        ultimately show ?thesis using greater ATBranch(3-5)
+          unfolding rbt_assn_ext_unfold
+          apply auto[]
+          apply (sepwith \<open>simp add: order_less_not_sym value_of_key.simps\<close>)
+          apply simp
+          done
+      qed
+qed
+
+
+lemma value_ex_split_red:
+  assumes
+    "kn \<notin> ex" and
+    "value_of_key t ti kn = Some vi" and
+    "rbt_sorted (rbt_of t)"
+  shows
+    "
+      is_sep_red (rbt_assn_ext t (ex \<union> {kn}) ti) \<box> (rbt_assn_ext t ex ti) (\<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) vi)
+    "
+  apply (rule is_sep_redI)
+  subgoal premises prems
+    apply (sep isep_dest: value_ex_split_ent)
+    using assms apply auto
+    apply (sep isep_dest: prems[simplified])
+    done
+  done
 
 lemma value_ex_join_ent:
   assumes
-    "(kn, VALUE_EX) \<in> ex" and
+    "kn \<in> ex" and
     "value_of_key t1 ti kn = Some vi" and
     "rbt_sorted (rbt_of t1)"
   shows
     "
     rbt_assn_ext t1 ex ti ** \<upharpoonleft>value_assn v vi \<turnstile> 
-    (EXS t2. rbt_assn_ext t2 (ex - {(kn, VALUE_EX)}) ti ** \<up>(rbt_of t2 = rbt_update (rbt_of t1) kn v))
+    (EXS t2. rbt_assn_ext t2 (ex - {kn}) ti ** \<up>(rbt_of t2 = rbt_update (rbt_of t1) kn v))
     "
   using assms
 proof (induction t1 arbitrary: ti)
@@ -83,14 +159,11 @@ next
       done
   next
     case equal
-    with ATBranch(4) show ?thesis
-      apply -
-      apply sepE
-       apply auto[]
+    with ATBranch(3-5) show ?thesis
       unfolding rbt_assn_ext_unfold
-      apply sep
-      using ATBranch(5) rbt_less_trans rbt_greater_trans apply auto[]
-      using ATBranch(3) apply (simp add: value_of_key.simps) 
+      apply -
+      apply (sepEwith \<open>auto intro: rbt_less_trans rbt_greater_trans\<close>)
+      apply (simp add: value_of_key.simps)
       apply sep
       done
   next
@@ -115,9 +188,9 @@ next
 qed
 
 lemma value_ex_join_red:
-  "rbt_sorted (rbt_of t1) \<Longrightarrow> (k, VALUE_EX) \<in> ex \<Longrightarrow> (k, VALUE_EX) \<notin> ex' \<Longrightarrow> value_of_key t1 ti k = Some vi \<Longrightarrow>
+  "rbt_sorted (rbt_of t1) \<Longrightarrow> k \<in> ex \<Longrightarrow> k \<notin> ex' \<Longrightarrow> value_of_key t1 ti k = Some vi \<Longrightarrow>
   is_sep_red
-  (EXS t2. rbt_assn_ext t2 (ex - {(k, VALUE_EX)}) ti ** \<up>(rbt_of t2 = rbt_update (rbt_of t1) k v))
+  (EXS t2. rbt_assn_ext t2 (ex - {k}) ti ** \<up>(rbt_of t2 = rbt_update (rbt_of t1) k v))
   (EXS t3. rbt_assn_ext t3 ex' ti)
   (rbt_assn_ext t1 ex ti ** \<upharpoonleft>value_assn v vi)
   (EXS t3. rbt_assn_ext t3 ex' ti)

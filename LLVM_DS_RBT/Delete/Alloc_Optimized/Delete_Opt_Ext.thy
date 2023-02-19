@@ -10,8 +10,6 @@ begin
 context rbt_impl
 begin
 
-abbreviation "is_rbt_node t \<equiv> inv1 t \<and> inv2 t \<and> rbt_sorted t"
-
 lemma del_opt_correct_ext':
   "
   llvm_htriple
@@ -22,7 +20,8 @@ lemma del_opt_correct_ext':
     \<upharpoonleft>key_assn k ki **
     \<up>(rbt_of t_res = rbt_del_ad k (rbt_of t)) **
     ctx(rbt_sorted (rbt_of t_res)) **
-    \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key t_res ti_res)
+    \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key t_res ti_res) **
+    \<up>((value_of_key t ti)(k := None) \<subseteq>\<^sub>m value_of_key t_res ti_res)
   )
   "
   supply sep_context_pureI[fri_red_rules]
@@ -50,11 +49,11 @@ next
         supply rbt_del_rbt_sorted[intro]
 
         supply ptr_of_key_simps[simp]
+        supply value_of_key_simps[simp]
 
         apply vcg 
         apply vcg_compat
         apply (sepEwith auto)
-
         apply simp
         apply sep
         done
@@ -63,9 +62,15 @@ next
         supply 2(1)[simplified ctx_def, vcg_rules]
         supply rbt_del_rbt_less[simp]
         supply rbt_del_ad_correct[simp]
-        supply ptr_of_key_simps[simp]
+
 
         apply vcg
+        apply vcg_compat
+
+        supply value_of_key_simps[simp]
+        supply ptr_of_key_simps[simp]
+
+        apply (sepEwith \<open>solves auto\<close>)
         done
       done
 
@@ -81,6 +86,7 @@ next
         supply rbt_del_rbt_sorted[intro]
 
         supply ptr_of_key_simps[simp]
+        supply value_of_key_simps[simp]
 
         apply vcg 
         apply vcg_compat
@@ -96,12 +102,16 @@ next
         supply rbt_del_ad_correct[simp]
         supply ptr_of_key_simps[simp]
 
-        apply vcg
+        apply vcg 
+        supply value_of_key_simps[simp]
+        apply vcg_vok
+
         done
       done
       subgoal (*kc = k*)
         supply ptr_of_key_simps[simp]
-        apply vcg
+        supply value_of_key_simps[simp]
+        apply vcg_vok
       done
     done
   done
@@ -109,7 +119,9 @@ qed
 
 lemmas del_opt_ext_correct = del_opt_correct_ext'[simplified ctx_def rbt_del_ad_correct]
 
-lemma delete_opt_ext_correct [vcg_rules]:
+method pok_solver = (simp?, (subst ptr_of_key_simps | (auto simp: ptr_of_key_simps)[])+)[]
+
+lemma delete_opt_ext_correct:
 "
   llvm_htriple
   (\<upharpoonleft>key_assn k ki ** rbt_assn_ext t {} ti ** \<up>(is_rbt_node (rbt_of t)))
@@ -118,39 +130,40 @@ lemma delete_opt_ext_correct [vcg_rules]:
     rbt_assn_ext res_t {} res_ti **
     \<upharpoonleft>key_assn k ki **
     \<up>(rbt_of res_t = (rbt_delete k (rbt_of t))) **
-    \<up>(rbt_sorted (rbt_of res_t)) **
-    \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key res_t res_ti)
+    ctx(rbt_sorted (rbt_of res_t)) **
+    \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
+    \<up>((value_of_key t ti)(k := None) \<subseteq>\<^sub>m value_of_key res_t res_ti)
   )
 "
   unfolding delete_opt_def rbt_delete_def paint_def
   supply 
     del_opt_ext_correct[vcg_rules] 
-    load_rbt_non_null[vcg_rules]    
-    
+    load_rbt_non_null[vcg_rules] 
+    sep_context_pureI[isep_red]
+
   apply vcg
   subgoal
     apply vcg_compat
     apply (sepEwith auto)
-     (*rbt_of =*)
-     apply (cases "rbt_del k (rbt_of t)") 
-      apply simp_all
-
-    apply (sepwith simp)
-    subgoal using rbt_sorted.simps(2) by metis (*rbt_sorted*)
-
-    apply sep
-    subgoal (*ptr_of_key relation*)
-      apply (simp add: ptr_of_key_simps)
-      apply (subst ptr_of_key_simps(4))
-       apply (simp only: rbt_of.simps)
-      using rbt_sorted.simps(2) apply metis
-      apply simp
-      done
-
-    apply sep
+      (*rbt_of =*)
+    apply (cases "rbt_del k (rbt_of t)") 
+     apply simp_all
     done
+
+  apply vcg
+  apply vcg_compat
+  apply (sepEwith auto) 
+   apply (cases "rbt_del k (rbt_of t)") 
+    apply simp_all
+
+  supply ptr_of_key_simps[simp] value_of_key_simps[simp]
+  apply sep
+   apply (metis rbt_sorted.simps(2))
+  apply (sepwith auto)
   done
 
+lemmas [vcg_rules] = delete_opt_ext_correct[simplified ctx_def] 
+                      
 end
 
 end

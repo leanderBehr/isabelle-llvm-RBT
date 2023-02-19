@@ -31,23 +31,6 @@ lemma rbt_assn_non_null_def:
   subgoal by auto
   done
 
-lemma rbt_assn_non_null_unfold:
-  assumes 
-    "ti \<noteq> null"
-    "pure_part (rbt_assn t ti)"
-  obtains c l k v r where
-  "t = (rbt.Branch c l k v r)"
-  using assms by (cases t; auto)
-
-
-lemma non_null_rbt_assn_sepD:
-  "ti \<noteq> null \<Longrightarrow> rbt_assn t ti \<turnstile> (EXS c l k v r. rbt_assn (rbt.Branch c l k v r) ti)"
-  apply (cases t)
-  subgoal by simp
-  subgoal by (simp, sepE)
-  done
-
-
 lemma extract_pure: "STATE asf X s \<Longrightarrow> (pure_part X \<Longrightarrow> thesis) \<Longrightarrow> thesis"
   by (meson STATE_def pure_partI)
 

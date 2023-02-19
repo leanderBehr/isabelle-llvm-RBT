@@ -27,7 +27,7 @@ partial_function (M) insert'_opt ::
           then! do {l_p\<^sub>n \<leftarrow> insert'_opt k\<^sub>n v\<^sub>n l_p; set_left_p l_p\<^sub>n n_p; balance_black n_p c}
           else! if! lt_impl k k\<^sub>n
           then! do {r_p\<^sub>n \<leftarrow> insert'_opt k\<^sub>n v\<^sub>n r_p; set_right_p r_p\<^sub>n n_p; balance_black n_p c}
-          else! do {key_delete k; value_delete v;
+          else! do {key_free k; value_free v;
                     set_key_p k\<^sub>n n_p; set_value_p v\<^sub>n n_p;
                     return n_p}
       }     

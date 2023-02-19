@@ -57,8 +57,6 @@ lemma rbt_of_reorient_empty [simp]:
 
 subsection \<open>Assertion\<close>
 
-datatype except = VALUE_EX
-
 fun assn_unless (infixl "unless" 40) where 
   "assn_unless assn b = (if b then \<box> else assn)"
 declare assn_unless.simps[simp del]
@@ -78,7 +76,7 @@ context rbt_impl
 begin
 interpretation rbt_impl_deps .
 
-fun rbt_assn_ext :: "('k, 'v, 'ki, 'vi) assn_tree \<Rightarrow> ('k \<times> except) set \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> ll_assn" where
+fun rbt_assn_ext :: "('k, 'v, 'ki, 'vi) assn_tree \<Rightarrow> 'k set \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> ll_assn" where
   "rbt_assn_ext ATEmpty ex p = \<up>(p = null)"
 | "rbt_assn_ext (ATBranch c k v ci li ki vi ri l r) ex p =
     (
@@ -86,7 +84,7 @@ fun rbt_assn_ext :: "('k, 'v, 'ki, 'vi) assn_tree \<Rightarrow> ('k \<times> exc
       color_assn c ci **
       rbt_assn_ext l ex li **
       \<upharpoonleft>key_assn k ki **
-      \<upharpoonleft>value_assn v vi unless (k, VALUE_EX) \<in> ex **
+      \<upharpoonleft>value_assn v vi unless k \<in> ex **
       rbt_assn_ext r ex ri
     )"
 declare rbt_assn_ext.simps(2)[simp del]
@@ -151,7 +149,7 @@ lemma unfold_rbt_assn_ext_red_rule_1 [fri_red_rules]:
         color_assn c ci **
         rbt_assn_ext l ex li **
         \<upharpoonleft>key_assn k ki **
-        \<upharpoonleft>value_assn v vi unless (k, VALUE_EX) \<in> ex **
+        \<upharpoonleft>value_assn v vi unless k \<in> ex **
         rbt_assn_ext r ex ri
     )
     (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti)
@@ -171,7 +169,7 @@ lemma unfold_rbt_assn_ext_red_rule_2 [fri_red_rules]:
         color_assn c ci **
         rbt_assn_ext l ex li **
         \<upharpoonleft>key_assn k ki **
-        \<upharpoonleft>value_assn v vi unless (k, VALUE_EX) \<in> ex **
+        \<upharpoonleft>value_assn v vi unless k \<in> ex **
         rbt_assn_ext r ex ri
     )
     (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti unless cond)
@@ -255,7 +253,7 @@ lemma rbt_assn_ext_left_assn_unfold [fri_red_rules]:
       \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti **
       color_assn c ci **
       \<upharpoonleft>key_assn k ki **
-      \<upharpoonleft>value_assn v vi unless (k, VALUE_EX) \<in> ex \<and>*
+      \<upharpoonleft>value_assn v vi unless k \<in> ex \<and>*
       rbt_assn_ext r ex ri)
     \<box>
     (rbt_assn_ext (ATBranch c k v ci li ki vi ri l r) ex ti)
@@ -277,7 +275,7 @@ lemma rbt_assn_ext_right_assn_unfold [fri_red_rules]:
       color_assn c ci **
       rbt_assn_ext l ex li **
       \<upharpoonleft>key_assn k ki **
-      \<upharpoonleft>value_assn v vi unless (k, VALUE_EX) \<in> ex
+      \<upharpoonleft>value_assn v vi unless k \<in> ex
     )
     \<box>
     (rbt_assn_ext (ATBranch c k v ci li ki vi ri l r) ex ti)

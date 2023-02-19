@@ -9,19 +9,19 @@ begin
 type_synonym string = "(8 word, 64) array_list"
 
 
-definition [llvm_code]: "make_index_mapping_wrap strs_p res_out_p \<equiv> 
+definition [llvm_code]: "make_id_map_rec_wrap strs_p res_out_p \<equiv> 
   do {
     strs \<leftarrow> ll_load strs_p;
-    res \<leftarrow> make_index_mapping strs;
+    res \<leftarrow> make_id_map_rec strs;
     ll_store res res_out_p
   }
 "
 
 
-definition [llvm_code]: "make_index_mapping_alt_wrap strs_p res_out_p \<equiv> 
+definition [llvm_code]: "make_id_map_loop_wrap strs_p res_out_p \<equiv> 
   do {
     strs \<leftarrow> ll_load strs_p;
-    res \<leftarrow> make_index_mapping_alt strs;
+    res \<leftarrow> make_id_map_loop strs;
     ll_store res res_out_p
   }
 "
@@ -46,10 +46,12 @@ abbreviation "map_lookup \<equiv> map.lookup_wrap :: (string, 64 word) rbti ptr 
 abbreviation "map_insert \<equiv> map.insert_wrap :: (string, 64 word) rbti ptr \<Rightarrow> _ \<Rightarrow> _\<Rightarrow> unit llM"
 abbreviation "map_delete \<equiv> map.delete_wrap :: (string, 64 word) rbti ptr  \<Rightarrow> _\<Rightarrow> unit llM"
 
+abbreviation "map_insert_opt \<equiv> map.insert_opt_wrap :: (string, 64 word) rbti ptr \<Rightarrow> _ \<Rightarrow> _\<Rightarrow> unit llM"
+abbreviation "map_delete_opt \<equiv> map.delete_opt_wrap :: (string, 64 word) rbti ptr  \<Rightarrow> _\<Rightarrow> unit llM"
 
 export_llvm
-  make_index_mapping_wrap is "void impl_make_index_mapping(string_list*, result*)"
-  make_index_mapping_alt_wrap is "void impl_make_index_mapping_alt(string_list*, result*)"
+  make_id_map_rec_wrap is "void impl_make_id_map_rec(string_list*, result*)"
+  make_id_map_loop_wrap is "void impl_make_id_map_loop(string_list*, result*)"
 
   string_new is impl_string_new
   string_list_new is impl_string_list_new
@@ -68,6 +70,9 @@ export_llvm
   "M_CONST map_lookup" is impl_map_lookup
   "M_CONST map_insert" is impl_map_insert
   "M_CONST map_delete" is impl_map_delete
+
+  "M_CONST map_insert_opt" is impl_map_insert_opt
+  "M_CONST map_delete_opt" is impl_map_delete_opt
 
   defines 
     \<open>
@@ -112,6 +117,10 @@ export_llvm
     \<open>(string, 64) array_list\<close> = string_list
     \<open>(string, 64 word) rbti \<times> (string, 64) array_list\<close> = result
   file "../../exports/example.ll"
+
+
+
+
 
 
 end

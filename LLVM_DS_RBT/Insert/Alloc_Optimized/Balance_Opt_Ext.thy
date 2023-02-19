@@ -3,6 +3,7 @@ theory Balance_Opt_Ext
     Balance_Opt
     "../../Assertion_Tree_Lookup"
     "../../Utilities_Ext"
+    "HOL-Eisbach.Eisbach_Tools"
 begin
 
 context rbt_impl
@@ -17,7 +18,8 @@ lemma balance_opt_correct_ext [vcg_rules]:
   (\<lambda>res. EXS res_t. rbt_assn_ext res_t {} res **
     \<up>(rbt_of res_t = rbt_balance (rbt_of l) k v (rbt_of r)) **
     \<up>(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res = ptr_of_key (ATBranch color.B k v ci li ki vi ri l r) ti)  
+    \<up>(ptr_of_key res_t res = ptr_of_key (ATBranch color.B k v ci li ki vi ri l r) ti) **
+    \<up>(value_of_key res_t res = value_of_key(ATBranch color.B k v ci li ki vi ri l r) ti)  
   )
   "
   unfolding 
@@ -35,34 +37,50 @@ lemma balance_opt_correct_ext [vcg_rules]:
   apply vcg
   subgoal (*Case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
-    apply auto
+                        apply auto
+    supply value_of_key_simps[simp]
     apply vcg
     done
   subgoal (*Case 2+*)
     apply vcg
     subgoal (*Case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
-      apply auto
-      apply vcg
+                          apply auto
+      subgoal by vcg_vok
+      subgoal by vcg_vok
       done
     subgoal (*Case 3+*)
       apply vcg
       subgoal (*Case 3*)
         apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
-        apply auto 
-        apply vcg
+        apply auto  
+        subgoal by vcg_vok
+        subgoal by vcg_vok
+        subgoal by vcg_vok
+        subgoal by vcg_vok
         done
       subgoal (*Case 4+*)
         apply vcg
         subgoal (*Case 4*)
           apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
-          apply auto
-          apply vcg
+                              apply auto
+          subgoal by vcg_vok
+          subgoal by vcg_vok
           done
-        subgoal (*Case 5*)
-          apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
-          apply auto
+        subgoal (*Case 5+*)
           apply vcg
+          subgoal (*Case 5*)
+            apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
+                                apply auto
+            subgoal by vcg_vok
+            subgoal by vcg_vok
+            subgoal by vcg_vok
+            subgoal by vcg_vok
+            done
+          subgoal (*Case 6*)
+            apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
+                                apply auto
+            by vcg
           done
         done
       done

@@ -85,24 +85,27 @@ subsubsection "Frame"
 (*matches second conjunct of premise against first conjunct of conclusion*)
 (*order matters for prioritization*)
 lemma frame_assumption_rule:
-  "As ** Bs -- PR \<tturnstile> Cs -- QR \<Longrightarrow> As ** A ** Bs -- PR \<tturnstile> A ** Cs -- QR" (*multi elem conj both sides*)
-  "As -- PR \<tturnstile> Cs -- QR \<Longrightarrow> As ** A -- PR \<tturnstile> A ** Cs -- QR"             (*single elem left, multi elem right, mut. ex. with next*)
-  "As ** Bs -- PR \<tturnstile> \<box> -- QR \<Longrightarrow> As ** A ** Bs -- PR \<tturnstile> A -- QR"        (*multi elem left, single elem right, mut. ex. with prev.*)
-  "As -- PR \<tturnstile> \<box> -- QR \<Longrightarrow> As ** A -- PR \<tturnstile> A -- QR"                    (*single elem conj both sides*)
+  "As ** Bs -- PR \<tturnstile> Ds ** Cs -- QR \<Longrightarrow> As ** A ** Bs -- PR \<tturnstile> Ds ** A ** Cs -- QR" (*multi elem conj both sides*)
+  "As -- PR \<tturnstile> Ds ** Cs -- QR \<Longrightarrow> As ** A -- PR \<tturnstile> Ds ** A ** Cs -- QR"             (*single elem left, multi elem right, mut. ex. with next*)
+  "As ** Bs -- PR \<tturnstile> Ds ** \<box> -- QR \<Longrightarrow> As ** A ** Bs -- PR \<tturnstile> Ds ** A -- QR"        (*multi elem left, single elem right, mut. ex. with prev.*)
+  "As -- PR \<tturnstile> Ds ** \<box> -- QR \<Longrightarrow> As ** A -- PR \<tturnstile> Ds ** A -- QR"                    (*single elem conj both sides*)
   unfolding frame_def 
   apply (simp add: conj_entails_mono sep_conj_left_commute)+
   done
 
-
 lemma frame_prem_boxD: "\<box> ** A -- PR \<tturnstile> B -- QR \<Longrightarrow>  A -- PR \<tturnstile> B -- QR" by simp
 lemma frame_prem_boxI: "A -- PR \<tturnstile> B -- QR \<Longrightarrow> \<box> ** A -- PR \<tturnstile> B -- QR" by simp
 
+lemma frame_conc_boxD: "A -- PR \<tturnstile> \<box> ** B -- QR \<Longrightarrow>  A -- PR \<tturnstile> B -- QR" by simp
+lemma frame_conc_boxI: "A -- PR \<tturnstile> B -- QR \<Longrightarrow> A -- PR \<tturnstile> \<box> ** B -- QR" by simp
 
 method frame_assumption' =
   rule frame_prem_boxD,
-  all_frame_prem_shifts \<open>determ \<open>rule frame_assumption_rule\<close>\<close>,
+  rule frame_conc_boxD,
+  all_frame_conc_shifts \<open>all_frame_prem_shifts \<open>determ \<open>rule frame_assumption_rule\<close>\<close>\<close>,
   isep_normalize?,
-  (rule frame_prem_boxI)? (*does not apply if only the box is left*)
+  (rule frame_prem_boxI)?, (*does not apply if only the box is left*)
+  (rule frame_conc_boxI)? (*does not apply if only the box is left*)
 
 
 lemma frame_boxI: 
@@ -129,10 +132,6 @@ lemma frame_rev_assumption_rule:
   unfolding frame_def 
   apply (simp add: conj_entails_mono sep_conj_left_commute)+
   done
-
-
-lemma frame_conc_boxD: "A -- PR \<tturnstile> \<box> ** B -- QR \<Longrightarrow>  A -- PR \<tturnstile> B -- QR" by simp
-lemma frame_conc_boxI: "A -- PR \<tturnstile> B -- QR \<Longrightarrow> A -- PR \<tturnstile> \<box> ** B -- QR" by simp
 
 
 method frame_rev_assumption' =
@@ -174,7 +173,6 @@ method isep_assumption =
   entails_assumption |
   is_post_frame, frame_assumption |
   is_pre_frame, frame_rev_assumption
-
 
 schematic_goal "A ** B ** C ** X \<tturnstile> B ** C ** A -- ?QR"
   apply isep_assumption
@@ -373,11 +371,13 @@ lemma entails_TAGG:
 lemma frame_TAGG: 
 "A -- Pr \<tturnstile> B ** TAG C -- Qr \<Longrightarrow> A -- Pr \<tturnstile> B ** C -- Qr" unfolding TAG_def by simp
 
+lemma TAG_def_norm: "TAG x \<equiv> x" unfolding TAG_def by simp
+
 method first_partition_entails methods m =
-  all_entails_conc_shifts \<open>rule entails_TAGG, isep_normalize?, m; (subst TAG_def)?\<close> | m
+  all_entails_conc_shifts \<open>rule entails_TAGG, isep_normalize?, m; (normalize_with thms: TAG_def_norm)?\<close> | m
 
 method first_partition_frame methods m =
-  all_frame_conc_shifts \<open>rule frame_TAGG, isep_normalize?, m; (subst TAG_def)?\<close> | m
+  all_frame_conc_shifts \<open>rule frame_TAGG, isep_normalize?, m; (normalize_with thms: TAG_def_norm)?\<close> | m
 
 
 method first_partition methods m = 
@@ -406,6 +406,26 @@ method sep_step =
       \<close>      
     )
   )
+
+method sep_fast_step =
+  is_sep_goal,
+  (
+    isep_extract_pure |
+    isep_normalize |
+    entails_box_solver |
+    (isep_elim_ex, isep_extract_pure) |
+    isep_assumption | 
+    (
+      first_partition
+      \<open>
+        determ \<open>match fri_red_rules isep_red in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: r\<close>\<close> |
+        determ \<open>match isep_intro in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: intro_red_rule[OF r]\<close>\<close> |
+        determ \<open>match isep_dest in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: dest_red_rule[OF r]\<close>\<close>
+      \<close>    
+    )
+  )
+
+method sep_fast = (sep_fast_step+)[]
 
 method sep_step_filter methods filter declares isep_red isep_intro isep_dest =
   sep_step;(is_sep_goal | filter)

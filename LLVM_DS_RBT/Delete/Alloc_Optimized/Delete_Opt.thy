@@ -38,8 +38,8 @@ partial_function (M) del_opt ::
           else do {set_color_p 0 t_p; return t_p}
         }
         else! do {
-            key_delete y;
-            value_delete s;
+            key_free y;
+            value_free s;
             ll_free t_p;
             combine_opt a b
         }
@@ -54,7 +54,7 @@ lemmas [llvm_code] = del_opt.simps
 lemma del_opt_correct':
 "
   llvm_htriple
-  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti)
+  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti ** \<up>(is_rbt_node t))
   (del_opt ki ti)
   (\<lambda>r. rbt_assn (rbt_del_ad k t) r ** \<upharpoonleft>key_assn k ki)
 "
@@ -69,7 +69,7 @@ next
 
   have IH1: 
     "x < y \<Longrightarrow> llvm_htriple
-      (\<upharpoonleft>key_assn x ki \<and>* rbt_assn a ti)
+      (\<upharpoonleft>key_assn x ki \<and>* rbt_assn a ti ** \<up>(is_rbt_node a))
       (del_opt ki ti)
       (\<lambda>r. rbt_assn (rbt_del_ad x a) r \<and>* \<upharpoonleft>key_assn x ki)"
     for ki ti
@@ -77,7 +77,7 @@ next
 
   have IH2:
     "y < x \<Longrightarrow> llvm_htriple
-      (\<upharpoonleft>key_assn x ki \<and>* rbt_assn b ti)
+      (\<upharpoonleft>key_assn x ki \<and>* rbt_assn b ti ** \<up>(is_rbt_node b))
       (del_opt ki ti)
       (\<lambda>r. rbt_assn (rbt_del_ad x b) r \<and>* \<upharpoonleft>key_assn x ki)"
     for ki ti using 2(3-4) by fastforce
@@ -94,7 +94,7 @@ qed
 lemma del_opt_correct:
 "
   llvm_htriple
-  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti)
+  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti ** \<up>(is_rbt_node t))
   (del_opt ki ti)
   (\<lambda>r. rbt_assn (rbt_del k t) r ** \<upharpoonleft>key_assn k ki)
 "
@@ -114,7 +114,7 @@ lemmas [llvm_code] = delete_opt_def
 lemma delete_opt_correct [vcg_rules]:
 "
   llvm_htriple
-  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti)
+  (\<upharpoonleft>key_assn k ki ** rbt_assn t ti ** \<up>(is_rbt_node t))
   (delete_opt ki ti)
   (\<lambda>r. rbt_assn (rbt_delete k t) r ** \<upharpoonleft>key_assn k ki)
 "

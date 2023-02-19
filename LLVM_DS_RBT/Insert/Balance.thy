@@ -114,17 +114,16 @@ subsection \<open>Balance Cases\<close>
 
 
 definition "balance_ad_case_1 lhs_p k v rhs_p \<equiv> do {
-  lhs \<leftarrow> ll_load lhs_p;
-  rhs \<leftarrow> ll_load rhs_p;
-  case lhs of (RBT_NODE _ a w x b) \<Rightarrow>
-  case rhs of (RBT_NODE _ c y z d) \<Rightarrow>
-    do {
-      ll_store (RBT_NODE 1 a w x b) lhs_p;
-      ll_store (RBT_NODE 1 c y z d) rhs_p;
-      new (RBT_NODE 0 lhs_p k v rhs_p)
-    }
-  }"
+  set_color_p 1 lhs_p;
+  set_color_p 1 rhs_p;
+  new (RBT_NODE 0 lhs_p k v rhs_p)
+}"
 
+thm set_color_p_def[simplified mod_ptr_def]
+schematic_goal "set_color_p color node_ptr = X ?X"
+  unfolding set_color_p_def mod_ptr_def
+  apply simp
+  oops
 
 lemma balance_ad_case_1_correct [vcg_rules]:
   "

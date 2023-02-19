@@ -93,8 +93,8 @@ definition "balance_left l_p k v r_p \<equiv>
     else! if! ll_matches_rbt bl_pat_3 r_p
     then! bl_case_3 l_p k v r_p
     else! do { 
-      key_delete k;
-      value_delete v;
+      key_free k;
+      value_free v;
       free l_p; free r_p;
       empty
     }
@@ -216,8 +216,8 @@ definition "balance_right l_p k v r_p \<equiv>
     else! if! ll_matches_rbt br_pat_3 l_p
     then! br_case_3 l_p k v r_p
     else! do { 
-      key_delete k;
-      value_delete v;
+      key_free k;
+      value_free v;
       free l_p; free r_p;
       empty
     }

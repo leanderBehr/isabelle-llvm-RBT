@@ -11,20 +11,12 @@ begin
 hide_const Proto_EOArray.list_assn
 
 
-definition elem_wise_assn_ex ::
-  "('a \<Rightarrow> 'b \<Rightarrow> ll_assn) \<Rightarrow> 'a list \<Rightarrow> 'b list \<Rightarrow> nat set \<Rightarrow> ll_assn" where
-  "elem_wise_assn_ex a xs ys ex = (\<Union>* i\<in>{0..<length xs} - ex. a (xs ! i) (ys ! i))"
-
-
-abbreviation "elem_wise_assn a xs ys \<equiv> elem_wise_assn_ex a xs ys {}"
-
-
-definition arl_mems_assn_ex ::
+definition arl_elem_assn_ex ::
   "('a, 'b) dr_assn \<Rightarrow> 'a list \<Rightarrow> 'b list \<Rightarrow> ('b::llvm_rep, 'l::len2) array_list \<Rightarrow> nat set \<Rightarrow> ll_assn" where 
-  "arl_mems_assn_ex A xs xsi arl ex \<equiv> \<upharpoonleft>arl_assn xsi arl ** \<upharpoonleft>(list_assn A (idxe_map xsi |` ex)) xs xsi"
+  "arl_elem_assn_ex A xs xsi arl ex \<equiv> \<upharpoonleft>arl_assn xsi arl ** \<upharpoonleft>(list_assn A (idxe_map xsi |` ex)) xs xsi"
 
 
-abbreviation "arl_mems_assn' A xs arl \<equiv> (EXS xsi. arl_mems_assn_ex A xs xsi arl {})"
+abbreviation "arl_elem_assn A xs arl \<equiv> (EXS xsi. arl_elem_assn_ex A xs xsi arl {})"
 
 
 lemma 
@@ -32,10 +24,10 @@ lemma
   "\<lbrakk>P = Q; PS -- Pr \<tturnstile> QS -- Qr\<rbrakk> \<Longrightarrow> P ** PS -- Pr \<tturnstile> Q ** QS -- Qr"
   "\<lbrakk>P = Q; \<box> -- Pr \<tturnstile> QS -- Qr\<rbrakk> \<Longrightarrow> P -- Pr \<tturnstile> Q ** QS -- Qr"
   "\<lbrakk>P = Q; \<box> -- Pr \<tturnstile> \<box> -- Qr\<rbrakk> \<Longrightarrow> P -- Pr \<tturnstile> Q -- Qr"
-  apply (simp_all add: frame_assumption_rule(2) sep_conj_commute)
-  using frame_assumption_rule(2) apply fastforce+
-  done
-
+  apply (simp_all add: conj_entails_mono sep_conj_left_commute sep_conj_commute) 
+  
+  oops
+  
 
 lemma entails_refl_dyn:
   "\<lbrakk>P = Q; PS \<turnstile> QS \<rbrakk> \<Longrightarrow> P ** PS \<turnstile> Q ** QS"
@@ -47,9 +39,9 @@ lemma entails_refl_dyn:
   done
 
 
-lemma arl_mems_assn_def':
-  "arl_mems_assn' A xs xsi = (EXS l. \<upharpoonleft>arl_assn l xsi ** \<upharpoonleft>(list_assn A (Map.empty)) xs l)"
-  unfolding arl_mems_assn_ex_def
+lemma arl_elem_assn_def':
+  "arl_elem_assn A xs xsi = (EXS l. \<upharpoonleft>arl_assn l xsi ** \<upharpoonleft>(list_assn A (Map.empty)) xs l)"
+  unfolding arl_elem_assn_ex_def
   by simp
 
 
@@ -67,16 +59,6 @@ lemma snat_assn_le_iso [simp]:
   "\<lbrakk>\<flat>\<^sub>psnat.assn x xi; \<flat>\<^sub>psnat.assn y yi\<rbrakk> \<Longrightarrow> xi < yi \<longleftrightarrow> x < y"
   unfolding snat.assn_def  
   by (auto simp add: snat_eq_unat_aux2 unat_mono word_less_nat_alt)
-
-
-lemma 
-  assumes "i \<notin> ex" and "i < length xs"
-  shows
-    "elem_wise_assn_ex a xs ys ex \<turnstile> elem_wise_assn_ex a xs ys (ex \<union> {i}) ** a (xs ! i) (ys ! i)"
-  unfolding elem_wise_assn_ex_def
-  using assms
-  by (simp add: list_assn_extract_aux sep.mult_commute)
-
 
 
 lemmas la_ired_extract[isep_red] = la_red_extract[simplified PRECOND_def SOLVE_AUTO_def]
@@ -98,11 +80,11 @@ lemma la_ired_join[isep_red]:
 lemma arl_mems_len_rule [vcg_rules]:
   "
   llvm_htriple
-  (arl_mems_assn_ex A xs xsi arl ex)
+  (arl_elem_assn_ex A xs xsi arl ex)
   (arl_len arl)
-  (\<lambda>len. \<upharpoonleft>snat.assn (length xs) len ** arl_mems_assn_ex A xs xsi arl ex)
+  (\<lambda>len. \<upharpoonleft>snat.assn (length xs) len ** arl_elem_assn_ex A xs xsi arl ex)
 "
-  unfolding arl_mems_assn_ex_def
+  unfolding arl_elem_assn_ex_def
   apply vcg
   apply vcg_compat
   apply isep_extract_pure
@@ -115,11 +97,11 @@ lemma arl_mems_len_rule [vcg_rules]:
 lemma arl_mems_nth_rule [vcg_rules]:
 "
   llvm_htriple
-  (arl_mems_assn_ex A xs xsi arl ex ** \<upharpoonleft>snat.assn i ii ** \<up>(i < length xs) ** \<up>(i \<notin> ex))
+  (arl_elem_assn_ex A xs xsi arl ex ** \<upharpoonleft>snat.assn i ii ** \<up>(i < length xs) ** \<up>(i \<notin> ex))
   (arl_nth arl ii)
-  (\<lambda>elem. arl_mems_assn_ex A xs xsi arl (ex \<union> {i}) ** \<upharpoonleft>A (xs ! i) elem ** \<up>(elem = xsi ! i))
+  (\<lambda>elem. arl_elem_assn_ex A xs xsi arl (ex \<union> {i}) ** \<upharpoonleft>A (xs ! i) elem ** \<up>(elem = xsi ! i))
 "
-  unfolding arl_mems_assn_ex_def
+  unfolding arl_elem_assn_ex_def
   apply vcg
   apply vcg_compat
   apply (sep | find_sep)+
@@ -128,14 +110,7 @@ lemma arl_mems_nth_rule [vcg_rules]:
   by (simp add: restrict_map_insert)
 
 
-lemma no_ex_arl_mems_nth_rule [vcg_rules]:
-"
-  llvm_htriple
-  (arl_mems_assn_ex A xs xsi arl {} ** \<upharpoonleft>snat.assn i ii ** \<up>(i < length xs))
-  (arl_nth arl ii)
-  (\<lambda>elem. arl_mems_assn_ex A xs xsi arl {i} ** \<upharpoonleft>A (xs ! i) elem ** \<up>(elem = xsi ! i))
-"
-  by vcg
+
 
 unbundle monad_syntax_M 
 
@@ -189,12 +164,12 @@ definition [llvm_code]:
   }"
 
 
-definition "loop_inv A xs xsi arl i si \<equiv> arl_mems_assn_ex A xs xsi arl {0..<i}"
+definition "loop_inv A xs xsi arl i si \<equiv> arl_elem_assn_ex A xs xsi arl {0..<i}"
 
 
-lemma empty_arl_mems_assn_ex_sepD:
-  "arl_mems_assn_ex A xs xsi arl {0..<length xs} \<turnstile> \<upharpoonleft>arl_assn xsi arl"
-  unfolding arl_mems_assn_ex_def
+lemma empty_arl_elem_assn_ex_sepD:
+  "arl_elem_assn_ex A xs xsi arl {0..<length xs} \<turnstile> \<upharpoonleft>arl_assn xsi arl"
+  unfolding arl_elem_assn_ex_def
   apply isep_assumption
   apply isep_extract_pure
   apply (isep_drule drule: list_assn_free_none)
@@ -278,7 +253,7 @@ lemma arl_mems_free_rule:
   shows
     "
       llvm_htriple
-      (arl_mems_assn_ex A xs xsi arl {})
+      (arl_elem_assn_ex A xs xsi arl {})
       (arl_mems_free mem_free arl)
       (\<lambda>_. \<box>)
     "
@@ -295,7 +270,7 @@ lemma arl_mems_free_rule:
     done
   subgoal (*after loop*)
     apply vcg_solve
-    unfolding arl_mems_assn_ex_def
+    unfolding arl_elem_assn_ex_def
     apply vcg
     apply vcg_compat
     apply isep_extract_pure

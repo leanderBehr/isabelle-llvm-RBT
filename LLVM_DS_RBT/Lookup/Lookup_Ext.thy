@@ -77,7 +77,6 @@ next
       apply (sepwith simp) 
        apply (cases "rbt_lookup (rbt_of al) kn")
         apply (auto simp add: ptr_of_key.simps)
-      apply (sepwith simp)
       done
 
     apply vcg
@@ -86,7 +85,6 @@ next
       apply (sepwith simp)
       apply (cases "rbt_lookup (rbt_of ar) kn")
       apply (auto simp add: ptr_of_key.simps)
-      apply (sepwith simp)
       done
 
     apply vcg

@@ -105,11 +105,13 @@ lemma delete_opt_map_rule:
     (delete_opt ki ti)
     (\<lambda>r. rbt_map_assn (m |` (-{k})) r ** \<upharpoonleft>key_assn k ki)
   "
-    apply vcg
-    apply vcg_compat
-    apply (sepEwith simp)
-    apply (simp_all add: rbt_lookup_rbt_delete)
-    done
+  supply is_rbt_def[simp]
+  apply vcg
+  apply vcg_compat
+  apply (sepE | find_sep)+   
+  using is_rbt_def rbt_delete_is_rbt apply blast
+  apply (simp add: rbt_lookup_rbt_delete)
+  done
 
 
 lemmas rbt_map_rules[vcg_rules] = 

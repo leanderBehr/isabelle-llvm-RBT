@@ -15,11 +15,13 @@ partial_function (M) free :: "
     then return ()
     else do {
       n \<leftarrow> ll_load n_p;
-      key_delete (rbt_node.key n);
-      value_delete (rbt_node.val n);
-      ll_free n_p;
-      free (rbt_node.left n);
-      free (rbt_node.right n)
+      case n of (RBT_NODE _ l k v r) \<Rightarrow> do {
+        key_free k;
+        value_free v;
+        ll_free n_p;
+        free l;
+        free (rbt_node.right n)
+      }
     }
   }
 "

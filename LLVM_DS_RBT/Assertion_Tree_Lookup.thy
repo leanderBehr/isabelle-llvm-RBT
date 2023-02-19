@@ -25,8 +25,23 @@ fun at_ptr_graph where
     {(k, p)} \<union> (at_ptr_graph al li) \<union> (at_ptr_graph ar ri)
   "
 
+fun value_of_key where
+  "value_of_key t ti k = map_option (assn_tree.ll_val \<circ> snd) (p_node_of_key t ti k)"
+
+
+fun at_value_graph where
+  "at_value_graph ATEmpty _ = {}"
+| "at_value_graph (ATBranch c k v ci li ki vi ri al ar) p = 
+    {(k, vi)} \<union> (at_value_graph al li) \<union> (at_value_graph ar ri)
+  "
+
 lemma ptr_of_key_less_none:
   "rbt_of t |\<guillemotleft> k \<Longrightarrow> ptr_of_key t p k = None"
+  apply (induction t arbitrary: p)
+  by auto
+
+lemma value_of_key_less_none:
+  "rbt_of t |\<guillemotleft> k \<Longrightarrow> value_of_key t p k = None"
   apply (induction t arbitrary: p)
   by auto
 
@@ -42,10 +57,19 @@ lemma ptr_of_key_greater_none:
   by auto
 
 
+lemma value_of_key_greater_none:
+  "k \<guillemotleft>| rbt_of t \<Longrightarrow> value_of_key t p k = None"
+  apply (induction t arbitrary: p)
+  by auto
+
+
 lemma p_node_of_key_greater_none:
   "k \<guillemotleft>| rbt_of t \<Longrightarrow> p_node_of_key t p k = None"
   apply (induction t arbitrary: p)
   by auto
+
+
+declare value_of_key.simps[simp del]
 
 
 lemma graph_p_node_of_key_eq:
@@ -137,6 +161,40 @@ lemma at_ptr_graph_graph_eq:
   qed
   done
 
+subsection \<open>value of key\<close>
+
+lemma value_of_key_node_p_of_key_eq:
+  "Map.graph (value_of_key t ti) = { (a, ll_val (snd b)) | a b. (a, b) \<in> Map.graph (p_node_of_key t ti) } "
+  unfolding Map.graph_def
+  by (auto simp: value_of_key.simps)
+
+lemma graph_value_of_key_eq:
+  "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri al ar)) \<Longrightarrow>
+  Map.graph (value_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
+  {(k,vi)} \<union> (Map.graph (value_of_key al li)) \<union> (Map.graph (value_of_key ar ri))"
+  supply value_of_key.simps[simp]
+  apply (auto simp add: value_of_key_node_p_of_key_eq graph_p_node_of_key_eq) 
+  by force
+
+
+lemma at_value_graph_eq:
+  "rbt_sorted (rbt_of t) \<Longrightarrow> at_value_graph t p = Map.graph (value_of_key t p)"
+  supply value_of_key.simps[simp]
+proof (induction t arbitrary: p)
+  case ATEmpty
+  then show ?case
+    unfolding Map.graph_def
+    by simp
+next
+  case (ATBranch x1 x2 x3 x4 x5 x6 x7 x8 t1 t2)
+  from ATBranch have "at_value_graph t1 p = Map.graph (value_of_key t1 p)" by fastforce
+  moreover from ATBranch have "at_value_graph t2 p = Map.graph (value_of_key t2 p)" by fastforce
+
+  ultimately show ?case
+    using ATBranch graph_value_of_key_eq
+    by fastforce
+qed
+
 subsection \<open>ptr of key handling\<close>
 
 subsubsection \<open>special case rules without handling updates\<close>
@@ -190,6 +248,12 @@ lemma graph_upd_none_eq:
   by (auto split!: if_splits)
 
 
+lemma graph_upd_some_eq:
+  "Map.graph (m1(x \<mapsto> y)) = Map.graph m1 - {(x, the (m1 x))} \<union> {(x, y)}"
+  unfolding Map.graph_def
+  by (auto split!: if_splits)
+
+
 (*step3*)
 lemmas map_grap_at_ptr_grap_eq = at_ptr_graph_graph_eq[symmetric]
 
@@ -202,12 +266,40 @@ lemmas ptr_of_key_simps =
   (*step3*)
   map_grap_at_ptr_grap_eq
 
-subsection \<open>value of key\<close>
+(*step 1*)
+lemma value_to_ptr_map_subset_eq:
+  "(m1:: 'k \<rightharpoonup> 'vi) \<subseteq>\<^sub>m m2 \<longleftrightarrow> Map.graph m1 \<subseteq> Map.graph m2"
+  unfolding Map.graph_def map_le_def by force
 
-fun value_of_key where
-  "value_of_key t ti k = map_option (assn_tree.ll_val \<circ> snd) (p_node_of_key t ti k)"
+lemma value_to_ptr_map_eq_eq:
+  "(m1:: 'k \<rightharpoonup> 'vi) = m2 \<longleftrightarrow> Map.graph m1 = Map.graph m2"
+  unfolding  map_le_def
+  apply (rule iffI)
+  subgoal by simp
+  subgoal using fun_eq_graphI .
+  done
 
-declare value_of_key.simps[simp del]
+lemmas value_of_key_simps = 
+  (*step1*)
+  value_to_ptr_map_subset_eq
+  value_to_ptr_map_eq_eq
+  (*step2*)
+  graph_upd_none_eq
+  (*step3*)
+  at_value_graph_eq[symmetric]
+
+subsection \<open>methods\<close>
+
+method vok_solver = (solves auto | (subst value_of_key_simps | subst (asm) value_of_key_simps | (auto)[])+)[]
+method pok_solver = (solves auto | (subst ptr_of_key_simps | subst (asm) ptr_of_key_simps | (auto)[])+)[]
+
+method vok_filter = match conclusion in "value_of_key _ _ = _" \<Rightarrow> vok_solver 
+                                      \<bar> _ \<Rightarrow> succeed
+
+method catch_entails = match conclusion in "ENTAILS _ _" \<Rightarrow> vcg_compat
+
+method vcg_vok = ((catch_entails | vcg_step)+, (sepEwith \<open>vok_filter,auto?\<close> | simp)+)+
+
 
 end
 

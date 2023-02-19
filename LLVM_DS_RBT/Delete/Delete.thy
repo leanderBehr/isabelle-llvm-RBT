@@ -74,8 +74,8 @@ partial_function (M) del ::
         else do { set_right_p r_del t_p; set_color_p 0 t_p; return t_p }
       }
       else! do {
-          key_delete y;
-          value_delete s;
+          key_free y;
+          value_free s;
           ll_free t_p;
           combine a b
       }

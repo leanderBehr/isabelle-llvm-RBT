@@ -39,8 +39,11 @@ partial_function (M) list_le'
 
 abbreviation "string_assn str (stri:: (8 word, 'l::len2) array_list) \<equiv>
    \<up>(LENGTH('l) > 4) ** (EXS ws. \<upharpoonleft>arl_assn ws stri ** \<up>(length ws = length str) **
-   \<up>(\<forall>i < length str. \<flat>\<^sub>psnat.assn (str ! i) (ws ! i)))"
+   \<up>(\<forall>i < length str. \<flat>\<^sub>punat.assn (str ! i) (ws ! i)))"
 
+(*
+abbreviation "string_assn str (stri:: (8 word, 'l::len2) array_list) \<equiv> arl_elem_assn snat.assn str stri"
+*)
 
 lemma postfix_le: 
   "\<lbrakk>i < length xs; i < length ys\<rbrakk> \<Longrightarrow> drop i xs < drop i ys = (xs ! i < ys ! i \<or> xs ! i = ys ! i \<and> drop (i+1) xs < drop (i+1) ys)"  
@@ -119,7 +122,7 @@ next
     apply (subst list_le'.simps)
     apply vcg
     subgoal for asf x xa r ra s
-      apply vcg_rl back back
+      apply vcg_rl back
        apply vcg_compat
        apply (sep isep_intro: pure_pure_asm_prefixI | find_sep)+
         apply (auto simp add: SOLVE_AUTO_DEFER_def)
@@ -131,7 +134,7 @@ next
              apply (auto simp add: postfix_le)
       apply vcg_solve
       apply vcg
-      apply vcg_rl back back
+      apply vcg_rl back 
        apply vcg_compat
        apply (sepwith \<open>auto\<close> isep_intro: pure_pure_asm_prefixI) 
       apply vcg_solve
@@ -140,35 +143,15 @@ next
        apply vcg_compat
        apply (sepEwith simp isep_intro: pure_pure_asm_prefixI)
         apply simp_all
-      subgoal
-      proof -
-        assume assms:
-          "\<flat>\<^sub>psnat.assn i (ii :: 'a word)"
-          "length x = length xs"
-          "i < length xs"
-          "pure_part (\<upharpoonleft>arl_assn x xsi)"
-
-        hence "snat ii = i" by (simp add: snat.assn_def) 
-        moreover have "Suc i \<in> snats LENGTH('a)"
-          using \<open>length x = length xs\<close>
-          unfolding snats_def
-          using assms arl_length_snat_bound by fastforce 
-        moreover have "ii + 1 \<noteq> 0"
-          by (smt (z3) Suc_pred add_0 add_diff_cancel_right' assms(1) calculation(2) diff_is_0_eq group_cancel.add1 in_snats_conv len_gt_0 lessI less_le linorder_not_less max_snat_def plus_1_eq_Suc sel_mk_pure_assn(3) snat.assn_def snat_eq_unat_aux2 snat_lt_max_snat snat_zero unat_add_lem unat_neq_ZD unat_plus_if' unat_power_lower unsigned_1)
-
-
-        ultimately have "snat (ii + 1) = i + 1"
-          by (metis (no_types, lifting) Suc_eq_plus1 assms(1) in_snats_conv max_snat_def sel_mk_pure_assn(3) snat.assn_def snat_eq_unat(1) snat_eq_unat_aux2 unatSuc2)
-
-        then show "\<flat>\<^sub>psnat.assn (Suc i) (ii + 1)"
-          unfolding snat.assn_def
-          by (smt (verit, del_insts) Suc_eq_plus1 Suc_pred add_cancel_right_right assms(1) len_gt_0 max_snat_def plus_1_eq_Suc sel_mk_pure_assn(3) snat.assn_def snat_eq_unat_aux2 snat_invar_alt snat_lt_max_snat snat_zero unatSuc unat_1 word_overflow_unat)
-      qed
-       apply (sepEwith blast) 
-      apply vcg_solve
-      apply vcg
+      subgoal 
+        unfolding dr_assn_pure_asm_prefix_def snat.assn_def snat_invar_def
+        apply (rule conjI)
+         apply simp_all
+        by (smt (verit) Suc_eq_plus1 less_trans_Suc linorder_not_less msb_unat_big snat_eq_unat(1) unat_1 unat_plus_if' unsigned_less)
+      apply isep_intro_ex
+      apply (sepwith simp)
+      apply vcg_solve+
       done
-
     subgoal by vcg
     subgoal by vcg
     done
@@ -230,7 +213,7 @@ next
     apply (subst list_le''.simps)
     apply vcg
     subgoal for asf x xa r ra s
-      apply vcg_rl back back
+      apply vcg_rl back
        apply vcg_compat
        apply (sep isep_intro: pure_pure_asm_prefixI | find_sep)+
         apply (auto simp add: SOLVE_AUTO_DEFER_def)
@@ -241,7 +224,7 @@ next
              apply (auto simp add: postfix_le)
       apply vcg_solve
       apply vcg
-      apply vcg_rl back back
+      apply vcg_rl back
        apply vcg_compat
        apply (sepwith auto isep_intro: pure_pure_asm_prefixI)
       apply vcg_solve

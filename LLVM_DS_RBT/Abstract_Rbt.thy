@@ -14,6 +14,7 @@ hide_const (open) balance_left
 hide_const (open) balance_right
 hide_const (open) combine
 
+abbreviation "is_rbt_node t \<equiv> inv1 t \<and> inv2 t \<and> rbt_sorted t"
 
 subsection \<open>Rbt Utilities\<close>
 

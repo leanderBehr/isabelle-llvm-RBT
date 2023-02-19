@@ -53,6 +53,9 @@ definition "bl_opt_case_3 n_p \<equiv>
   }
 "
 
+definition [llvm_inline]: "TFail \<equiv> fail" (*avoids VCG assuming fail can't be reached*)
+
+
 
 definition "balance_left_opt n_p \<equiv> 
   do {
@@ -80,7 +83,11 @@ lemma balance_left_opt_correct [vcg_rules]:
       \<upharpoonleft>value_assn v vi **
       rbt_assn r ri **
       color_assn c ci **
-      \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p
+      \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p **
+
+      \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) l_pre) **
+      \<up>(inv1 (Branch c l_pre k v r)) **
+      \<up>(inv2 (Branch c l_pre k v r))
     )
     (balance_left_opt n_p)
     (\<lambda>res. rbt_assn (rbt_balance_left l k v r) res)
@@ -119,12 +126,7 @@ lemma balance_left_opt_correct [vcg_rules]:
         done
       subgoal (*case 4*)
         apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
-                  apply auto
-        apply (
-            vcg |
-            vcg_solve |
-            vcg_rl, vcg_compat, (sepwith simp | simp)+
-            )+
+                  apply (auto elim!: matches_rbt.elims)
         done
       done
     done
@@ -201,7 +203,11 @@ lemma balance_right_opt_correct [vcg_rules]:
       \<upharpoonleft>value_assn v vi **
       rbt_assn r ri **
       color_assn c ci **
-      \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p
+      \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p **
+
+      \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) r_pre) **
+      \<up>(inv1 (Branch c l k v r_pre)) **
+      \<up>(inv2 (Branch c l k v r_pre))
     )
     (balance_right_opt n_p)
     (\<lambda>res. rbt_assn (rbt_balance_right l k v r) res)
@@ -241,12 +247,7 @@ lemma balance_right_opt_correct [vcg_rules]:
         done
       subgoal (*case 4*)
         apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases)
-                  apply auto
-        apply (
-            vcg |
-            vcg_solve |
-            vcg_rl, vcg_compat, (sepwith simp | simp)+
-            )+
+                  apply (auto elim: matches_rbt.elims)
         done
       done
     done
@@ -266,6 +267,51 @@ lemmas [llvm_code] =
   balance_right_opt_def
   balance_left_opt_def
 
+
+lemma balance_left_opt_correct_combine [vcg_rules]:
+  "
+    llvm_htriple
+    (
+      rbt_assn l li **
+      \<upharpoonleft>key_assn k ki **
+      \<upharpoonleft>value_assn v vi **
+      rbt_assn r ri **
+      color_assn c ci **
+      \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) n_p **
+
+      \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) r)
+    )
+    (balance_left_opt n_p)
+    (\<lambda>res. rbt_assn (rbt_balance_left l k v r) res)
+  "
+  unfolding 
+    balance_left_opt_def
+    bl_opt_case_1_def
+    bl_opt_case_2_def
+    bl_opt_case_3_def
+    rotate_left_def
+    rotate_right_def
+    left_def
+    right_def
+  apply vcg
+  subgoal (*case 1*)
+    apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
+              apply auto
+    apply vcg
+    done
+  subgoal (*case 2+*)
+    apply vcg
+
+    subgoal (*case 2*)
+      apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
+                apply auto
+       apply vcg
+      done
+    subgoal (*case 3+*)
+      apply vcg
+      done
+    done
+  done
 
 end
 

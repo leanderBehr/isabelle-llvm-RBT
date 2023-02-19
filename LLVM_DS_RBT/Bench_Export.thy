@@ -3,6 +3,7 @@ theory Bench_Export
     Free
     Map_Interface
     Export_Wrappers
+    Fail_Setup
 begin      
 
 

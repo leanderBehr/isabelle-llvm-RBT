@@ -10,7 +10,7 @@ context rbt_impl
 begin
 
 
-lemma disjoint_trees_map_add_graph [simp]:
+lemma disjoint_trees_ptr_map_add_graph [simp]:
   assumes "rbt_of l |\<guillemotleft> k" and "k \<guillemotleft>| rbt_of r"
   shows
     "Map.graph (ptr_of_key l li ++ ptr_of_key r ri) =
@@ -18,30 +18,28 @@ lemma disjoint_trees_map_add_graph [simp]:
   unfolding map_add_def Map.graph_def
   apply (rule equalityI)
   subgoal by (auto split: option.splits)
-  subgoal apply (auto split: option.splits)
-    subgoal for a b x2
-    proof (cases k a rule: linorder_cases)
-      case less
-      with assms have "ptr_of_key l li a = None"  
-        using ptr_of_key_less_none rbt_less_trans by blast
-      moreover assume "ptr_of_key l li a = Some b"
-      ultimately show ?thesis by simp
-    next
-      case equal
-      with assms have "ptr_of_key l li a = None"  
-        using ptr_of_key_less_none rbt_less_trans by blast
-      moreover assume "ptr_of_key l li a = Some b"
-      ultimately show ?thesis by simp
-
-    next
-      case greater
-      with assms have "ptr_of_key r ri a = None"  
-        using ptr_of_key_greater_none rbt_greater_trans by blast
-      moreover assume "ptr_of_key r ri a = Some x2"
-      ultimately show ?thesis by simp
-    qed
-    done
+  subgoal  
+    apply (auto split: option.splits)
+    by (metis assms linorder_not_less option.distinct(1) 
+        ptr_of_key_greater_none ptr_of_key_less_none
+        rbt_greater_trans rbt_less_eq_trans)
   done
+
+lemma disjoint_trees_value_map_add_graph [simp]:
+  assumes "rbt_of l |\<guillemotleft> k" and "k \<guillemotleft>| rbt_of r"
+  shows
+    "Map.graph (value_of_key l li ++ value_of_key r ri) =
+         Map.graph (value_of_key l li) \<union> Map.graph (value_of_key r ri)" 
+  unfolding map_add_def Map.graph_def
+  apply (rule equalityI)
+  subgoal by (auto split: option.splits)
+  subgoal  
+    apply (auto split: option.splits)
+    by (metis assms linorder_not_less option.distinct(1)
+        value_of_key_greater_none value_of_key_less_none
+        rbt_greater_trans rbt_less_eq_trans)
+  done
+
 
 lemma combine_correct_ext':
   "
@@ -53,10 +51,12 @@ lemma combine_correct_ext':
     rbt_assn_ext res_t {} res_ti **
     ctx(rbt_of res_t = rbt_combine (rbt_of l) (rbt_of r)) **
     ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key l li ++ ptr_of_key r ri)
+    \<up>(ptr_of_key res_t res_ti = ptr_of_key l li ++ ptr_of_key r ri) **
+    \<up>(value_of_key res_t res_ti = value_of_key l li ++ value_of_key r ri)
   )
   "
   supply ptr_of_key_simps[simp]
+  supply value_of_key_simps[simp]
   supply sep_context_pureI[fri_red_rules]
 proof(induction "rbt_of l" "rbt_of r" arbitrary: l r li ri rule: RBT_Impl.combine.induct)
   case 1
@@ -120,6 +120,11 @@ next
        apply simp
        apply (auto simp: rbt_sorted.simps)[1]
 
+      apply sep 
+       supply rbt_sorted.simps[simp]
+       apply vok_solver 
+      apply (metis rbt_greater_simps(2) rbt_sorted.simps(2))
+      apply vok_solver 
       apply sep
       done
     done
@@ -174,6 +179,8 @@ next
        apply (subst ptr_of_key_simps(4), (auto)[])+
        apply auto[1]
 
+      apply sep
+       apply vok_solver
       apply sep
       done
     done

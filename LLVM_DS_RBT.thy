@@ -6,6 +6,26 @@ theory LLVM_DS_RBT
 begin
 context rbt_impl
 begin
-find_theorems rbt_of HOL.eq name: reorient
+interpretation rbt_impl_deps . 
+
+find_theorems lookup_ptr
+
+find_in_thms from_bool in llvm_code_raw
+lemma balance_correct_test [vcg_rules]:
+  "llvm_htriple
+  (
+    rbt_assn l li **
+    rbt_assn r ri **   
+    \<upharpoonleft>key_assn k ki **
+    \<upharpoonleft>value_assn v vi
+  )
+  (balance_left li ki vi ri)
+  (\<lambda>res. rbt_assn (rbt_balance_left l k v r) res) 
+  "
+  unfolding balance_left_def bl_case_1_def
+  apply vcg
+  apply (auto elim!: matches_rbt.elims) []
+  oops
+
 end
 end

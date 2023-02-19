@@ -297,22 +297,22 @@ locale rbt_impl =
 
 lt_impl and
 key_assn and
-key_delete :: "'ki \<Rightarrow> unit llM" and
+key_free :: "'ki \<Rightarrow> unit llM" and
 value_assn :: "('v, 'vi) dr_assn" and
-value_delete :: "'vi \<Rightarrow> unit llM" +
+value_free :: "'vi \<Rightarrow> unit llM" +
 assumes
-  key_delete_rule [vcg_rules]: 
+  key_free_rule [vcg_rules]: 
   "
       llvm_htriple
       (\<upharpoonleft>key_assn k ki)
-      (key_delete ki)
+      (key_free ki)
       (\<lambda>_. \<box>)
     " and
-  value_delete_rule [vcg_rules]:
+  value_free_rule [vcg_rules]:
   "
       llvm_htriple
       (\<upharpoonleft>value_assn v vi)
-      (value_delete vi)
+      (value_free vi)
       (\<lambda>_. \<box>)
     "
 begin

@@ -122,7 +122,7 @@ fun rbt_balance_ad where
 lemma rbt_balance_ad_correct: 
   "rbt_balance_ad lhs k v rhs = rbt_balance lhs k v rhs"
   apply (induction lhs k v rhs rule: balance.induct)
-  by(auto simp add: 
+  by (auto simp add: 
       rbt_is_red_def
       rbt_left_def
       rbt_right_def
