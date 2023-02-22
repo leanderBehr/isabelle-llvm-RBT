@@ -136,7 +136,8 @@ lemma insert_opt_correct_ext [vcg_rules]:
       rbt_assn_ext res_t {} res_ti **
       \<up>(rbt_of res_t = rbt_insert k v (rbt_of t)) **
       \<up>(is_rbt (rbt_of res_t)) **
-      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key res_t res_ti)
+      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
+      \<up>(value_of_key res_t res_ti = (value_of_key t ti)(k \<mapsto> vi))
     )
   "
   apply vcg

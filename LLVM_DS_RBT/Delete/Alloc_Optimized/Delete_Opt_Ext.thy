@@ -122,7 +122,7 @@ lemmas del_opt_ext_correct = del_opt_correct_ext'[simplified ctx_def rbt_del_ad_
 method pok_solver = (simp?, (subst ptr_of_key_simps | (auto simp: ptr_of_key_simps)[])+)[]
 
 lemma delete_opt_ext_correct:
-"
+  "
   llvm_htriple
   (\<upharpoonleft>key_assn k ki ** rbt_assn_ext t {} ti ** \<up>(is_rbt_node (rbt_of t)))
   (delete_opt ki ti)
@@ -144,22 +144,17 @@ lemma delete_opt_ext_correct:
   apply vcg
   subgoal
     apply vcg_compat
-    apply (sepEwith auto)
-      (*rbt_of =*)
-    apply (cases "rbt_del k (rbt_of t)") 
-     apply simp_all
+    apply (sepEwith auto) 
+
+(*rbt_of =*)
+     apply (cases "rbt_del k (rbt_of t)") 
+      apply simp_all
+
+    apply sep
+     apply (metis rbt_sorted.simps(2)) 
+
+    apply (sepwith \<open>solves pok_solver | solves vok_solver\<close>) 
     done
-
-  apply vcg
-  apply vcg_compat
-  apply (sepEwith auto) 
-   apply (cases "rbt_del k (rbt_of t)") 
-    apply simp_all
-
-  supply ptr_of_key_simps[simp] value_of_key_simps[simp]
-  apply sep
-   apply (metis rbt_sorted.simps(2))
-  apply (sepwith auto)
   done
 
 lemmas [vcg_rules] = delete_opt_ext_correct[simplified ctx_def] 

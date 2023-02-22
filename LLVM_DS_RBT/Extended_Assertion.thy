@@ -160,27 +160,6 @@ lemma unfold_rbt_assn_ext_red_rule_1 [fri_red_rules]:
   apply simp
   done
 
-lemma unfold_rbt_assn_ext_red_rule_2 [fri_red_rules]:
-  "
-    is_sep_red
-    (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti unless cond)
-    (
-        \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti **
-        color_assn c ci **
-        rbt_assn_ext l ex li **
-        \<upharpoonleft>key_assn k ki **
-        \<upharpoonleft>value_assn v vi unless k \<in> ex **
-        rbt_assn_ext r ex ri
-    )
-    (\<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti unless cond)
-    (rbt_assn_ext (ATBranch c k v ci li ki vi ri l r) ex ti)
-  "
-  apply (rule is_sep_redI)
-  unfolding rbt_assn_ext_unfold
-  apply simp
-  done
-
-
 lemma rbt_assn_ext_key_assn_unfold [fri_red_rules]: 
   "
     is_sep_red

@@ -395,10 +395,10 @@ method sep_step =
     isep_normalize |
     entails_box_solver |
     (isep_elim_ex, isep_extract_pure) |
-    isep_assumption | 
     (
       first_partition
       \<open>
+        isep_assumption |
         append
         \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
         \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
@@ -497,5 +497,9 @@ method vcg_compat = ((simp only: PRECOND_def ENTAILS_def FRI_END_def) | (no_inst
 schematic_goal "ff A ** ff B \<tturnstile> ff ?X -- ?R"
   apply isep_assumption back
   done
+
+lemma prune_pureE: "\<lbrakk>pure_part X; T\<rbrakk> \<Longrightarrow> T" by simp
+
+method prune_pure = elim prune_pureE
 
 end

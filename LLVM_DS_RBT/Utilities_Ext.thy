@@ -58,11 +58,19 @@ declare ll_matches_rbt.simps[simp del]
 
 definition "ctx (P::bool) \<equiv> \<up>P"
 
-lemma sep_context_pureI: "B \<Longrightarrow> is_sep_red (\<up>B) \<box> \<box> (ctx B)"
+lemma sep_context_pureI [fri_red_rules]: 
+  "B \<Longrightarrow> is_sep_red (\<up>B) \<box> \<box> (ctx B)"
   unfolding ctx_def
   apply (rule is_sep_redI)
   by (simp add: pure_true_conv)
 
+lemma ctx_is_pure [simp]: "sep_is_pure_assn (ctx X)" 
+  unfolding ctx_def
+  by simp
+
+lemma ctx_pure_part [simp]: "pure_part (ctx X) = X" 
+  unfolding ctx_def
+  by simp
 
 end
 

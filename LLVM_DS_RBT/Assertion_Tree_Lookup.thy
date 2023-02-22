@@ -290,8 +290,8 @@ lemmas value_of_key_simps =
 
 subsection \<open>methods\<close>
 
-method vok_solver = (solves auto | (subst value_of_key_simps | subst (asm) value_of_key_simps | (auto)[])+)[]
-method pok_solver = (solves auto | (subst ptr_of_key_simps | subst (asm) ptr_of_key_simps | (auto)[])+)[]
+method vok_solver = ((subst value_of_key_simps | subst (asm) value_of_key_simps | (auto)[])+)[]
+method pok_solver = ((subst ptr_of_key_simps | subst (asm) ptr_of_key_simps | (auto)[])+)[]
 
 method vok_filter = match conclusion in "value_of_key _ _ = _" \<Rightarrow> vok_solver 
                                       \<bar> _ \<Rightarrow> succeed
