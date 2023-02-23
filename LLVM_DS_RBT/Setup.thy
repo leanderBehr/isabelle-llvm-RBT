@@ -9,13 +9,13 @@ begin
 subsection \<open>RBT NODE Datatype\<close>
 
 text_raw \<open>\snip{rbtnodedef}{1}{2}{%\<close>
-datatype ('key :: llvm_rep, 'value :: llvm_rep) rbt_node =
+datatype ('k :: llvm_rep, 'v :: llvm_rep) rbt_node =
   RBT_NODE
   (color: "8 word")
-  (left: "('key,'value) rbt_node ptr")
-  (key: 'key) 
-  (val: 'value)
-  (right: "('key,'value) rbt_node ptr")
+  (left: "('k, 'v) rbt_node ptr")
+  (key: 'k) 
+  (val: 'v)
+  (right: "('k, 'v) rbt_node ptr")
 text_raw \<open>}%endsnip\<close>
 
 hide_const (open) color left key val right

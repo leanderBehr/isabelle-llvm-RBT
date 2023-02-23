@@ -10,7 +10,7 @@ datatype ('k, 'v, 'ki, 'vi) assn_tree =
   (color: color)
   (key: 'k)
   (val: 'v) 
-  "8 word"
+  (ll_color: "8 word")
   (ll_left: "('ki, 'vi) rbti")
   (ll_key: 'ki) 
   (ll_val: 'vi) 
