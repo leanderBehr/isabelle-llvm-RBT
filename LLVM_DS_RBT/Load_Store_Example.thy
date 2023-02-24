@@ -28,7 +28,7 @@ method is_contains = match conclusion in "value_of_key _ _  = _" \<Rightarrow> s
 method join_filter = then_else is_contains \<open>solves auto\<close> succeed
 
 lemma example_correct:
-  " rbt_sorted (rbt_of t) \<Longrightarrow> rbt_lookup (rbt_of t) k1 \<noteq> None \<Longrightarrow>
+  "is_rbt (rbt_of t) \<Longrightarrow> rbt_lookup (rbt_of t) k1 \<noteq> None \<Longrightarrow>
   llvm_htriple
   (
     rbt_assn_ext t {} ti **
@@ -53,9 +53,8 @@ lemma example_correct:
   apply sepE
   done
 
-
 lemma example_correct_2:
-  " rbt_sorted (rbt_of t) \<Longrightarrow> rbt_lookup (rbt_of t) k1 \<noteq> None \<Longrightarrow>
+  " is_rbt (rbt_of t) \<Longrightarrow> rbt_lookup (rbt_of t) k1 \<noteq> None \<Longrightarrow>
   llvm_htriple
   (
     rbt_assn_ext t {} ti **
@@ -80,7 +79,7 @@ lemma example_correct_2:
   apply sep
   done 
 
-declare insert_opt_correct_ext'[vcg_rules del]
+
 
 definition "example2 t k1 v1 k2 v2 k3 f1 f2 \<equiv>
   do {

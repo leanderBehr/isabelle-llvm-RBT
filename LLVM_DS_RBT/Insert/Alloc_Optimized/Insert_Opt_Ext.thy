@@ -97,37 +97,8 @@ next
     done
 qed
 
-lemma insert_opt_correct_ext' [vcg_rules]:
-  "
-    llvm_htriple
-    (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_sorted (rbt_of t)))
-    (insert_opt ki vi ti)
-    (\<lambda>res_ti. EXS res_t.
-      rbt_assn_ext res_t {} res_ti **
-      \<up>(rbt_of res_t = rbt_insert k v (rbt_of t)) **
-      \<up>(rbt_sorted (rbt_of res_t)) **
-      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
-      \<up>(value_of_key res_t = (value_of_key t)(k \<mapsto> vi))
-    )
-  "
-  unfolding insert_opt_def rbt_insert_def rbt_insert_with_key_def paint_def
-  supply insert'_opt_correct_ext[vcg_rules]
-  apply vcg
-  apply (cases "rbt_ins (\<lambda>_ _ v. v) k v (rbt_of t)")
-  subgoal using rbt_ins_non_empty by fast
-  apply vcg
-  apply (subgoal_tac "rbt_sorted (rbt_of (ATBranch color.B x23 x24 1 li ki vi ri al ar))")
-   apply vcg_compat 
-   apply (sepEwith \<open>auto dest!: ptr_of_key_subsetD\<close>)
-    apply (auto simp add: value_of_key_simps intro: rbt_less_trans rbt_greater_trans)[]  
-  apply simp
-  using ins_rbt_sorted rbt_of.simps(2) rbt_sorted.simps(2)
-  by metis
- 
-  
 
-
-lemma insert_opt_correct_ext [vcg_rules]:
+lemma insert_opt_correct_ext':
   "
     llvm_htriple
     (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(is_rbt (rbt_of t)))
@@ -135,13 +106,27 @@ lemma insert_opt_correct_ext [vcg_rules]:
     (\<lambda>res_ti. EXS res_t.
       rbt_assn_ext res_t {} res_ti **
       \<up>(rbt_of res_t = rbt_insert k v (rbt_of t)) **
-      \<up>(is_rbt (rbt_of res_t)) **
+      ctx(is_rbt (rbt_of res_t)) **
       \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
       \<up>(value_of_key res_t = (value_of_key t)(k \<mapsto> vi))
     )
   "
+  unfolding insert_opt_def rbt_insert_def rbt_insert_with_key_def paint_def is_rbt_def
+  supply insert'_opt_correct_ext[vcg_rules]
   apply vcg
+  apply (cases "rbt_ins (\<lambda>_ _ v. v) k v (rbt_of t)")
+  subgoal using rbt_ins_non_empty by fast
+  apply vcg
+  apply vcg_compat 
+  apply (sepEwith \<open>(solves auto)?\<close>) 
+  subgoal
+    by (metis color_of.simps(2) ins_inv1_inv2(1) ins_inv1_inv2(3) ins_rbt_sorted inv1.simps(2) inv2.simps(2) rbt_of_branchI rbt_sorted.simps(2))
+  apply (sepwith \<open>solves pok_solver | solves vok_solver\<close>)
+  apply simp
+  apply sep
   done
+
+lemmas insert_opt_correct_ext[vcg_rules] = insert_opt_correct_ext'[simplified ctx_def]
 
 end
 
