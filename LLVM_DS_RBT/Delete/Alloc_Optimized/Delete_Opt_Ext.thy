@@ -49,7 +49,7 @@ next
         supply rbt_del_rbt_sorted[intro]
 
         supply ptr_of_key_simps[simp]
-        supply value_of_key'_simps[simp]
+        supply value_of_key_simps[simp]
 
         apply vcg 
         apply vcg_compat
@@ -67,7 +67,7 @@ next
         apply vcg
         apply vcg_compat
 
-        supply value_of_key'_simps[simp]
+        supply value_of_key_simps[simp]
         supply ptr_of_key_simps[simp]
 
         apply (sepEwith \<open>solves auto\<close>)
@@ -86,7 +86,7 @@ next
         supply rbt_del_rbt_sorted[intro]
 
         supply ptr_of_key_simps[simp]
-        supply value_of_key'_simps[simp]
+        supply value_of_key_simps[simp]
 
         apply vcg 
         apply vcg_compat
@@ -103,14 +103,14 @@ next
         supply ptr_of_key_simps[simp]
 
         apply vcg 
-        supply value_of_key'_simps[simp]
+        supply value_of_key_simps[simp]
         apply vcg_vok
 
         done
       done
       subgoal (*kc = k*)
         supply ptr_of_key_simps[simp]
-        supply value_of_key'_simps[simp]
+        supply value_of_key_simps[simp]
         apply vcg_vok
       done
     done

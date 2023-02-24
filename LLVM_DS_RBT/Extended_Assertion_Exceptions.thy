@@ -191,7 +191,7 @@ next
       subgoal 
         apply simp
         apply prune_pure
-        thm value_of_key'_simps
+        thm value_of_key_simps
         apply vok_solver 
         done
 

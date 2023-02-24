@@ -302,7 +302,7 @@ lemma value_to_ptr_map_eq_eq:
   subgoal using fun_eq_graphI .
   done
 
-lemmas value_of_key'_simps = 
+lemmas value_of_key_simps = 
   (*step1*)
   value_to_ptr_map_subset_eq
   value_to_ptr_map_eq_eq
@@ -314,7 +314,7 @@ lemmas value_of_key'_simps =
 
 subsection \<open>methods\<close>
 
-method vok_solver = ((subst value_of_key'_simps | subst (asm) value_of_key'_simps | (auto)[])+)[]
+method vok_solver = ((subst value_of_key_simps | subst (asm) value_of_key_simps | (auto)[])+)[]
 method pok_solver = ((subst ptr_of_key_simps | subst (asm) ptr_of_key_simps | (auto)[])+)[]
 
 method vok_filter = match conclusion in "value_of_key _ = _" \<Rightarrow> vok_solver 

@@ -56,7 +56,7 @@ lemma combine_correct_ext':
   )
   "
   supply ptr_of_key_simps[simp]
-  supply value_of_key'_simps[simp]
+  supply value_of_key_simps[simp]
   supply sep_context_pureI[fri_red_rules]
 proof(induction "rbt_of l" "rbt_of r" arbitrary: l r li ri rule: RBT_Impl.combine.induct)
   case 1

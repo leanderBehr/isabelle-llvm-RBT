@@ -50,7 +50,7 @@ lemma balance_left_opt_ext_correct':
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
               apply auto
-     supply value_of_key'_simps[simp]
+     supply value_of_key_simps[simp]
      apply vcg
     done
   subgoal (*case 2+*)
@@ -71,7 +71,7 @@ lemma balance_left_opt_ext_correct':
         apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
                   apply auto
          supply ptr_of_key_simps[simp]
-         supply value_of_key'_simps[simp]
+         supply value_of_key_simps[simp]
          supply load_rbt_non_null[vcg_rules]
          supply ptr_of_key_eqI[rule del]
 
@@ -147,7 +147,7 @@ lemma balance_right_opt_ext_correct':
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
               apply auto
-     supply value_of_key'_simps[simp]
+     supply value_of_key_simps[simp]
      apply vcg
     done
   subgoal (*case 2+*)
@@ -168,7 +168,7 @@ lemma balance_right_opt_ext_correct':
                   apply auto
 
          supply ptr_of_key_simps[simp]
-         supply value_of_key'_simps[simp]
+         supply value_of_key_simps[simp]
          supply load_rbt_non_null[vcg_rules]
          supply ptr_of_key_eqI[rule del]
 
@@ -240,7 +240,7 @@ lemma balance_left_opt_ext_combine_correct':
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
               apply auto
-    supply value_of_key'_simps[simp]
+    supply value_of_key_simps[simp]
     apply vcg
     done
   subgoal (*case 2+*)
@@ -249,7 +249,7 @@ lemma balance_left_opt_ext_combine_correct':
     subgoal (*case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
                 apply auto
-       supply value_of_key'_simps[simp]
+       supply value_of_key_simps[simp]
        apply vcg
       done
     apply vcg (*all other cases unreachable*)

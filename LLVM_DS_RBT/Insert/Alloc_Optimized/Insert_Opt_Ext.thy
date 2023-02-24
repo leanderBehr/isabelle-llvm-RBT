@@ -75,7 +75,7 @@ next
     supply 
       rbt_greater_trans[intro]
       rbt_less_trans[intro]      
-      value_of_key'_simps[simp]
+      value_of_key_simps[simp]
 
     supply 2(1-2)[vcg_rules] 
     apply (vcg;fail)
@@ -92,7 +92,7 @@ next
     supply 
       rbt_greater_trans[intro]
       rbt_less_trans[intro]      
-      value_of_key'_simps[simp]
+      value_of_key_simps[simp]
     apply (vcg;fail)
     done
 qed
@@ -119,7 +119,7 @@ lemma insert_opt_correct_ext' [vcg_rules]:
   apply (subgoal_tac "rbt_sorted (rbt_of (ATBranch color.B x23 x24 1 li ki vi ri al ar))")
    apply vcg_compat 
    apply (sepEwith \<open>auto dest!: ptr_of_key_subsetD\<close>)
-    apply (auto simp add: value_of_key'_simps intro: rbt_less_trans rbt_greater_trans)[]  
+    apply (auto simp add: value_of_key_simps intro: rbt_less_trans rbt_greater_trans)[]  
   apply simp
   using ins_rbt_sorted rbt_of.simps(2) rbt_sorted.simps(2)
   by metis
