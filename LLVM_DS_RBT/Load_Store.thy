@@ -69,8 +69,15 @@ subsection \<open>Store\<close>
 definition store :: "('ki, 'vi) rbti \<Rightarrow> 'vi \<Rightarrow> unit llM" where
   "store p v = set_value_p v p"
 
-lemma Hx: "(k, v) \<in> at_value_graph t \<Longrightarrow> rbt_of t |\<guillemotleft> k \<Longrightarrow> T" sorry
-lemma Hy: "(k, v) \<in> at_value_graph t \<Longrightarrow> k \<guillemotleft>| rbt_of t \<Longrightarrow> T" sorry
+lemma Hx: "(k, v) \<in> at_value_graph t \<Longrightarrow> rbt_of t |\<guillemotleft> k \<Longrightarrow> T"
+  apply (induction t)
+  apply auto
+  done
+
+lemma Hy: "(k, v) \<in> at_value_graph t \<Longrightarrow> k \<guillemotleft>| rbt_of t \<Longrightarrow> T"
+  apply (induction t)
+  apply auto
+  done
 
 lemma store_correct:
   assumes
