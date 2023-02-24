@@ -19,7 +19,7 @@ lemma balance_opt_correct_ext [vcg_rules]:
     \<up>(rbt_of res_t = rbt_balance (rbt_of l) k v (rbt_of r)) **
     \<up>(rbt_sorted (rbt_of res_t)) **
     \<up>(ptr_of_key res_t res = ptr_of_key (ATBranch color.B k v ci li ki vi ri l r) ti) **
-    \<up>(value_of_key res_t res = value_of_key(ATBranch color.B k v ci li ki vi ri l r) ti)  
+    \<up>(value_of_key res_t = value_of_key(ATBranch color.B k v ci li ki vi ri l r))  
   )
   "
   unfolding 
@@ -38,7 +38,7 @@ lemma balance_opt_correct_ext [vcg_rules]:
   subgoal (*Case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
                         apply auto
-    supply value_of_key_simps[simp]
+    supply value_of_key'_simps[simp]
     apply vcg
     done
   subgoal (*Case 2+*)

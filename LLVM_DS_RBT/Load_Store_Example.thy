@@ -24,7 +24,7 @@ definition "example t k1 v1 k2 v2 \<equiv>
   }
 "
 
-method is_contains = match conclusion in "value_of_key _ _ _ = _" \<Rightarrow> succeed
+method is_contains = match conclusion in "value_of_key _ _  = _" \<Rightarrow> succeed
 method join_filter = then_else is_contains \<open>solves auto\<close> succeed
 
 lemma example_correct:

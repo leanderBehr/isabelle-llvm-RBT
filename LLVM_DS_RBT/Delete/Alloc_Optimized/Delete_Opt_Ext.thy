@@ -21,7 +21,7 @@ lemma del_opt_correct_ext':
     \<up>(rbt_of t_res = rbt_del_ad k (rbt_of t)) **
     ctx(rbt_sorted (rbt_of t_res)) **
     \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key t_res ti_res) **
-    \<up>((value_of_key t ti)(k := None) \<subseteq>\<^sub>m value_of_key t_res ti_res)
+    \<up>((value_of_key t)(k := None) \<subseteq>\<^sub>m value_of_key t_res)
   )
   "
   supply sep_context_pureI[fri_red_rules]
@@ -49,7 +49,7 @@ next
         supply rbt_del_rbt_sorted[intro]
 
         supply ptr_of_key_simps[simp]
-        supply value_of_key_simps[simp]
+        supply value_of_key'_simps[simp]
 
         apply vcg 
         apply vcg_compat
@@ -67,7 +67,7 @@ next
         apply vcg
         apply vcg_compat
 
-        supply value_of_key_simps[simp]
+        supply value_of_key'_simps[simp]
         supply ptr_of_key_simps[simp]
 
         apply (sepEwith \<open>solves auto\<close>)
@@ -86,7 +86,7 @@ next
         supply rbt_del_rbt_sorted[intro]
 
         supply ptr_of_key_simps[simp]
-        supply value_of_key_simps[simp]
+        supply value_of_key'_simps[simp]
 
         apply vcg 
         apply vcg_compat
@@ -103,14 +103,14 @@ next
         supply ptr_of_key_simps[simp]
 
         apply vcg 
-        supply value_of_key_simps[simp]
+        supply value_of_key'_simps[simp]
         apply vcg_vok
 
         done
       done
       subgoal (*kc = k*)
         supply ptr_of_key_simps[simp]
-        supply value_of_key_simps[simp]
+        supply value_of_key'_simps[simp]
         apply vcg_vok
       done
     done
@@ -132,7 +132,7 @@ lemma delete_opt_ext_correct:
     \<up>(rbt_of res_t = (rbt_delete k (rbt_of t))) **
     ctx(rbt_sorted (rbt_of res_t)) **
     \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
-    \<up>((value_of_key t ti)(k := None) \<subseteq>\<^sub>m value_of_key res_t res_ti)
+    \<up>((value_of_key t)(k := None) \<subseteq>\<^sub>m value_of_key res_t)
   )
 "
   unfolding delete_opt_def rbt_delete_def paint_def
@@ -158,7 +158,7 @@ lemma delete_opt_ext_correct:
   done
 
 lemmas [vcg_rules] = delete_opt_ext_correct[simplified ctx_def] 
-                      
+
 end
 
 end

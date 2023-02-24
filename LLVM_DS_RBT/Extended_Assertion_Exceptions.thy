@@ -48,10 +48,31 @@ lemma rbt_greater_value_ex_eq_1 [simp]:
   "kn \<guillemotleft>| rbt_of t \<Longrightarrow> rbt_assn_ext t (Set.insert kn ex) ti = rbt_assn_ext t ex ti"
   apply (subst rbt_greater_value_ex_eq_2[symmetric]) by simp+
 
+lemma [simp]:
+  "value_of_key ATEmpty k = None"
+  unfolding value_of_key_def value_of_key'.simps by simp
+
+lemma [simp]:
+  "kn < k \<Longrightarrow> value_of_key (ATBranch c k v ci li ki vi ri l r) kn = value_of_key l kn"
+  unfolding value_of_key_def apply (simp add: value_of_key'.simps)
+  unfolding value_of_key'.simps[symmetric]
+  using value_of_key'_value_of_key_eq by metis
+
+lemma [simp]:
+  "k < kn \<Longrightarrow> value_of_key (ATBranch c k v ci li ki vi ri l r) kn = value_of_key r kn"
+  unfolding value_of_key_def apply (auto simp add: value_of_key'.simps)
+  unfolding value_of_key'.simps[symmetric]
+  using value_of_key'_value_of_key_eq by metis
+
+lemma [simp]:
+  "value_of_key (ATBranch c k v ci li ki vi ri l r) k = Some vi"
+  unfolding value_of_key_def apply (auto simp add: value_of_key'.simps)
+  done
+
 lemma value_ex_split_ent:
   assumes
     "kn \<notin> ex" and
-    "value_of_key t ti kn = Some vi" and
+    "value_of_key t kn = Some vi" and
     "rbt_sorted (rbt_of t)"
   shows
     "
@@ -60,7 +81,7 @@ lemma value_ex_split_ent:
   using assms
 proof(induction t arbitrary: ti)
   case ATEmpty
-  then show ?case by (simp add: value_of_key.simps)
+  then show ?case by simp
 next
   case (ATBranch c k v ci li ki vi ri l r)
   then show ?case
@@ -76,7 +97,7 @@ next
         ultimately show ?thesis using less ATBranch(3-5)
           unfolding rbt_assn_ext_unfold
           apply simp
-          apply (sepwith \<open>simp add: value_of_key.simps\<close>)
+          apply (sepwith simp) 
           apply simp
           done
       next
@@ -84,8 +105,8 @@ next
         with ATBranch show ?thesis
           unfolding rbt_assn_ext_unfold
           apply -
-          apply (sepEwith \<open>auto intro: rbt_less_trans rbt_greater_trans\<close>)
-          apply (simp add: value_of_key.simps)
+          apply (sepEwith \<open>auto intro: rbt_less_trans rbt_greater_trans\<close>) 
+          apply simp
           apply sep
           done
       next
@@ -100,7 +121,7 @@ next
         ultimately show ?thesis using greater ATBranch(3-5)
           unfolding rbt_assn_ext_unfold
           apply auto[]
-          apply (sepwith \<open>simp add: order_less_not_sym value_of_key.simps\<close>)
+          apply (sepwith \<open>simp add: order_less_not_sym\<close>)
           apply simp
           done
       qed
@@ -110,7 +131,7 @@ qed
 lemma value_ex_split_red:
   assumes
     "kn \<notin> ex" and
-    "value_of_key t ti kn = Some vi" and
+    "value_of_key t kn = Some vi" and
     "rbt_sorted (rbt_of t)"
   shows
     "
@@ -126,7 +147,7 @@ lemma value_ex_split_red:
 
 lemma value_ex_join_ent':
   assumes
-    "value_of_key t ti kn = Some vi" and
+    "value_of_key t kn = Some vi" and
     "kn \<in> ex" and
     "rbt_sorted (rbt_of t)"
   shows
@@ -137,13 +158,13 @@ lemma value_ex_join_ent':
       \<up>(rbt_of t_res = rbt_update (rbt_of t) kn v) **
       ctx(rbt_sorted (rbt_of t_res)) **
       \<up>(ptr_of_key t_res ti = ptr_of_key t ti) **
-      \<up>(value_of_key t_res ti = value_of_key t ti)
+      \<up>(value_of_key t_res = value_of_key t)
     )
     "
   using assms
 proof (induction t arbitrary: ti)
   case ATEmpty
-  then show ?case unfolding value_of_key.simps by simp
+  then show ?case by simp
 next
   case (ATBranch c k v ci li ki vi ri l r)
   show ?case
@@ -158,7 +179,7 @@ next
       apply - 
       unfolding rbt_assn_ext_unfold
       apply (isep_drule drule: ATBranch(1))
-      apply (auto simp add: value_of_key.simps)[3]
+      apply (auto)[3]
  
       apply (sepEwith \<open>(solves auto)?\<close>)
        apply (simp add: rbt_map_entry_rbt_less rbt_map_entry_rbt_sorted)  
@@ -170,6 +191,7 @@ next
       subgoal 
         apply simp
         apply prune_pure
+        thm value_of_key'_simps
         apply vok_solver 
         done
 
@@ -183,7 +205,7 @@ next
       apply -
       apply (sepEwith \<open>auto intro: rbt_less_trans rbt_greater_trans\<close>)
        apply vok_solver
-      apply (simp add: value_of_key.simps)
+      apply simp
       apply sep
       done
   next
@@ -198,7 +220,7 @@ next
       apply - 
       unfolding rbt_assn_ext_unfold
       apply (isep_drule drule: ATBranch(2))
-      apply (auto simp add: value_of_key.simps)[3]
+      apply (auto)[3]
  
       apply (sepEwith \<open>(solves auto)?\<close>)
        apply (simp add: rbt_map_entry_rbt_greater rbt_map_entry_rbt_sorted)  
@@ -222,7 +244,7 @@ qed
 lemmas value_ex_join_ent = value_ex_join_ent'[simplified ctx_def]
 
 lemma value_ex_join_red:
-  "rbt_sorted (rbt_of t1) \<Longrightarrow> k \<in> ex \<Longrightarrow> k \<notin> ex' \<Longrightarrow> value_of_key t1 ti k = Some vi \<Longrightarrow>
+  "rbt_sorted (rbt_of t1) \<Longrightarrow> k \<in> ex \<Longrightarrow> k \<notin> ex' \<Longrightarrow> value_of_key t1 k = Some vi \<Longrightarrow>
   is_sep_red
   (EXS t2. rbt_assn_ext t2 (ex - {k}) ti ** \<up>(rbt_of t2 = rbt_update (rbt_of t1) k v))
   (EXS t3. rbt_assn_ext t3 ex' ti)

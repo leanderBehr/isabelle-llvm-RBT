@@ -8,9 +8,6 @@ context rbt_impl
 begin
 interpretation rbt_impl_deps . 
 
-find_theorems lookup_ptr
-
-find_in_thms from_bool in llvm_code_raw
 lemma balance_correct_test [vcg_rules]:
   "llvm_htriple
   (

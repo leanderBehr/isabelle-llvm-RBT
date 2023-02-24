@@ -28,8 +28,8 @@ lemma disjoint_trees_ptr_map_add_graph [simp]:
 lemma disjoint_trees_value_map_add_graph [simp]:
   assumes "rbt_of l |\<guillemotleft> k" and "k \<guillemotleft>| rbt_of r"
   shows
-    "Map.graph (value_of_key l li ++ value_of_key r ri) =
-         Map.graph (value_of_key l li) \<union> Map.graph (value_of_key r ri)" 
+    "Map.graph (value_of_key l ++ value_of_key r) =
+         Map.graph (value_of_key l) \<union> Map.graph (value_of_key r)" 
   unfolding map_add_def Map.graph_def
   apply (rule equalityI)
   subgoal by (auto split: option.splits)
@@ -52,11 +52,11 @@ lemma combine_correct_ext':
     ctx(rbt_of res_t = rbt_combine (rbt_of l) (rbt_of r)) **
     ctx(rbt_sorted (rbt_of res_t)) **
     \<up>(ptr_of_key res_t res_ti = ptr_of_key l li ++ ptr_of_key r ri) **
-    \<up>(value_of_key res_t res_ti = value_of_key l li ++ value_of_key r ri)
+    \<up>(value_of_key res_t = value_of_key l ++ value_of_key r)
   )
   "
   supply ptr_of_key_simps[simp]
-  supply value_of_key_simps[simp]
+  supply value_of_key'_simps[simp]
   supply sep_context_pureI[fri_red_rules]
 proof(induction "rbt_of l" "rbt_of r" arbitrary: l r li ri rule: RBT_Impl.combine.induct)
   case 1
@@ -174,11 +174,7 @@ next
 
        apply simp
       apply sep
-
-       apply simp 
-       apply (subst ptr_of_key_simps(4), (auto)[])+
-       apply auto[1]
-
+      apply pok_solver
       apply sep
        apply vok_solver
       apply sep

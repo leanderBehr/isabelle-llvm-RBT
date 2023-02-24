@@ -25,14 +25,24 @@ fun at_ptr_graph where
     {(k, p)} \<union> (at_ptr_graph al li) \<union> (at_ptr_graph ar ri)
   "
 
-fun value_of_key where
-  "value_of_key t ti k = map_option (assn_tree.ll_val \<circ> snd) (p_node_of_key t ti k)"
+fun value_of_key' where
+  "value_of_key' t ti k = map_option (assn_tree.ll_val \<circ> snd) (p_node_of_key t ti k)"
 
+
+definition "value_of_key t k \<equiv> value_of_key' t null k"
+
+lemma 
+  value_of_key'_value_of_key_eq_eta_ext: "value_of_key' t ti k = value_of_key t k" and
+  value_of_key'_value_of_key_eq_eta_cont: "value_of_key' t ti = value_of_key t"
+  unfolding value_of_key_def
+  apply (induction t) by auto
+
+lemmas value_of_key'_value_of_key_eq = value_of_key'_value_of_key_eq_eta_ext value_of_key'_value_of_key_eq_eta_cont
 
 fun at_value_graph where
-  "at_value_graph ATEmpty _ = {}"
-| "at_value_graph (ATBranch c k v ci li ki vi ri al ar) p = 
-    {(k, vi)} \<union> (at_value_graph al li) \<union> (at_value_graph ar ri)
+  "at_value_graph ATEmpty = {}"
+| "at_value_graph (ATBranch c k v ci li ki vi ri al ar) = 
+    {(k, vi)} \<union> (at_value_graph al) \<union> (at_value_graph ar)
   "
 
 lemma ptr_of_key_less_none:
@@ -40,10 +50,13 @@ lemma ptr_of_key_less_none:
   apply (induction t arbitrary: p)
   by auto
 
-lemma value_of_key_less_none:
-  "rbt_of t |\<guillemotleft> k \<Longrightarrow> value_of_key t p k = None"
+lemma value_of_key'_less_none:
+  "rbt_of t |\<guillemotleft> k \<Longrightarrow> value_of_key' t p k = None"
   apply (induction t arbitrary: p)
   by auto
+
+lemmas value_of_key_less_none = value_of_key'_less_none[simplified value_of_key'_value_of_key_eq]
+
 
 lemma p_node_of_key_less_none:
   "rbt_of t |\<guillemotleft> k \<Longrightarrow> p_node_of_key t p k = None"
@@ -57,10 +70,12 @@ lemma ptr_of_key_greater_none:
   by auto
 
 
-lemma value_of_key_greater_none:
-  "k \<guillemotleft>| rbt_of t \<Longrightarrow> value_of_key t p k = None"
+lemma value_of_key'_greater_none:
+  "k \<guillemotleft>| rbt_of t \<Longrightarrow> value_of_key' t p k = None"
   apply (induction t arbitrary: p)
   by auto
+
+lemmas value_of_key_greater_none = value_of_key'_greater_none[simplified value_of_key'_value_of_key_eq]
 
 
 lemma p_node_of_key_greater_none:
@@ -69,7 +84,7 @@ lemma p_node_of_key_greater_none:
   by auto
 
 
-declare value_of_key.simps[simp del]
+declare value_of_key'.simps[simp del]
 
 
 lemma graph_p_node_of_key_eq:
@@ -163,23 +178,28 @@ lemma at_ptr_graph_graph_eq:
 
 subsection \<open>value of key\<close>
 
-lemma value_of_key_node_p_of_key_eq:
-  "Map.graph (value_of_key t ti) = { (a, ll_val (snd b)) | a b. (a, b) \<in> Map.graph (p_node_of_key t ti) } "
+lemma value_of_key'_node_p_of_key_eq:
+  "Map.graph (value_of_key' t ti) = { (a, ll_val (snd b)) | a b. (a, b) \<in> Map.graph (p_node_of_key t ti) } "
   unfolding Map.graph_def
-  by (auto simp: value_of_key.simps)
+  by (auto simp: value_of_key'.simps)
 
-lemma graph_value_of_key_eq:
+lemmas value_of_key_node_p_of_key_eq = value_of_key'_node_p_of_key_eq[simplified value_of_key'_value_of_key_eq]
+
+
+lemma graph_value_of_key'_eq:
   "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri al ar)) \<Longrightarrow>
-  Map.graph (value_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
-  {(k,vi)} \<union> (Map.graph (value_of_key al li)) \<union> (Map.graph (value_of_key ar ri))"
-  supply value_of_key.simps[simp]
-  apply (auto simp add: value_of_key_node_p_of_key_eq graph_p_node_of_key_eq) 
+  Map.graph (value_of_key' (ATBranch c k v ci li ki vi ri al ar) p) =
+  {(k,vi)} \<union> (Map.graph (value_of_key' al li)) \<union> (Map.graph (value_of_key' ar ri))"
+  supply value_of_key'.simps[simp]
+  apply (auto simp add: value_of_key'_node_p_of_key_eq graph_p_node_of_key_eq) 
   by force
 
+lemmas graph_value_of_key_eq = graph_value_of_key'_eq[simplified value_of_key'_value_of_key_eq]
 
-lemma at_value_graph_eq:
-  "rbt_sorted (rbt_of t) \<Longrightarrow> at_value_graph t p = Map.graph (value_of_key t p)"
-  supply value_of_key.simps[simp]
+
+lemma at_value_graph_eq':
+  "rbt_sorted (rbt_of t) \<Longrightarrow> at_value_graph t = Map.graph (value_of_key' t p)"
+  supply value_of_key'.simps[simp]
 proof (induction t arbitrary: p)
   case ATEmpty
   then show ?case
@@ -187,13 +207,15 @@ proof (induction t arbitrary: p)
     by simp
 next
   case (ATBranch x1 x2 x3 x4 x5 x6 x7 x8 t1 t2)
-  from ATBranch have "at_value_graph t1 p = Map.graph (value_of_key t1 p)" by fastforce
-  moreover from ATBranch have "at_value_graph t2 p = Map.graph (value_of_key t2 p)" by fastforce
+  from ATBranch have "at_value_graph t1 = Map.graph (value_of_key' t1 p)" by fastforce
+  moreover from ATBranch have "at_value_graph t2 = Map.graph (value_of_key' t2 p)" by fastforce
 
   ultimately show ?case
-    using ATBranch graph_value_of_key_eq
-    by fastforce
+    using ATBranch graph_value_of_key'_eq
+    by (metis at_value_graph.simps(2) value_of_key'_value_of_key_eq_eta_cont)
 qed
+
+lemmas at_value_graph_eq = at_value_graph_eq'[simplified value_of_key'_value_of_key_eq]
 
 subsection \<open>ptr of key handling\<close>
 
@@ -262,6 +284,7 @@ lemmas ptr_of_key_simps =
   key_to_ptr_map_subset_eq
   key_to_ptr_map_eq_eq
   (*step2*)
+  graph_map_upd
   graph_upd_none_eq
   (*step3*)
   map_grap_at_ptr_grap_eq
@@ -279,21 +302,22 @@ lemma value_to_ptr_map_eq_eq:
   subgoal using fun_eq_graphI .
   done
 
-lemmas value_of_key_simps = 
+lemmas value_of_key'_simps = 
   (*step1*)
   value_to_ptr_map_subset_eq
   value_to_ptr_map_eq_eq
   (*step2*)
+  graph_map_upd
   graph_upd_none_eq
-  (*step3*)
+  (*step3*)   
   at_value_graph_eq[symmetric]
 
 subsection \<open>methods\<close>
 
-method vok_solver = ((subst value_of_key_simps | subst (asm) value_of_key_simps | (auto)[])+)[]
+method vok_solver = ((subst value_of_key'_simps | subst (asm) value_of_key'_simps | (auto)[])+)[]
 method pok_solver = ((subst ptr_of_key_simps | subst (asm) ptr_of_key_simps | (auto)[])+)[]
 
-method vok_filter = match conclusion in "value_of_key _ _ = _" \<Rightarrow> vok_solver 
+method vok_filter = match conclusion in "value_of_key _ = _" \<Rightarrow> vok_solver 
                                       \<bar> _ \<Rightarrow> succeed
 
 method catch_entails = match conclusion in "ENTAILS _ _" \<Rightarrow> vcg_compat

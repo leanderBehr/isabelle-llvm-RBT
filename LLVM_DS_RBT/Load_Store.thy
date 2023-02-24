@@ -23,7 +23,7 @@ lemma rbt_ptr_load_correct [vcg_rules]:
     (load p)
     (\<lambda>res_v.
         rbt_assn_ext t ex ti **
-        \<up>(value_of_key t ti kn = Some res_v)
+        \<up>(value_of_key t kn = Some res_v)
     )
     "
   using assms
@@ -33,8 +33,6 @@ proof(induction t arbitrary: ti)
 next
   case (ATBranch c k v ci li ki vi ri al ar)
   note ATBranch(1-2)[vcg_rules]
-
-  note value_of_key.simps[simp]
 
   show ?case
   proof(cases kn k rule: linorder_cases)
@@ -71,6 +69,9 @@ subsection \<open>Store\<close>
 definition store :: "('ki, 'vi) rbti \<Rightarrow> 'vi \<Rightarrow> unit llM" where
   "store p v = set_value_p v p"
 
+lemma Hx: "(k, v) \<in> at_value_graph t \<Longrightarrow> rbt_of t |\<guillemotleft> k \<Longrightarrow> T" sorry
+lemma Hy: "(k, v) \<in> at_value_graph t \<Longrightarrow> k \<guillemotleft>| rbt_of t \<Longrightarrow> T" sorry
+
 lemma store_correct:
   assumes
     "rbt_sorted (rbt_of t)" and
@@ -85,7 +86,7 @@ lemma store_correct:
       rbt_assn_ext res_t ex ti **
       \<up>(rbt_of res_t = rbt_of t) **
       \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t ti = (value_of_key t ti)(kn \<mapsto> vni))
+      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   using assms
@@ -102,13 +103,12 @@ next
     with less ATBranch(3-5) show ?thesis
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>simp add: ptr_of_key_simps\<close> | find_sep)+
-      apply (rule ext)
-      subgoal for x xa
-        apply (drule fun_cong[where x = xa])+
-        apply (auto simp add: value_of_key.simps)
-        done
-      done
+      apply (sepEwith \<open>simp\<close> | find_sep)+
+       apply pok_solver
+
+      unfolding fun_upd_apply[symmetric]
+      apply vok_solver
+      by (fast intro: rbt_less_trans elim: Hx)
   next
     case equal
     with ATBranch(4) have "p = ti" by (simp add: ptr_of_key.simps) 
@@ -117,24 +117,24 @@ next
       unfolding rbt_assn_ext_unfold
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>auto simp add: value_of_key.simps\<close>)
-      apply simp
+      apply (sepEwith \<open>(solves auto)?\<close>)
+      unfolding fun_upd_apply[symmetric]
+      apply vok_solver
+        apply (auto elim: Hx Hy)
       done
   next
     case greater
     note ATBranch(1)[vcg_rules]
-    from greater ATBranch(4) have "Some p = ptr_of_key l li kn"
+    from greater ATBranch(4) have "ptr_of_key l li kn = Some p"
       by (auto simp add: ptr_of_key.simps)
     with greater ATBranch(3-5) show ?thesis
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>simp add: ptr_of_key_simps\<close> | find_sep)+
-      apply (rule ext)
-      subgoal for x xa
-        apply (drule fun_cong[where x = xa])+
-        apply (auto simp add: value_of_key.simps)
-        done
-      done
+      apply (sepEwith simp | find_sep)+
+      unfolding fun_upd_apply[symmetric]
+       apply pok_solver
+      apply vok_solver
+      by (fast intro: rbt_greater_trans elim: Hy)
   qed
 qed
 
@@ -150,10 +150,10 @@ lemma store_correct_no_ex:
     (rbt_assn_ext t ex ti)
     (store p vni)
     (\<lambda>_. EXS res_t.
-      rbt_assn_ext res_t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t ti kn)) **
+      rbt_assn_ext res_t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t kn)) **
       \<up>(rbt_of res_t = rbt_of t) **
       \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t ti = (value_of_key t ti)(kn \<mapsto> vni))
+      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   using assms
@@ -168,19 +168,20 @@ next
     from less ATBranch(5) have "ptr_of_key r ri kn = Some p"
       by (simp add: order_less_not_sym ptr_of_key.simps)
 
-    
+
 
     then show ?thesis using less ATBranch(3-4)
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>simp add: ptr_of_key_simps\<close> | find_sep)+
-       apply (auto simp: less_imp_neq rbt_less_trans value_of_key.simps) 
-       apply sep
-      apply (rule ext)
-      subgoal for x xa
-        apply (drule fun_cong[where x = xa])+
-        apply (auto simp add: value_of_key.simps)
-        done
+      apply (sepEwith simp)
+       apply pok_solver
+      apply sep
+       apply (simp_all only: fun_upd_apply[symmetric] del: fun_upd_apply)
+       apply (timeit vok_solver)
+       apply (fast intro: rbt_less_trans elim: Hx)
+
+      apply (auto simp: less_imp_neq rbt_less_trans ) 
+      apply sep
       done
   next
     case equal
@@ -190,9 +191,12 @@ next
       unfolding rbt_assn_ext_unfold
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>auto simp add: value_of_key.simps\<close>)
-      apply (simp add: value_of_key.simps) 
+      apply (sepEwith simp)
+       apply pok_solver
       apply sep
+      unfolding fun_upd_apply[symmetric]
+       apply vok_solver
+      apply (auto elim: Hx Hy)
       done
   next
     case greater
@@ -205,14 +209,14 @@ next
     ultimately show ?thesis using greater ATBranch(3-4)
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>simp add: ptr_of_key_simps\<close> | find_sep)+
-       apply (auto simp: rbt_greater_trans order_less_not_sym value_of_key.simps) 
-       apply sep
-      apply (rule ext)
-      subgoal for x xa
-        apply (drule fun_cong[where x = xa])+
-        apply (auto simp add: value_of_key.simps)
-        done
+      apply (sepEwith simp)
+       apply pok_solver
+
+      apply sep
+      unfolding fun_upd_apply[symmetric]
+       apply vok_solver
+       apply (fast intro: rbt_greater_trans elim: Hy)
+      apply (auto simp: rbt_greater_trans order_less_not_sym)
       done
   qed
 qed
@@ -228,7 +232,7 @@ lemma store_correct' [vcg_rules]:
       rbt_assn_ext res_t ex ti **
       \<up>(rbt_of res_t = rbt_of t) **
       \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t ti = (value_of_key t ti)(kn \<mapsto> vni))
+      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   supply store_correct[vcg_rules]
@@ -243,10 +247,10 @@ lemma store_correct_no_ex' [vcg_rules]:
     (rbt_assn_ext t ex ti ** \<up>(ptr_of_key t ti kn = Some p) ** \<up>(kn \<notin> ex) ** \<up>(rbt_sorted (rbt_of t)))
     (store p vni)
     (\<lambda>_. EXS res_t.
-      rbt_assn_ext res_t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t ti kn)) **
+      rbt_assn_ext res_t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t kn)) **
       \<up>(rbt_of res_t = rbt_of t) **
       \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t ti = (value_of_key t ti)(kn \<mapsto> vni))
+      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   supply store_correct_no_ex[vcg_rules]
