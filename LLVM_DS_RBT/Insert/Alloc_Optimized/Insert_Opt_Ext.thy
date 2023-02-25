@@ -35,11 +35,10 @@ proof (induction k v "rbt_of t" arbitrary: t ti rule: rbt_insert_ad'.induct )
   case (1 k\<^sub>n v\<^sub>n)
   then show ?case
     apply (subst insert'_opt.simps)
-    supply load_rbt_non_null[vcg_rules]
     apply vcg
     apply vcg_compat
     apply (sepEwith \<open>vok_filter,auto?\<close>)
-     apply vok_solver
+     apply simp
     apply (sepwith simp)
     done
 next
@@ -70,9 +69,7 @@ next
   from 2(3) show ?case
     apply (subst insert'_opt.simps)
     unfolding balance_black_def
-    supply load_rbt_non_null[vcg_rules]
-
-    supply 
+    supply
       rbt_greater_trans[intro]
       rbt_less_trans[intro]      
       value_of_key_simps[simp]
@@ -88,7 +85,6 @@ next
   from 3(3) show ?case
     apply (subst insert'_opt.simps)
     unfolding balance_black_def
-    supply load_rbt_non_null[vcg_rules] 
     supply 
       rbt_greater_trans[intro]
       rbt_less_trans[intro]      

@@ -183,8 +183,8 @@ next
       apply (sepEwith simp)
        apply pok_solver
       apply sep
-       apply (simp_all only: fun_upd_apply[symmetric] del: fun_upd_apply)
-       apply (timeit vok_solver)
+       apply (simp_all only: fun_upd_apply[symmetric])
+       apply vok_solver
        apply (fast intro: rbt_less_trans elim: Hx)
 
       apply (auto simp: less_imp_neq rbt_less_trans ) 

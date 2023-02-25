@@ -93,16 +93,9 @@ next
   show ?case
     apply (subst combine.simps)
     apply vcg
-    subgoal
-      apply resolve_rbt_pat_mat
-      apply vcg
-      done
-    subgoal
-      apply vcg
-      apply (cases "rbt_combine b c")
-       apply (auto split: color.splits)
-       apply vcg
-      done
+    apply (cases "rbt_combine b c")
+     apply (auto split: color.splits)
+     apply vcg
     done
 next
   case (4 a k x b c s y d)
@@ -110,16 +103,9 @@ next
   show ?case
     apply (subst combine.simps)
     apply vcg
-    subgoal
-      apply resolve_rbt_pat_mat
-      apply vcg
-      done
-    subgoal
-      apply vcg
-      apply (cases "rbt_combine b c")
-       apply (auto split: color.splits)
-       apply vcg
-      done
+    apply (cases "rbt_combine b c")
+     apply (auto split: color.splits)
+     apply vcg
     done
 next
   case (5 va vb vc vd b k x c)

@@ -105,7 +105,7 @@ lemma balance_left_opt_correct [vcg_rules]:
   subgoal (*case 1*)
     apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
               apply auto
-    apply vcg
+       apply vcg
     done
   subgoal (*case 2+*)
     apply vcg
@@ -117,13 +117,6 @@ lemma balance_left_opt_correct [vcg_rules]:
       done
     subgoal (*case 3+*)
       apply vcg
-      subgoal (*case 3*)
-        apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
-                  apply auto
-         apply vcg
-         supply load_rbt_non_null[vcg_rules]
-         apply vcg
-        done
       subgoal (*case 4*)
         apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
                   apply (auto elim!: matches_rbt.elims)
@@ -131,7 +124,6 @@ lemma balance_left_opt_correct [vcg_rules]:
       done
     done
   done
-
 
 definition "br_opt_case_1 n_p \<equiv>
   do {
@@ -226,7 +218,7 @@ lemma balance_right_opt_correct [vcg_rules]:
   subgoal (*case 1*)
     apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases)
               apply auto
-    apply vcg
+       apply vcg
     done
   subgoal (*case 2+*)
     apply vcg
@@ -238,13 +230,6 @@ lemma balance_right_opt_correct [vcg_rules]:
       done
     subgoal (*case 3+*)
       apply vcg
-      subgoal (*case 3*)
-        apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases)
-                  apply auto
-         apply vcg
-         supply load_rbt_non_null[vcg_rules]
-         apply vcg
-        done
       subgoal (*case 4*)
         apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases)
                   apply (auto elim: matches_rbt.elims)
@@ -252,7 +237,6 @@ lemma balance_right_opt_correct [vcg_rules]:
       done
     done
   done
-
 
 lemmas [llvm_inline] = 
   br_opt_case_1_def
@@ -301,15 +285,6 @@ lemma balance_left_opt_correct_combine [vcg_rules]:
     done
   subgoal (*case 2+*)
     apply vcg
-
-    subgoal (*case 2*)
-      apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_left.cases)
-                apply auto
-       apply vcg
-      done
-    subgoal (*case 3+*)
-      apply vcg
-      done
     done
   done
 

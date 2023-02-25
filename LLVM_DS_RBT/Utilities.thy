@@ -400,7 +400,6 @@ next
       apply vcg
       done
     subgoal
-      supply load_rbt_non_null[vcg_rules]
       apply vcg
         apply (all \<open>subst Hack_1\<close>)
         apply vcg
@@ -409,7 +408,7 @@ next
 qed
 
 
-lemmas [simp del] = ll_matches_rbt.simps
+declare ll_matches_rbt.simps[simp del]
 
 
 lemmas [llvm_pre_simp] =

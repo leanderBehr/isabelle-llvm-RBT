@@ -59,10 +59,10 @@ lemma balance_left_opt_ext_correct':
     subgoal (*case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
                 apply auto
-      subgoal by (timeit vcg_vok)
-      subgoal by (timeit vcg_vok)
-      subgoal by (timeit vcg_vok)
-      subgoal by (timeit vcg_vok)
+      subgoal by vcg_vok
+      subgoal by vcg_vok
+      subgoal by vcg_vok
+      subgoal by vcg_vok
 
       done
     subgoal (*case 3+*)
@@ -72,7 +72,6 @@ lemma balance_left_opt_ext_correct':
                   apply auto
          supply ptr_of_key_simps[simp]
          supply value_of_key_simps[simp]
-         supply load_rbt_non_null[vcg_rules]
          supply ptr_of_key_eqI[rule del]
 
          supply rbt_greater_trans[intro]
@@ -142,7 +141,6 @@ lemma balance_right_opt_ext_correct':
     rotate_right_def
     left_def
     right_def
-  supply sep_context_pureI[fri_red_rules]
   apply vcg
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
@@ -156,10 +154,10 @@ lemma balance_right_opt_ext_correct':
     subgoal (*case 2*)
       apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
                 apply auto
-      subgoal by (timeit vcg_vok)
-      subgoal by (timeit vcg_vok)
-      subgoal by (timeit vcg_vok)
-      subgoal by (timeit vcg_vok)
+      subgoal by vcg_vok
+      subgoal by vcg_vok
+      subgoal by vcg_vok
+      subgoal by vcg_vok
       done
     subgoal (*case 3+*)
       apply vcg
@@ -169,7 +167,6 @@ lemma balance_right_opt_ext_correct':
 
          supply ptr_of_key_simps[simp]
          supply value_of_key_simps[simp]
-         supply load_rbt_non_null[vcg_rules]
          supply ptr_of_key_eqI[rule del]
 
          supply rbt_greater_trans[intro]
@@ -189,7 +186,9 @@ lemma balance_right_opt_ext_correct':
           apply vcg
           subgoal
             apply vcg_compat
-            apply sepE apply (sep | (auto)[])+
+            apply (sepEwith \<open>(solves auto)?\<close>)
+            apply simp 
+            apply sep
             done
           done
         done
@@ -235,7 +234,6 @@ lemma balance_left_opt_ext_combine_correct':
     rotate_right_def
     left_def
     right_def
-  supply sep_context_pureI[fri_red_rules]
   apply vcg
   subgoal (*case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)

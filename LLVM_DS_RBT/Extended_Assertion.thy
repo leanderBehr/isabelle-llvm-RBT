@@ -119,11 +119,10 @@ lemma load_rbt [vcg_rules]:
   done
 
 
-lemma load_rbt_non_null:
+lemma load_rbt_ext_non_null [vcg_rules]:
   "
-    ti \<noteq> null \<Longrightarrow>
     llvm_htriple
-    (rbt_assn_ext t {} ti)
+    (rbt_assn_ext t {} ti ** \<up>(ti \<noteq> null))
     (ll_load ti)
     (\<lambda>res.
       EXS ci li ki vi ri c l k v r.

@@ -83,23 +83,19 @@ next
       apply resolve_rbt_pat_mat
       subgoal
         supply rbt_sorted.simps[simp del]
-        apply vcg
         apply vcg_compat
-        subgoal
-          apply sepE
-           apply (auto simp add: RBT_Impl.combine.simps)[] 
+        apply sepE
+        apply (auto simp add: RBT_Impl.combine.simps)[] 
 
-          apply sep
-           apply simp
-           apply (rule combine_rbt_sorted)
-          using rbt_sorted.simps apply fast+
-            apply auto[2]
+        apply sep
+        apply simp
+        apply (rule combine_rbt_sorted)
+        using rbt_sorted.simps apply fast+
+        apply auto[2]
 
-          apply (sepwith auto)
-          apply simp
-          apply (sepwith simp)
-
-          done
+        apply (sepwith auto)
+        apply simp
+        apply (sepwith simp)
         done
       done
     subgoal
@@ -140,7 +136,6 @@ next
     subgoal
       apply resolve_rbt_pat_mat
       supply rbt_sorted.simps[simp del]
-      apply vcg
       apply vcg_compat
       subgoal
         apply sepE
@@ -183,7 +178,6 @@ next
   next
     case (5 va vb vc vd b k x c)
     note 5(1)[simplified ctx_def, vcg_rules]
-    note load_rbt_non_null[vcg_rules]
     from 5(2-3) show ?case
       apply (subst combine_opt.simps)
       apply vcg
@@ -203,7 +197,6 @@ next
   next
     case (6 a k x b va vb vc vd)
     note 6(1)[simplified ctx_def, vcg_rules]
-    note load_rbt_non_null[vcg_rules]
     from 6(2-3) show ?case
       apply (subst combine_opt.simps)
       apply vcg

@@ -152,7 +152,7 @@ lemma delete_correct [vcg_rules]:
   (\<lambda>r. rbt_assn (rbt_delete k t) r ** \<upharpoonleft>key_assn k ki)
 "
   unfolding delete_def rbt_delete_def paint_def
-  supply del_correct[vcg_rules] load_rbt_non_null[vcg_rules]
+  supply del_correct[vcg_rules]
   apply vcg
   done
 

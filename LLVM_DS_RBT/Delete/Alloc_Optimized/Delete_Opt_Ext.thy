@@ -36,7 +36,6 @@ next
 
   from 2(5) show ?case
     apply (subst del_opt.simps)
-    supply load_rbt_non_null[vcg_rules]
     apply vcg
 
     subgoal for al ar ci li ki vi ri asf ra sa (*k < kc*)
@@ -119,8 +118,6 @@ qed
 
 lemmas del_opt_ext_correct = del_opt_correct_ext'[simplified ctx_def rbt_del_ad_correct]
 
-method pok_solver = (simp?, (subst ptr_of_key_simps | (auto simp: ptr_of_key_simps)[])+)[]
-
 lemma delete_opt_ext_correct:
   "
   llvm_htriple
@@ -138,7 +135,6 @@ lemma delete_opt_ext_correct:
   unfolding delete_opt_def rbt_delete_def paint_def
   supply 
     del_opt_ext_correct[vcg_rules] 
-    load_rbt_non_null[vcg_rules] 
     sep_context_pureI[isep_red]
 
   apply vcg

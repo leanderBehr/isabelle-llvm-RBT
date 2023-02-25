@@ -122,31 +122,7 @@ lemma balance_left_correct':
     bl_case_1_def
     bl_case_2_def
     bl_case_3_def
-  apply vcg
-  subgoal (*case 1*)
-    apply resolve_rbt_pat_mat
-    apply vcg
-    done
-  subgoal (*case 2+*)
-
-    apply vcg
-  
-    subgoal (*case 2*)
-      apply resolve_rbt_pat_mat
-      apply vcg
-      done
-    subgoal (*case 3+*)
-      apply vcg
-      subgoal (*case 3*)
-        apply resolve_rbt_pat_mat
-        apply vcg
-        supply load_rbt_non_null[vcg_rules]
-        apply vcg
-        done
-      subgoal (*case 4*) by vcg
-      done
-    done
-  done
+  by vcg
 
 lemma balance_left_correct [vcg_rules]:
   "
@@ -230,6 +206,7 @@ lemma neq_Red: "(c \<noteq> color.R) = (c = color.B)"
 method resolve_rbt_pat_mat' =
   ((erule matches_rbt.elims(2-3) | simp add: neq_Red)+)[1]
 
+
 lemma balance_right_correct [vcg_rules]: 
   "
     llvm_htriple
@@ -243,27 +220,24 @@ lemma balance_right_correct [vcg_rules]:
     br_case_2_def
     br_case_3_def
   apply vcg
-  subgoal (*case 1*)
-    apply resolve_rbt_pat_mat
-    apply vcg
+  subgoal (*case 2*)
+    apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
+     apply vcg
     done
-  subgoal (*case 2+*)
+  subgoal (*case 3+*)
     apply vcg
-    subgoal (*case 2*)
+    subgoal (*case 3a*)
       apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
        apply vcg
       done
-    subgoal (*case 3+*)
-      apply vcg
-      subgoal (*case 3*)
-        apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
-         supply load_rbt_non_null[vcg_rules]
-         apply vcg
-        done
-      subgoal (*case 4*) 
-        apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
-             apply vcg
-        done
+    subgoal (*case 3b*) 
+      apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
+       apply vcg
+      done
+
+    subgoal (*case 4*) 
+      apply (cases "(l, k, v, r)" rule: RBT_Impl.balance_right.cases, auto)
+           apply vcg
       done
     done
   done

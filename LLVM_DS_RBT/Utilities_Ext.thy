@@ -46,7 +46,6 @@ next
       apply vcg
       done
     subgoal
-      supply load_rbt_non_null[vcg_rules]
       apply vcg
         apply (all \<open>subst Hack_1\<close>)
         apply vcg
