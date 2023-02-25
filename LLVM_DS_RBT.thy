@@ -8,6 +8,8 @@ context rbt_impl
 begin
 interpretation rbt_impl_deps . 
 
+thm insert_opt_correct_ext
+
 lemma balance_correct_test [vcg_rules]:
   "llvm_htriple
   (

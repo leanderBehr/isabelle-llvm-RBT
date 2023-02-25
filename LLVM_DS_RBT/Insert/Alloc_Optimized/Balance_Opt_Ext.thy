@@ -33,13 +33,12 @@ lemma balance_opt_correct_ext [vcg_rules]:
     rotate_right_def
     right_def
     left_def
-  supply rbt_greater_trans[intro] rbt_less_trans[intro]
+  supply rbt_greater_trans[intro] rbt_less_trans[intro] 
   apply vcg
   subgoal (*Case 1*)
     apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance.cases)
                         apply auto
-    supply value_of_key_simps[simp]
-    apply vcg
+    apply vcg_vok
     done
   subgoal (*Case 2+*)
     apply vcg

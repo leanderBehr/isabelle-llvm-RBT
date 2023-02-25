@@ -69,14 +69,16 @@ subsection \<open>Store\<close>
 definition store :: "('ki, 'vi) rbti \<Rightarrow> 'vi \<Rightarrow> unit llM" where
   "store p v = set_value_p v p"
 
-lemma Hx: "(k, v) \<in> at_value_graph t \<Longrightarrow> rbt_of t |\<guillemotleft> k \<Longrightarrow> T"
+lemma Hx: "(k, v) \<in> graph (value_of_key t) \<Longrightarrow> rbt_of t |\<guillemotleft> k \<Longrightarrow> T"
   apply (induction t)
+  unfolding graph_def
   apply auto
   done
 
-lemma Hy: "(k, v) \<in> at_value_graph t \<Longrightarrow> k \<guillemotleft>| rbt_of t \<Longrightarrow> T"
+lemma Hy: "(k, v) \<in> graph (value_of_key t) \<Longrightarrow> k \<guillemotleft>| rbt_of t \<Longrightarrow> T"
   apply (induction t)
-  apply auto
+  unfolding graph_def
+   apply auto
   done
 
 lemma store_correct:
@@ -124,7 +126,7 @@ next
       unfolding rbt_assn_ext_unfold
       apply vcg
       apply vcg_compat
-      apply (sepEwith \<open>(solves auto)?\<close>)
+      apply (sepEwith \<open>(solves auto) | solves pok_solver | succeed\<close>)
       unfolding fun_upd_apply[symmetric]
       apply vok_solver
         apply (auto elim: Hx Hy)

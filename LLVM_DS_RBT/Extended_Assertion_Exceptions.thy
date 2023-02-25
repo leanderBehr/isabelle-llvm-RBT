@@ -202,8 +202,7 @@ next
     with ATBranch(3-5) show ?thesis
       unfolding rbt_assn_ext_unfold
       apply -
-      apply (sepEwith \<open>auto intro: rbt_less_trans rbt_greater_trans\<close>)
-       apply vok_solver
+      apply (sepEwith \<open>solves pok_solver | solves vok_solver\<close>)
       apply simp
       apply sep
       done

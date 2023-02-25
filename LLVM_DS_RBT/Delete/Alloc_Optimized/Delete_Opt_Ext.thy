@@ -47,30 +47,14 @@ next
         supply rbt_del_rbt_less[intro]
         supply rbt_del_rbt_sorted[intro]
 
-        supply ptr_of_key_simps[simp]
-        supply value_of_key_simps[simp]
-
-        apply vcg 
-        apply vcg_compat
-        apply (sepEwith auto)
-        apply simp
-        apply sep
-        done
+        by vcg_vok
 
       subgoal (*ra = 1*)
         supply 2(1)[simplified ctx_def, vcg_rules]
         supply rbt_del_rbt_less[simp]
         supply rbt_del_ad_correct[simp]
 
-
-        apply vcg
-        apply vcg_compat
-
-        supply value_of_key_simps[simp]
-        supply ptr_of_key_simps[simp]
-
-        apply (sepEwith \<open>solves auto\<close>)
-        done
+        by vcg_vok
       done
 
     subgoal for al ar ci li ki vi ri asf ra s (*kc \<le> k*)
@@ -84,34 +68,15 @@ next
         supply rbt_del_rbt_greater[intro]
         supply rbt_del_rbt_sorted[intro]
 
-        supply ptr_of_key_simps[simp]
-        supply value_of_key_simps[simp]
-
-        apply vcg 
-        apply vcg_compat
-        apply (sepEwith auto)
-
-        apply simp
-        apply sep
-        done
+        by vcg_vok
 
       subgoal (*rb = 1*)
         supply 2(3)[simplified ctx_def, vcg_rules]
         supply rbt_del_rbt_greater[simp]
         supply rbt_del_ad_correct[simp]
-        supply ptr_of_key_simps[simp]
-
-        apply vcg 
-        supply value_of_key_simps[simp]
-        apply vcg_vok
-
-        done
+        by vcg_vok
       done
-      subgoal (*kc = k*)
-        supply ptr_of_key_simps[simp]
-        supply value_of_key_simps[simp]
-        apply vcg_vok
-      done
+      subgoal (*kc = k*) by vcg_vok
     done
   done
 qed

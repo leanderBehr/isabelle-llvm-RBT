@@ -41,7 +41,7 @@ lemma rbt_of_branchI [intro!]:
     "rbt_of l = l'"
     "rbt_of r = r'"
   shows
-    "rbt_of (ATBranch c k v ci li ki vi ri l r) = (rbt.Branch c l' k v r')"
+    "rbt_of (ATBranch c k v ci li ki vi ri l r) = rbt.Branch c l' k v r'"
   using assms by simp
 
 
@@ -50,7 +50,7 @@ lemma rbt_of_emptyI [intro!]:
   by simp
 
 lemma rbt_of_reorient_branch [simp]: 
-  "(Branch c l k v r = rbt_of x) = (rbt_of x = Branch c l k v r)" by auto
+  "(Branch c l k v r = rbt_of t) = (rbt_of t = Branch c l k v r)" by auto
 
 lemma rbt_of_reorient_empty [simp]:
   "(rbt.Empty = rbt_of t) = (rbt_of t = rbt.Empty)" by auto

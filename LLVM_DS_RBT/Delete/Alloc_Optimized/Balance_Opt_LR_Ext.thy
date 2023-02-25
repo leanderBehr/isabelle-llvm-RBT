@@ -48,17 +48,14 @@ lemma balance_left_opt_ext_correct':
   supply sep_context_pureI[fri_red_rules]
   apply vcg
   subgoal (*case 1*)
-    apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
-              apply auto
-     supply value_of_key_simps[simp]
-     apply vcg
+    apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases, auto)
+     apply vcg_vok
     done
   subgoal (*case 2+*)
     apply vcg
 
     subgoal (*case 2*)
-      apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
-                apply auto
+      apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases, auto)
       subgoal by vcg_vok
       subgoal by vcg_vok
       subgoal by vcg_vok
@@ -68,31 +65,27 @@ lemma balance_left_opt_ext_correct':
     subgoal (*case 3+*)
       apply vcg
       subgoal (*case 3*)
-        apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
-                  apply auto
-         supply ptr_of_key_simps[simp]
-         supply value_of_key_simps[simp]
-         supply ptr_of_key_eqI[rule del]
-
+        apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases, auto)
          supply rbt_greater_trans[intro]
          supply rbt_less_trans[intro]
 
-        subgoal
-          apply vcg 
+        subgoal 
+          apply vcg
+          apply vcg_compat
           subgoal
-            apply vcg_compat 
-            apply (sepEwith auto)
+            apply (sepEwith \<open>solves auto | solves pok_solver | solves vok_solver\<close>)
             apply simp
-            apply (sepwith simp)
+            apply sep
             done
           done
 
-        subgoal 
-
+        subgoal
           apply vcg
+          apply vcg_compat
           subgoal
-            apply vcg_compat
-            apply sepE apply (sep | (auto)[])+
+            apply (sepEwith \<open>solves auto | solves pok_solver | solves vok_solver\<close>)
+            apply simp
+            apply sep
             done
           done
         done
@@ -143,17 +136,14 @@ lemma balance_right_opt_ext_correct':
     right_def
   apply vcg
   subgoal (*case 1*)
-    apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
-              apply auto
-     supply value_of_key_simps[simp]
-     apply vcg
+    apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases, auto)
+     apply vcg_vok
     done
   subgoal (*case 2+*)
     apply vcg
 
     subgoal (*case 2*)
-      apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
-                apply auto
+      apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases, auto)
       subgoal by vcg_vok
       subgoal by vcg_vok
       subgoal by vcg_vok
@@ -162,32 +152,26 @@ lemma balance_right_opt_ext_correct':
     subgoal (*case 3+*)
       apply vcg
       subgoal (*case 3*)
-        apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases)
-                  apply auto
-
-         supply ptr_of_key_simps[simp]
-         supply value_of_key_simps[simp]
-         supply ptr_of_key_eqI[rule del]
-
+        apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_right.cases, auto)
          supply rbt_greater_trans[intro]
          supply rbt_less_trans[intro]
 
         subgoal
-          apply vcg 
+          apply vcg
+          apply vcg_compat
           subgoal
-            apply vcg_compat 
-            apply (sepEwith auto)
+            apply (sepEwith \<open>solves auto | solves pok_solver | solves vok_solver\<close>)
             apply simp
-            apply (sepwith simp)
+            apply sep
             done
           done
 
         subgoal 
           apply vcg
+          apply vcg_compat
           subgoal
-            apply vcg_compat
-            apply (sepEwith \<open>(solves auto)?\<close>)
-            apply simp 
+            apply (sepEwith \<open>solves auto | solves pok_solver | solves vok_solver\<close>)
+            apply simp
             apply sep
             done
           done
@@ -236,19 +220,15 @@ lemma balance_left_opt_ext_combine_correct':
     right_def
   apply vcg
   subgoal (*case 1*)
-    apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
-              apply auto
-    supply value_of_key_simps[simp]
-    apply vcg
+    apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases, auto)
+    apply vcg_vok
     done
   subgoal (*case 2+*)
     apply vcg
 
     subgoal (*case 2*)
-      apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases)
-                apply auto
-       supply value_of_key_simps[simp]
-       apply vcg
+      apply (cases "(rbt_of l, k, v, rbt_of r)" rule: RBT_Impl.balance_left.cases, auto)
+       apply vcg_vok
       done
     apply vcg (*all other cases unreachable*)
     done

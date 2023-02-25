@@ -12,11 +12,13 @@ begin
 lemma pure_assn_prem_from_prem: "(P1 \<Longrightarrow> P2 \<Longrightarrow> htriple P3 c Q) \<Longrightarrow> htriple (\<up>P1 ** \<up>P2 ** P3) c Q"
   by (metis (mono_tags) htriple_realizable_preI n1 pure_true_conv realizable_extract_pure)
 
-lemma less_key_not_in_value_graph [dest]: "(k, vi) \<in> at_value_graph t \<Longrightarrow> (rbt_of t) |\<guillemotleft> k \<Longrightarrow> False"
-  apply (induction t) by auto
+lemma less_key_not_in_value_graph [dest]: "(k, vi) \<in> graph (value_of_key t) \<Longrightarrow> (rbt_of t) |\<guillemotleft> k \<Longrightarrow> False"
+  unfolding graph_def
+  by (simp add: value_of_key_less_none)+
 
-lemma greater_key_not_in_value_graph [dest]: "(k, vi) \<in> at_value_graph t \<Longrightarrow> k \<guillemotleft>| (rbt_of t) \<Longrightarrow> False"
-  apply (induction t) by auto
+lemma greater_key_not_in_value_graph [dest]: "(k, vi) \<in> graph (value_of_key t) \<Longrightarrow> k \<guillemotleft>| (rbt_of t) \<Longrightarrow> False"
+  unfolding graph_def
+  by (simp add: value_of_key_greater_none)+
 
 lemma insert'_opt_correct_ext:
   "
@@ -30,16 +32,11 @@ lemma insert'_opt_correct_ext:
       \<up>(value_of_key res_t = (value_of_key t)(k \<mapsto> vi))
     )
   "
-  supply ptr_of_key_subsetD[dest!]
 proof (induction k v "rbt_of t" arbitrary: t ti rule: rbt_insert_ad'.induct )
   case (1 k\<^sub>n v\<^sub>n)
   then show ?case
     apply (subst insert'_opt.simps)
-    apply vcg
-    apply vcg_compat
-    apply (sepEwith \<open>vok_filter,auto?\<close>)
-     apply simp
-    apply (sepwith simp)
+    apply vcg_vok
     done
 next
   case (2 k\<^sub>n v\<^sub>n l k v r)
@@ -71,12 +68,10 @@ next
     unfolding balance_black_def
     supply
       rbt_greater_trans[intro]
-      rbt_less_trans[intro]      
-      value_of_key_simps[simp]
+      rbt_less_trans[intro]
 
     supply 2(1-2)[vcg_rules] 
-    apply (vcg;fail)
-    done
+    by (vcg_vok;fail)
 next
   case (3 k\<^sub>n v\<^sub>n l k v r)
 
@@ -87,10 +82,8 @@ next
     unfolding balance_black_def
     supply 
       rbt_greater_trans[intro]
-      rbt_less_trans[intro]      
-      value_of_key_simps[simp]
-    apply (vcg;fail)
-    done
+      rbt_less_trans[intro]
+    by (vcg_vok;fail)
 qed
 
 

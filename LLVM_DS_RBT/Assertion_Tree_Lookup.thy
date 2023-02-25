@@ -5,6 +5,8 @@ begin
 context rbt_impl
 begin
 
+abbreviation "graph \<equiv> Map.graph"
+
 fun p_node_of_key :: "_ \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> 'k  \<Rightarrow> _ option" where
   "p_node_of_key ATEmpty _  _ = None"
 | "p_node_of_key br p kn =
@@ -18,16 +20,10 @@ fun p_node_of_key :: "_ \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> 'k  \<Righta
 fun ptr_of_key :: "_ \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> 'k  \<Rightarrow> ('ki, 'vi) rbti option" where
   "ptr_of_key t ti k = map_option fst (p_node_of_key t ti k)"
 
-
-fun at_ptr_graph where
-  "at_ptr_graph ATEmpty _ = {}"
-| "at_ptr_graph (ATBranch c k v ci li ki vi ri al ar) p = 
-    {(k, p)} \<union> (at_ptr_graph al li) \<union> (at_ptr_graph ar ri)
-  "
+declare ptr_of_key.simps[simp del]
 
 fun value_of_key' where
   "value_of_key' t ti k = map_option (assn_tree.ll_val \<circ> snd) (p_node_of_key t ti k)"
-
 
 definition "value_of_key t k \<equiv> value_of_key' t null k"
 
@@ -39,16 +35,10 @@ lemma
 
 lemmas value_of_key'_value_of_key_eq = value_of_key'_value_of_key_eq_eta_ext value_of_key'_value_of_key_eq_eta_cont
 
-fun at_value_graph where
-  "at_value_graph ATEmpty = {}"
-| "at_value_graph (ATBranch c k v ci li ki vi ri al ar) = 
-    {(k, vi)} \<union> (at_value_graph al) \<union> (at_value_graph ar)
-  "
-
 lemma ptr_of_key_less_none:
   "rbt_of t |\<guillemotleft> k \<Longrightarrow> ptr_of_key t p k = None"
   apply (induction t arbitrary: p)
-  by auto
+  by (auto simp add: ptr_of_key.simps)
 
 lemma value_of_key'_less_none:
   "rbt_of t |\<guillemotleft> k \<Longrightarrow> value_of_key' t p k = None"
@@ -67,7 +57,7 @@ lemma p_node_of_key_less_none:
 lemma ptr_of_key_greater_none:
   "k \<guillemotleft>| rbt_of t \<Longrightarrow> ptr_of_key t p k = None"
   apply (induction t arbitrary: p)
-  by auto
+  by (auto simp add: ptr_of_key.simps)
 
 
 lemma value_of_key'_greater_none:
@@ -89,19 +79,19 @@ declare value_of_key'.simps[simp del]
 
 lemma graph_p_node_of_key_eq:
   "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri al ar)) \<Longrightarrow>
-  Map.graph (p_node_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
-  {(k, (p, ATBranch c k v ci li ki vi ri al ar))} \<union> (Map.graph (p_node_of_key al li)) \<union> (Map.graph (p_node_of_key ar ri))"
+  graph (p_node_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
+  {(k, (p, ATBranch c k v ci li ki vi ri al ar))} \<union> (graph (p_node_of_key al li)) \<union> (graph (p_node_of_key ar ri))"
   apply standard
   subgoal 
-    unfolding Map.graph_def
+    unfolding graph_def
     apply standard
     apply simp
     by (metis assn_tree.sel(2,5,8,9,10) linorder_neq_iff option.inject)
   subgoal premises prems
-  proof
+  proof 
     fix x
     let ?br = "ATBranch c k v ci li ki vi ri al ar"
-    assume asm: "x \<in> {(k, p, ?br)} \<union> Map.graph (p_node_of_key al li) \<union> Map.graph (p_node_of_key ar ri)"
+    assume asm: "x \<in> {(k, p, ?br)} \<union> graph (p_node_of_key al li) \<union> graph (p_node_of_key ar ri)"
     obtain xk xp xbr where ab: "x = (xk, xp, xbr)" using prod_cases3 .
 
     have "xk \<guillemotleft>| rbt_of ar" and "rbt_of al |\<guillemotleft> xk" if "xk = k" using prems that by simp+
@@ -115,8 +105,8 @@ lemma graph_p_node_of_key_eq:
     from ab have lnot1: "x \<notin> {(k, p, ?br)}" if "xk < k" using that by blast
 
     have "xk \<guillemotleft>| rbt_of ar" if "xk < k" using that prems rbt_greater_trans by auto
-    hence "p_node_of_key ar ri xk = None" if "xk < k" using that ptr_of_key_greater_none by auto
-    with ab have lnot3: "x \<notin> Map.graph (p_node_of_key ar ri)" if "xk < k" using that in_graphD by fastforce
+    hence "p_node_of_key ar ri xk = None" if "xk < k" using that ptr_of_key_greater_none by (auto simp add: ptr_of_key.simps)
+    with ab have lnot3: "x \<notin> graph (p_node_of_key ar ri)" if "xk < k" using that in_graphD by fastforce
 
     from lnot1 lnot3 asm ab have left: "p_node_of_key al li xk = Some (xp, xbr)" if "xk < k" using that in_graphD by fast
 
@@ -126,7 +116,7 @@ lemma graph_p_node_of_key_eq:
       by (metis (no_types, opaque_lifting) Un_iff dual_order.irrefl empty_iff insert_iff option.distinct(1) prod.sel(1) rbt_of.simps(2) rbt_sorted.simps(2))
 
 
-    from center left right show "x \<in> Map.graph (p_node_of_key ?br p)"
+    from center left right show "x \<in> graph (p_node_of_key ?br p)"
       apply (cases xk k rule: linorder_cases)
       using ab apply (auto intro!: in_graphI)
       done
@@ -134,21 +124,21 @@ lemma graph_p_node_of_key_eq:
   done
 
 lemma ptr_of_key_node_p_of_key_eq:
-  "Map.graph (ptr_of_key t ti) = { (a, fst b) | a b. (a, b) \<in> Map.graph (p_node_of_key t ti) } "
-  unfolding Map.graph_def
-  by simp
+  "graph (ptr_of_key t ti) = { (a, fst b) | a b. (a, b) \<in> graph (p_node_of_key t ti) } "
+  unfolding graph_def
+  by (auto simp add: ptr_of_key.simps)
 
 lemma graph_ptr_of_key_eq:
   "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri al ar)) \<Longrightarrow>
-  Map.graph (ptr_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
-  {(k,p)} \<union> (Map.graph (ptr_of_key al li)) \<union> (Map.graph (ptr_of_key ar ri))"
+  graph (ptr_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
+  {(k,p)} \<union> (graph (ptr_of_key al li)) \<union> (graph (ptr_of_key ar ri))"
   apply (simp add: ptr_of_key_node_p_of_key_eq)
   using graph_p_node_of_key_eq by fastforce
 
 
 lemma fun_eq_graphI:
-  "Map.graph f = Map.graph g \<Longrightarrow> f = g"
-  unfolding Map.graph_def
+  "graph f = graph g \<Longrightarrow> f = g"
+  unfolding graph_def
   apply standard
   subgoal for x 
     apply (cases "f x"; cases "g x")
@@ -156,31 +146,11 @@ lemma fun_eq_graphI:
     done
   done
 
-
-
-lemma at_ptr_graph_graph_eq:
-  "rbt_sorted (rbt_of t) \<Longrightarrow> at_ptr_graph t p = Map.graph (ptr_of_key t p)"
-  apply (induction t arbitrary: p)
-  subgoal
-    unfolding Map.graph_def
-    apply simp
-    done
-  subgoal premises prems for x1 x2 x3 x4 x5 x6 x7 x8 t1 t2 p
-  proof -
-    from prems have "at_ptr_graph t1 p = Map.graph (ptr_of_key t1 p)" by auto
-    moreover from prems have "at_ptr_graph t2 p = Map.graph (ptr_of_key t2 p)" by auto
-
-    ultimately show ?thesis
-      using prems graph_ptr_of_key_eq
-      by fastforce
-  qed
-  done
-
 subsection \<open>value of key\<close>
 
 lemma value_of_key'_node_p_of_key_eq:
-  "Map.graph (value_of_key' t ti) = { (a, ll_val (snd b)) | a b. (a, b) \<in> Map.graph (p_node_of_key t ti) } "
-  unfolding Map.graph_def
+  "graph (value_of_key' t ti) = { (a, ll_val (snd b)) | a b. (a, b) \<in> graph (p_node_of_key t ti) } "
+  unfolding graph_def
   by (auto simp: value_of_key'.simps)
 
 lemmas value_of_key_node_p_of_key_eq = value_of_key'_node_p_of_key_eq[simplified value_of_key'_value_of_key_eq]
@@ -188,75 +158,31 @@ lemmas value_of_key_node_p_of_key_eq = value_of_key'_node_p_of_key_eq[simplified
 
 lemma graph_value_of_key'_eq:
   "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri al ar)) \<Longrightarrow>
-  Map.graph (value_of_key' (ATBranch c k v ci li ki vi ri al ar) p) =
-  {(k,vi)} \<union> (Map.graph (value_of_key' al li)) \<union> (Map.graph (value_of_key' ar ri))"
+  graph (value_of_key' (ATBranch c k v ci li ki vi ri al ar) p) =
+  {(k,vi)} \<union> (graph (value_of_key' al li)) \<union> (graph (value_of_key' ar ri))"
   supply value_of_key'.simps[simp]
   apply (auto simp add: value_of_key'_node_p_of_key_eq graph_p_node_of_key_eq) 
   by force
 
 lemmas graph_value_of_key_eq = graph_value_of_key'_eq[simplified value_of_key'_value_of_key_eq]
 
-
-lemma at_value_graph_eq':
-  "rbt_sorted (rbt_of t) \<Longrightarrow> at_value_graph t = Map.graph (value_of_key' t p)"
-  supply value_of_key'.simps[simp]
-proof (induction t arbitrary: p)
-  case ATEmpty
-  then show ?case
-    unfolding Map.graph_def
-    by simp
-next
-  case (ATBranch x1 x2 x3 x4 x5 x6 x7 x8 t1 t2)
-  from ATBranch have "at_value_graph t1 = Map.graph (value_of_key' t1 p)" by fastforce
-  moreover from ATBranch have "at_value_graph t2 = Map.graph (value_of_key' t2 p)" by fastforce
-
-  ultimately show ?case
-    using ATBranch graph_value_of_key'_eq
-    by (metis at_value_graph.simps(2) value_of_key'_value_of_key_eq_eta_cont)
-qed
-
-lemmas at_value_graph_eq = at_value_graph_eq'[simplified value_of_key'_value_of_key_eq]
-
 subsection \<open>ptr of key handling\<close>
-
-subsubsection \<open>special case rules without handling updates\<close>
-
-lemma ptr_of_key_eqI [intro!]:
-  "\<lbrakk>rbt_sorted (rbt_of t); rbt_sorted (rbt_of t'); at_ptr_graph t p = at_ptr_graph t' p'\<rbrakk>
-   \<Longrightarrow> ptr_of_key t p = ptr_of_key t' p'"
-  using at_ptr_graph_graph_eq fun_eq_graphI by metis
-
-lemma ptr_of_key_subsetI [intro!]:
-  "\<lbrakk>rbt_sorted (rbt_of t); rbt_sorted (rbt_of t'); at_ptr_graph t p \<subseteq> at_ptr_graph t' p'\<rbrakk>
-   \<Longrightarrow> ptr_of_key t p \<subseteq>\<^sub>m ptr_of_key t' p'"
-  apply (simp add: at_ptr_graph_graph_eq) 
-  unfolding map_le_def Map.graph_def
-  by fastforce
-
-declare ptr_of_key.simps[simp del]
-
-lemma ptr_of_key_subsetD:
-  "\<lbrakk>ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key t' ti'; rbt_sorted (rbt_of t); rbt_sorted (rbt_of t')\<rbrakk> 
-    \<Longrightarrow> at_ptr_graph t ti \<subseteq> at_ptr_graph t' ti'"
-  apply (simp add: at_ptr_graph_graph_eq)
-  unfolding map_le_def Map.graph_def by force
-
 
 subsubsection \<open>general rules\<close>
 
 text \<open>
-  1: @{term "m1 \<subseteq>\<^sub>m m2"} or m1 = m2 to Map.graph m1 ? Map.graph m2
+  1: @{term "m1 \<subseteq>\<^sub>m m2"} or m1 = m2 to graph m1 ? graph m2
   2: translate map updates to set operations
-  3: @{term "Map.graph (ptr_of_key t k) = at_ptr_graph t k"}
+  3: @{term "graph (ptr_of_key t k) = at_ptr_graph t k"}
 \<close>
 
 (*step 1*)
 lemma key_to_ptr_map_subset_eq:
-  "(m1:: 'k \<rightharpoonup> ('ki, 'vi) rbti) \<subseteq>\<^sub>m m2 \<longleftrightarrow> Map.graph m1 \<subseteq> Map.graph m2"
-  unfolding Map.graph_def map_le_def by force
+  "(m1:: 'k \<rightharpoonup> ('ki, 'vi) rbti) \<subseteq>\<^sub>m m2 \<longleftrightarrow> graph m1 \<subseteq> graph m2"
+  unfolding graph_def map_le_def by force
 
 lemma key_to_ptr_map_eq_eq:
-  "(m1:: 'k \<rightharpoonup> ('ki, 'vi) rbti) = m2 \<longleftrightarrow> Map.graph m1 = Map.graph m2"
+  "(m1:: 'k \<rightharpoonup> ('ki, 'vi) rbti) = m2 \<longleftrightarrow> graph m1 = graph m2"
   unfolding  map_le_def
   apply (rule iffI)
   subgoal by simp
@@ -265,19 +191,15 @@ lemma key_to_ptr_map_eq_eq:
 
 (*step2, simp for update to Some missing*)
 lemma graph_upd_none_eq:
-  "Map.graph (m1(x:=None)) = Map.graph m1 - {(x, y) |y. True}"
-  unfolding Map.graph_def 
+  "graph (m1(x:=None)) = graph m1 - {(x, y) |y. True}"
+  unfolding graph_def 
   by (auto split!: if_splits)
 
 
 lemma graph_upd_some_eq:
-  "Map.graph (m1(x \<mapsto> y)) = Map.graph m1 - {(x, the (m1 x))} \<union> {(x, y)}"
-  unfolding Map.graph_def
+  "graph (m1(x \<mapsto> y)) = graph m1 - {(x, the (m1 x))} \<union> {(x, y)}"
+  unfolding graph_def
   by (auto split!: if_splits)
-
-
-(*step3*)
-lemmas map_grap_at_ptr_grap_eq = at_ptr_graph_graph_eq[symmetric]
 
 lemmas ptr_of_key_simps = 
   (*step1*)
@@ -287,15 +209,15 @@ lemmas ptr_of_key_simps =
   graph_map_upd
   graph_upd_none_eq
   (*step3*)
-  map_grap_at_ptr_grap_eq
+  graph_ptr_of_key_eq
 
 (*step 1*)
 lemma value_to_ptr_map_subset_eq:
-  "(m1:: 'k \<rightharpoonup> 'vi) \<subseteq>\<^sub>m m2 \<longleftrightarrow> Map.graph m1 \<subseteq> Map.graph m2"
-  unfolding Map.graph_def map_le_def by force
+  "(m1:: 'k \<rightharpoonup> 'vi) \<subseteq>\<^sub>m m2 \<longleftrightarrow> graph m1 \<subseteq> graph m2"
+  unfolding graph_def map_le_def by force
 
 lemma value_to_ptr_map_eq_eq:
-  "(m1:: 'k \<rightharpoonup> 'vi) = m2 \<longleftrightarrow> Map.graph m1 = Map.graph m2"
+  "(m1:: 'k \<rightharpoonup> 'vi) = m2 \<longleftrightarrow> graph m1 = graph m2"
   unfolding  map_le_def
   apply (rule iffI)
   subgoal by simp
@@ -310,7 +232,13 @@ lemmas value_of_key_simps =
   graph_map_upd
   graph_upd_none_eq
   (*step3*)   
-  at_value_graph_eq[symmetric]
+  graph_value_of_key_eq
+
+lemma [simp]: "graph (ptr_of_key ATEmpty p) = {}"
+  by (simp add: graph_def ptr_of_key_greater_none)
+
+lemma [simp]: "graph (value_of_key ATEmpty) = {}"
+  by (simp add: graph_def value_of_key_greater_none)
 
 subsection \<open>methods\<close>
 
@@ -322,7 +250,8 @@ method vok_filter = match conclusion in "value_of_key _ = _" \<Rightarrow> vok_s
 
 method catch_entails = match conclusion in "ENTAILS _ _" \<Rightarrow> vcg_compat
 
-method vcg_vok = ((catch_entails | vcg_step)+, (sepEwith \<open>vok_filter,auto?\<close> | simp)+)+
+method vcg_vok = ((catch_entails | vcg_step)+, 
+    (sepEwith \<open>solves auto | solves pok_solver | solves vok_solver | succeed\<close> | simp)+)+
 
 
 end
