@@ -38,10 +38,10 @@ lemma example_correct:
     \<upharpoonleft>value_assn v2 v2i
   )
   (example ti k1i v1i k2i v2i)
-  (\<lambda>(res_ti, res_vi). EXS res_t res_v.
-    rbt_assn_ext res_t {} res_ti **
+  (\<lambda>(ti_res, res_vi). EXS t_res res_v.
+    rbt_assn_ext t_res {} ti_res **
     \<upharpoonleft>value_assn res_v res_vi ** \<upharpoonleft>key_assn k1 k1i **
-    \<up>(rbt_of res_t = (rbt_update (rbt_insert k2 v2 (rbt_of t)) k1 v1))
+    \<up>(rbt_of t_res = (rbt_update (rbt_insert k2 v2 (rbt_of t)) k1 v1))
   )
   "
   unfolding example_def
@@ -64,10 +64,10 @@ lemma example_correct_2:
     \<upharpoonleft>value_assn v2 v2i
   )
   (example ti k1i v1i k2i v2i)
-  (\<lambda>(res_ti, res_vi). EXS res_t res_v.
-    rbt_assn_ext res_t {} res_ti **
+  (\<lambda>(ti_res, res_vi). EXS t_res res_v.
+    rbt_assn_ext t_res {} ti_res **
     \<upharpoonleft>value_assn (the (rbt_lookup (rbt_insert k2 v2 (rbt_of t)) k1)) res_vi ** \<upharpoonleft>key_assn k1 k1i **
-    \<up>(rbt_of res_t = (rbt_update (rbt_insert k2 v2 (rbt_of t)) k1 v1))
+    \<up>(rbt_of t_res = (rbt_update (rbt_insert k2 v2 (rbt_of t)) k1 v1))
   )
   "
   unfolding example_def
@@ -125,11 +125,11 @@ lemma example2_correct:
     \<upharpoonleft>value_assn v2 v2i
   )
   (example2 ti k1i v1i k2i v2i k3i f1i f2i)
-  (\<lambda>(res_ti, res_vi). EXS res_t res_v.
-    rbt_assn_ext res_t {} res_ti **
+  (\<lambda>(ti_res, res_vi). EXS t_res res_v.
+    rbt_assn_ext t_res {} ti_res **
     \<upharpoonleft>key_assn k1 k1i ** \<upharpoonleft>key_assn k3 k3i **
     \<upharpoonleft>value_assn (f1 (the (rbt_lookup (rbt_delete k3 (rbt_insert k2 v2 (rbt_of t))) k1))) res_vi **
-    \<up>(rbt_of res_t = (rbt_update (rbt_update (rbt_delete k3 (rbt_insert k2 v2 (rbt_of t))) k1 v1)) k2 (f2 v2))
+    \<up>(rbt_of t_res = (rbt_update (rbt_update (rbt_delete k3 (rbt_insert k2 v2 (rbt_of t))) k1 v1)) k2 (f2 v2))
   )
   "
   unfolding example2_def

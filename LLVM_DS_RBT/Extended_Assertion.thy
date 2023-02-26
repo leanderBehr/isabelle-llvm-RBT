@@ -158,17 +158,18 @@ lemma unfold_rbt_assn_ext_red_rule_1 [fri_red_rules]:
   unfolding rbt_assn_ext_unfold
   apply simp
   done
-
+thm is_sep_red_def
 lemma rbt_assn_ext_key_assn_unfold [fri_red_rules]: 
   "
     is_sep_red
     (
       \<upharpoonleft>ll_bpto (RBT_NODE ci li ki vi ri) ti \<and>*
-      color_assn c ci \<and>* rbt_assn_ext l {} li \<and>*
-      \<upharpoonleft>value_assn v vi \<and>*
-      rbt_assn_ext r {} ri)
+      color_assn c ci \<and>*
+      rbt_assn_ext l ex li \<and>*
+      \<upharpoonleft>value_assn v vi unless k\<in>ex\<and>*
+      rbt_assn_ext r ex ri)
     \<box>
-    (rbt_assn_ext (ATBranch c k v ci li ki vi ri l r) {} ti)
+    (rbt_assn_ext (ATBranch c k v ci li ki vi ri l r) ex ti)
     (\<upharpoonleft>key_assn k ki)
   "
   apply (rule is_sep_redI)
@@ -273,7 +274,7 @@ lemma empty_correct_ext [vcg_rules]:
   "llvm_htriple
    \<box>
    empty
-   (\<lambda>res_ti. rbt_assn_ext ATEmpty {} res_ti)"
+   (\<lambda>ti_res. rbt_assn_ext ATEmpty {} ti_res)"
   unfolding empty_def
   by vcg
 

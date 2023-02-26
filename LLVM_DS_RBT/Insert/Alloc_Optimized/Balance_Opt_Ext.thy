@@ -15,11 +15,11 @@ lemma balance_opt_correct_ext [vcg_rules]:
     rbt_assn_ext (ATBranch color.B k v ci li ki vi ri l r) {} ti ** \<up>(rbt_sorted (rbt_of (ATBranch color.B k v ci li ki vi ri l r)))
   )
   (balance_opt ti)
-  (\<lambda>res. EXS res_t. rbt_assn_ext res_t {} res **
-    \<up>(rbt_of res_t = rbt_balance (rbt_of l) k v (rbt_of r)) **
-    \<up>(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res = ptr_of_key (ATBranch color.B k v ci li ki vi ri l r) ti) **
-    \<up>(value_of_key res_t = value_of_key(ATBranch color.B k v ci li ki vi ri l r))  
+  (\<lambda>res. EXS t_res. rbt_assn_ext t_res {} res **
+    \<up>(rbt_of t_res = rbt_balance (rbt_of l) k v (rbt_of r)) **
+    \<up>(rbt_sorted (rbt_of t_res)) **
+    \<up>(ptr_of_key t_res res = ptr_of_key (ATBranch color.B k v ci li ki vi ri l r) ti) **
+    \<up>(value_of_key t_res = value_of_key (ATBranch color.B k v ci li ki vi ri l r))  
   )
   "
   unfolding 

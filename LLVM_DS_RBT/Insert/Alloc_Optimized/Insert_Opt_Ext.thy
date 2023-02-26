@@ -25,11 +25,11 @@ lemma insert'_opt_correct_ext:
     llvm_htriple
     (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(rbt_sorted (rbt_of t)))
     (insert'_opt ki vi ti)
-    (\<lambda>res. EXS res_t. rbt_assn_ext res_t {} res **
-      \<up>(rbt_of res_t = (rbt_ins (\<lambda>_ _ v. v)) k v (rbt_of t)) **
-      \<up>(rbt_sorted (rbt_of res_t)) **
-      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key res_t res) **
-      \<up>(value_of_key res_t = (value_of_key t)(k \<mapsto> vi))
+    (\<lambda>res. EXS t_res. rbt_assn_ext t_res {} res **
+      \<up>(rbt_of t_res = (rbt_ins (\<lambda>_ _ v. v)) k v (rbt_of t)) **
+      \<up>(rbt_sorted (rbt_of t_res)) **
+      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key t_res res) **
+      \<up>(value_of_key t_res = (value_of_key t)(k \<mapsto> vi))
     )
   "
 proof (induction k v "rbt_of t" arbitrary: t ti rule: rbt_insert_ad'.induct )
@@ -92,12 +92,12 @@ lemma insert_opt_correct_ext':
     llvm_htriple
     (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn k ki ** \<upharpoonleft>value_assn v vi ** \<up>(is_rbt (rbt_of t)))
     (insert_opt ki vi ti)
-    (\<lambda>res_ti. EXS res_t.
-      rbt_assn_ext res_t {} res_ti **
-      \<up>(rbt_of res_t = rbt_insert k v (rbt_of t)) **
-      ctx(is_rbt (rbt_of res_t)) **
-      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
-      \<up>(value_of_key res_t = (value_of_key t)(k \<mapsto> vi))
+    (\<lambda>ti_res. EXS t_res.
+      rbt_assn_ext t_res {} ti_res **
+      \<up>(rbt_of t_res = rbt_insert k v (rbt_of t)) **
+      ctx(is_rbt (rbt_of t_res)) **
+      \<up>(ptr_of_key t ti \<subseteq>\<^sub>m ptr_of_key t_res ti_res) **
+      \<up>(value_of_key t_res = (value_of_key t)(k \<mapsto> vi))
     )
   "
   unfolding insert_opt_def rbt_insert_def rbt_insert_with_key_def paint_def is_rbt_def

@@ -91,11 +91,11 @@ lemma store_correct:
     llvm_htriple
     (rbt_assn_ext t ex ti)
     (store p vni)
-    (\<lambda>_. EXS res_t.
-      rbt_assn_ext res_t ex ti **
-      \<up>(rbt_of res_t = rbt_of t) **
-      \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
+    (\<lambda>_. EXS t_res.
+      rbt_assn_ext t_res ex ti **
+      \<up>(rbt_of t_res = rbt_of t) **
+      \<up>(ptr_of_key t_res ti = ptr_of_key t ti) **
+      \<up>(value_of_key t_res = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   using assms
@@ -158,11 +158,11 @@ lemma store_correct_no_ex:
     llvm_htriple
     (rbt_assn_ext t ex ti)
     (store p vni)
-    (\<lambda>_. EXS res_t.
-      rbt_assn_ext res_t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t kn)) **
-      \<up>(rbt_of res_t = rbt_of t) **
-      \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
+    (\<lambda>_. EXS t_res.
+      rbt_assn_ext t_res ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t kn)) **
+      \<up>(rbt_of t_res = rbt_of t) **
+      \<up>(ptr_of_key t_res ti = ptr_of_key t ti) **
+      \<up>(value_of_key t_res = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   using assms
@@ -237,11 +237,11 @@ lemma store_correct' [vcg_rules]:
     llvm_htriple
     (rbt_assn_ext t ex ti ** \<up>(ptr_of_key t ti kn = Some p) ** \<up>(kn \<in> ex) ** \<up>(rbt_sorted (rbt_of t)))
     (store p vni)
-    (\<lambda>_. EXS res_t.
-      rbt_assn_ext res_t ex ti **
-      \<up>(rbt_of res_t = rbt_of t) **
-      \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
+    (\<lambda>_. EXS t_res.
+      rbt_assn_ext t_res ex ti **
+      \<up>(rbt_of t_res = rbt_of t) **
+      \<up>(ptr_of_key t_res ti = ptr_of_key t ti) **
+      \<up>(value_of_key t_res = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   supply store_correct[vcg_rules]
@@ -255,11 +255,11 @@ lemma store_correct_no_ex' [vcg_rules]:
     llvm_htriple
     (rbt_assn_ext t ex ti ** \<up>(ptr_of_key t ti kn = Some p) ** \<up>(kn \<notin> ex) ** \<up>(rbt_sorted (rbt_of t)))
     (store p vni)
-    (\<lambda>_. EXS res_t.
-      rbt_assn_ext res_t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t kn)) **
-      \<up>(rbt_of res_t = rbt_of t) **
-      \<up>(ptr_of_key res_t ti = ptr_of_key t ti) **
-      \<up>(value_of_key res_t = (value_of_key t)(kn \<mapsto> vni))
+    (\<lambda>_. EXS t_res.
+      rbt_assn_ext t_res ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) (the (value_of_key t kn)) **
+      \<up>(rbt_of t_res = rbt_of t) **
+      \<up>(ptr_of_key t_res ti = ptr_of_key t ti) **
+      \<up>(value_of_key t_res = (value_of_key t)(kn \<mapsto> vni))
     )
     "
   supply store_correct_no_ex[vcg_rules]

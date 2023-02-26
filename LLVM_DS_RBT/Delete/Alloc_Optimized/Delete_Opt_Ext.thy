@@ -88,13 +88,13 @@ lemma delete_opt_ext_correct:
   llvm_htriple
   (\<upharpoonleft>key_assn k ki ** rbt_assn_ext t {} ti ** \<up>(is_rbt_node (rbt_of t)))
   (delete_opt ki ti)
-  (\<lambda>res_ti. EXS res_t.
-    rbt_assn_ext res_t {} res_ti **
+  (\<lambda>ti_res. EXS t_res.
+    rbt_assn_ext t_res {} ti_res **
     \<upharpoonleft>key_assn k ki **
-    \<up>(rbt_of res_t = (rbt_delete k (rbt_of t))) **
-    ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key res_t res_ti) **
-    \<up>((value_of_key t)(k := None) \<subseteq>\<^sub>m value_of_key res_t)
+    \<up>(rbt_of t_res = (rbt_delete k (rbt_of t))) **
+    ctx(rbt_sorted (rbt_of t_res)) **
+    \<up>((ptr_of_key t ti)(k := None) \<subseteq>\<^sub>m ptr_of_key t_res ti_res) **
+    \<up>((value_of_key t)(k := None) \<subseteq>\<^sub>m value_of_key t_res)
   )
 "
   unfolding delete_opt_def rbt_delete_def paint_def

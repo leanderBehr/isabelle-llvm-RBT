@@ -46,12 +46,12 @@ lemma combine_correct_ext':
   (rbt_assn_ext l {} li ** rbt_assn_ext r {} ri **
    \<up>(rbt_sorted (rbt_of l)) ** \<up>(rbt_sorted (rbt_of r)) ** \<up>(rbt_of l |\<guillemotleft> k \<and> k \<guillemotleft>| rbt_of r))
   (combine_opt li ri)
-  (\<lambda>res_ti. EXS res_t.
-    rbt_assn_ext res_t {} res_ti **
-    ctx(rbt_of res_t = rbt_combine (rbt_of l) (rbt_of r)) **
-    ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key l li ++ ptr_of_key r ri) **
-    \<up>(value_of_key res_t = value_of_key l ++ value_of_key r)
+  (\<lambda>ti_res. EXS t_res.
+    rbt_assn_ext t_res {} ti_res **
+    ctx(rbt_of t_res = rbt_combine (rbt_of l) (rbt_of r)) **
+    ctx(rbt_sorted (rbt_of t_res)) **
+    \<up>(ptr_of_key t_res ti_res = ptr_of_key l li ++ ptr_of_key r ri) **
+    \<up>(value_of_key t_res = value_of_key l ++ value_of_key r)
   )
   "
 proof(induction "rbt_of l" "rbt_of r" arbitrary: l r li ri rule: RBT_Impl.combine.induct)

@@ -28,12 +28,12 @@ lemma balance_left_opt_ext_correct':
     \<up>(inv2 (Branch c l_pre k v (rbt_of r)))
   )
   (balance_left_opt n_p)
-  (\<lambda>res_ti. EXS res_t.
-    rbt_assn_ext res_t {} res_ti **
-    \<up>(rbt_of res_t = rbt_balance_left (rbt_of l) k v (rbt_of r)) **
-    ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
-    \<up>(value_of_key res_t = value_of_key (ATBranch c k v ci li ki vi ri l r))
+  (\<lambda>ti_res. EXS t_res.
+    rbt_assn_ext t_res {} ti_res **
+    \<up>(rbt_of t_res = rbt_balance_left (rbt_of l) k v (rbt_of r)) **
+    ctx(rbt_sorted (rbt_of t_res)) **
+    \<up>(ptr_of_key t_res ti_res = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
+    \<up>(value_of_key t_res = value_of_key (ATBranch c k v ci li ki vi ri l r))
   )
   "
   unfolding 
@@ -117,12 +117,12 @@ lemma balance_right_opt_ext_correct':
     \<up>(inv2 (Branch c (rbt_of l) k v r_pre))
   )
   (balance_right_opt n_p)
-  (\<lambda>res_ti. EXS res_t.
-    rbt_assn_ext res_t {} res_ti **
-    \<up>(rbt_of res_t = rbt_balance_right (rbt_of l) k v (rbt_of r)) **
-    ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
-    \<up>(value_of_key res_t = value_of_key (ATBranch c k v ci li ki vi ri l r))
+  (\<lambda>ti_res. EXS t_res.
+    rbt_assn_ext t_res {} ti_res **
+    \<up>(rbt_of t_res = rbt_balance_right (rbt_of l) k v (rbt_of r)) **
+    ctx(rbt_sorted (rbt_of t_res)) **
+    \<up>(ptr_of_key t_res ti_res = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
+    \<up>(value_of_key t_res = value_of_key (ATBranch c k v ci li ki vi ri l r))
   )
   "
   unfolding 
@@ -201,12 +201,12 @@ lemma balance_left_opt_ext_combine_correct':
     \<up>(matches_rbt (RP_Branch CP_B RP_Var RP_Var) (rbt_of r))
   )
   (balance_left_opt n_p)
-  (\<lambda>res_ti. EXS res_t.
-    rbt_assn_ext res_t {} res_ti **
-    \<up>(rbt_of res_t = rbt_balance_left (rbt_of l) k v (rbt_of r)) **
-    ctx(rbt_sorted (rbt_of res_t)) **
-    \<up>(ptr_of_key res_t res_ti = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
-    \<up>(value_of_key res_t = value_of_key (ATBranch c k v ci li ki vi ri l r))
+  (\<lambda>ti_res. EXS t_res.
+    rbt_assn_ext t_res {} ti_res **
+    \<up>(rbt_of t_res = rbt_balance_left (rbt_of l) k v (rbt_of r)) **
+    ctx(rbt_sorted (rbt_of t_res)) **
+    \<up>(ptr_of_key t_res ti_res = ptr_of_key (ATBranch c k v ci li ki vi ri l r) n_p) **
+    \<up>(value_of_key t_res = value_of_key (ATBranch c k v ci li ki vi ri l r))
   )
   "
   unfolding 

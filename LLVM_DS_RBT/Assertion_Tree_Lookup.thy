@@ -129,9 +129,9 @@ lemma ptr_of_key_node_p_of_key_eq:
   by (auto simp add: ptr_of_key.simps)
 
 lemma graph_ptr_of_key_eq:
-  "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri al ar)) \<Longrightarrow>
-  graph (ptr_of_key (ATBranch c k v ci li ki vi ri al ar) p) =
-  {(k,p)} \<union> (graph (ptr_of_key al li)) \<union> (graph (ptr_of_key ar ri))"
+  "rbt_sorted (rbt_of (ATBranch c k v ci li ki vi ri l r)) \<Longrightarrow>
+  graph (ptr_of_key (ATBranch c k v ci li ki vi ri l r) ti) =
+  {(k,ti)} \<union> graph (ptr_of_key l li) \<union> graph (ptr_of_key r ri)"
   apply (simp add: ptr_of_key_node_p_of_key_eq)
   using graph_p_node_of_key_eq by fastforce
 
@@ -233,6 +233,12 @@ lemmas value_of_key_simps =
   graph_upd_none_eq
   (*step3*)   
   graph_value_of_key_eq
+
+abbreviation "empty_set \<equiv> {}" notation "\<emptyset>"
+
+
+lemma "graph (m(k \<mapsto> v)) = {(k, v)} \<union> graph (m(k := None))"
+  using graph_map_upd by simp  
 
 lemma [simp]: "graph (ptr_of_key ATEmpty p) = {}"
   by (simp add: graph_def ptr_of_key_greater_none)
