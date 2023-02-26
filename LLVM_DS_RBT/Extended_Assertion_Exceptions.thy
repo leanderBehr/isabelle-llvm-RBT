@@ -71,12 +71,12 @@ lemma [simp]:
 
 lemma value_ex_split_ent:
   assumes
-    "kn \<notin> ex" and
     "value_of_key t kn = Some vi" and
+    "kn \<notin> ex" and
     "rbt_sorted (rbt_of t)"
   shows
     "
-      rbt_assn_ext t ex ti \<turnstile> rbt_assn_ext t (ex \<union> {kn}) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) vi
+      rbt_assn_ext t ex ti \<turnstile> rbt_assn_ext t ({kn} \<union> ex) ti ** \<upharpoonleft>value_assn (the (rbt_lookup (rbt_of t) kn)) vi
     "
   using assms
 proof(induction t arbitrary: ti)
@@ -130,8 +130,8 @@ qed
 
 lemma value_ex_split_red:
   assumes
-    "kn \<notin> ex" and
     "value_of_key t kn = Some vi" and
+    "kn \<notin> ex" and
     "rbt_sorted (rbt_of t)"
   shows
     "
@@ -180,22 +180,13 @@ next
       unfolding rbt_assn_ext_unfold
       apply (isep_drule drule: ATBranch(1))
       apply (auto)[3]
- 
+
       apply (sepEwith \<open>(solves auto)?\<close>)
        apply (simp add: rbt_map_entry_rbt_less rbt_map_entry_rbt_sorted)  
 
-      apply (sepEwith \<open>(solves auto)?\<close>)
-      subgoal by (simp add: ptr_of_key_simps)
-
-      apply (sepEwith \<open>(solves auto)?\<close>)
-      subgoal 
-        apply simp
-        apply prune_pure
-        apply vok_solver 
-        done
-
+      apply (sepEwith \<open>solves pok_solver | solves vok_solver\<close>)
       apply simp
-      apply (sepEwith \<open>(solves auto)?\<close>)
+      apply sep
       done
   next
     case equal
@@ -223,18 +214,9 @@ next
       apply (sepEwith \<open>(solves auto)?\<close>)
        apply (simp add: rbt_map_entry_rbt_greater rbt_map_entry_rbt_sorted)  
 
-      apply (sepEwith \<open>(solves auto)?\<close>)
-      subgoal by (simp add: ptr_of_key_simps)
-
-      apply (sepEwith \<open>(solves auto)?\<close>)
-      subgoal 
-        apply simp
-        apply prune_pure
-        apply vok_solver 
-        done
-
+      apply (sepEwith \<open>solves pok_solver | solves vok_solver\<close>)
       apply simp
-      apply (sepEwith \<open>(solves auto)?\<close>)
+      apply sep
       done
   qed
 qed
