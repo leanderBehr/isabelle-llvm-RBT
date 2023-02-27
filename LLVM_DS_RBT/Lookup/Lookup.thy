@@ -75,17 +75,17 @@ abbreviation "alloc_opt_none \<equiv> do {
 
 
 partial_function (M) lookup ::
-  "('vi \<Rightarrow> 'vi llM) \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> 'ki \<Rightarrow> 'vi option_i llM" where
-  "lookup value_copy node_p k = do {
+  "('vi \<Rightarrow> 'vi llM) \<Rightarrow> 'ki \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> 'vi option_i llM" where
+  "lookup value_copy k node_p = do {
     if node_p = null
     then return (OPTION_I init 0)
     else do {
       node \<leftarrow> ll_load node_p;
       k_old \<leftarrow> return rbt_node.key node;
       if!  lt_impl k k_old
-      then! lookup value_copy (rbt_node.left node) k
+      then! lookup value_copy k (rbt_node.left node)
       else! if! lt_impl k_old k
-      then! lookup value_copy (rbt_node.right node) k
+      then! lookup value_copy k (rbt_node.right node)
       else! do {
         val_copy \<leftarrow> value_copy (rbt_node.val node);
         return (OPTION_I val_copy 1)
@@ -116,7 +116,7 @@ lemma lookup_correct [vcg_rules]:
     "
       llvm_htriple
       (rbt_assn t ti ** \<upharpoonleft>key_assn kn ki)
-      (lookup value_copy ti ki)
+      (lookup value_copy ki ti)
       (\<lambda>opt.
         \<upharpoonleft>value_option_assn (rbt_lookup t kn) opt **
         rbt_assn t ti **
@@ -144,17 +144,17 @@ qed
 
 
 partial_function (M) lookup_ptr ::
-  "('ki, 'vi) rbti \<Rightarrow> 'ki \<Rightarrow> ('ki, 'vi) rbti llM" where
-  "lookup_ptr node_p k = do {
+  "'ki \<Rightarrow> ('ki, 'vi) rbti \<Rightarrow> ('ki, 'vi) rbti llM" where
+  "lookup_ptr k node_p = do {
     if node_p = null
     then return null
     else do {
       node \<leftarrow> ll_load node_p;
       k_old \<leftarrow> return rbt_node.key node;
       if! lt_impl k k_old
-      then! lookup_ptr (rbt_node.left node) k
+      then! lookup_ptr k (rbt_node.left node)
       else! if! lt_impl k_old k
-      then! lookup_ptr (rbt_node.right node) k
+      then! lookup_ptr k (rbt_node.right node)
       else! return node_p
     }
   }"

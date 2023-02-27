@@ -16,7 +16,7 @@ interpretation rbt_impl_deps .
 
 definition "example t k1 v1 k2 v2 \<equiv>
   do {
-    p \<leftarrow> lookup_ptr t k1;
+    p \<leftarrow> lookup_ptr k1 t;
     t' \<leftarrow> insert_opt k2 v2 t;
     vp \<leftarrow> load p;
     store p v1;
@@ -38,10 +38,10 @@ lemma example_correct:
     \<upharpoonleft>value_assn v2 v2i
   )
   (example ti k1i v1i k2i v2i)
-  (\<lambda>(ti_res, res_vi). EXS t_res res_v.
+  (\<lambda>(ti_res, vi_res). EXS t_res v_res.
     rbt_assn_ext t_res {} ti_res **
-    \<upharpoonleft>value_assn res_v res_vi ** \<upharpoonleft>key_assn k1 k1i **
-    \<up>(rbt_of t_res = (rbt_update (rbt_insert k2 v2 (rbt_of t)) k1 v1))
+    \<upharpoonleft>value_assn v_res vi_res ** \<upharpoonleft>key_assn k1 k1i **
+    \<up>(rbt_of t_res = (rbt_update k1 v1 (rbt_insert k2 v2 (rbt_of t))))
   )
   "
   unfolding example_def
@@ -64,10 +64,10 @@ lemma example_correct_2:
     \<upharpoonleft>value_assn v2 v2i
   )
   (example ti k1i v1i k2i v2i)
-  (\<lambda>(ti_res, res_vi). EXS t_res res_v.
+  (\<lambda>(ti_res, vi_res). EXS t_res v_res.
     rbt_assn_ext t_res {} ti_res **
-    \<upharpoonleft>value_assn (the (rbt_lookup (rbt_insert k2 v2 (rbt_of t)) k1)) res_vi ** \<upharpoonleft>key_assn k1 k1i **
-    \<up>(rbt_of t_res = (rbt_update (rbt_insert k2 v2 (rbt_of t)) k1 v1))
+    \<upharpoonleft>value_assn (the (rbt_lookup (rbt_insert k2 v2 (rbt_of t)) k1)) vi_res ** \<upharpoonleft>key_assn k1 k1i **
+    \<up>(rbt_of t_res = (rbt_update k1 v1 (rbt_insert k2 v2 (rbt_of t))))
   )
   "
   unfolding example_def
@@ -81,16 +81,16 @@ lemma example_correct_2:
 
 
 
-definition "example2 t k1 v1 k2 v2 k3 f1 f2 \<equiv>
+definition "example2 t k1 k2 k3 v1 v2 f1 f2 \<equiv>
   do {
-    p \<leftarrow> lookup_ptr t k1;
+    pk1 \<leftarrow> lookup_ptr k1 t;
     t' \<leftarrow> insert_opt k2 v2 t;
-    vp \<leftarrow> load p;
+    vk1 \<leftarrow> load pk1;
     t'' \<leftarrow> delete_opt k3 t';
-    vp' \<leftarrow> f1 vp;
+    vk1' \<leftarrow> f1 vk1;
     f2 v2;
-    store p v1;
-    return (t'', vp')
+    store pk1 v1;
+    return (t'', vk1')
   }
 "
 
@@ -105,13 +105,13 @@ lemma rbt_assn_ext_diff_ex_sets [fri_red_rules]:
 
 
 lemma rbt_update_comp_comm: 
-  "k1 \<noteq> k2 \<Longrightarrow> rbt_update (rbt_update t k1 v1) k2 v2 = rbt_update (rbt_update t k2 v2) k1 v1" 
+  "k1 \<noteq> k2 \<Longrightarrow> rbt_update k2 v2 (rbt_update k1 v1 t) = rbt_update k1 v1 (rbt_update k2 v2 t)" 
   apply (induction t) by auto
 
 
 lemma example2_correct:
   assumes
-    [vcg_rules]: "\<And>v vi. llvm_htriple (\<upharpoonleft>value_assn v vi) (f1i vi) (\<lambda>res_v. \<upharpoonleft>value_assn (f1 v) res_v)" and
+    [vcg_rules]: "\<And>v vi. llvm_htriple (\<upharpoonleft>value_assn v vi) (f1i vi) (\<lambda>v_res. \<upharpoonleft>value_assn (f1 v) v_res)" and
     [vcg_rules]: "\<And>v vi. llvm_htriple (\<upharpoonleft>value_assn v vi) (f2i vi) (\<lambda>_. \<upharpoonleft>value_assn (f2 v) vi)"
   shows
     "\<lbrakk>is_rbt (rbt_of t); rbt_lookup (rbt_of t) k1 \<noteq> None; k1 \<noteq> k2; k1 \<noteq> k3; k2 \<noteq> k3\<rbrakk> \<Longrightarrow>
@@ -124,12 +124,12 @@ lemma example2_correct:
     \<upharpoonleft>value_assn v1 v1i **
     \<upharpoonleft>value_assn v2 v2i
   )
-  (example2 ti k1i v1i k2i v2i k3i f1i f2i)
-  (\<lambda>(ti_res, res_vi). EXS t_res res_v.
+  (example2 ti k1i k2i k3i v1i v2i f1i f2i)
+  (\<lambda>(ti_res, vi_res). EXS t_res v_res.
     rbt_assn_ext t_res {} ti_res **
     \<upharpoonleft>key_assn k1 k1i ** \<upharpoonleft>key_assn k3 k3i **
-    \<upharpoonleft>value_assn (f1 (the (rbt_lookup (rbt_delete k3 (rbt_insert k2 v2 (rbt_of t))) k1))) res_vi **
-    \<up>(rbt_of t_res = (rbt_update (rbt_update (rbt_delete k3 (rbt_insert k2 v2 (rbt_of t))) k1 v1)) k2 (f2 v2))
+    \<upharpoonleft>value_assn (f1 (the (rbt_lookup (rbt_of t) k1))) vi_res **
+    \<up>(rbt_of t_res = (rbt_update k2 (f2 v2) (rbt_update  k1 v1 (rbt_delete k3 (rbt_insert k2 v2 (rbt_of t))))))
   )
   "
   unfolding example2_def
@@ -150,7 +150,7 @@ lemma example2_correct:
    apply vcg_compat
    apply (sepwith \<open>solves auto\<close>)
 
-
+  term "inv1"
   apply vcg_solve
   apply vcg
 
@@ -161,10 +161,10 @@ lemma example2_correct:
 
     apply sep 
 
-    apply (simp add: rbt_update_comp_comm rbt_lookup_delete inv_12_def rbt_lookup_rbt_insert)
+    apply (simp_all add: rbt_update_comp_comm rbt_lookup_delete inv_12_def rbt_lookup_rbt_insert)
 
     subgoal premises
-      apply entails_box_solver
+      apply sep
       done
     done
   done

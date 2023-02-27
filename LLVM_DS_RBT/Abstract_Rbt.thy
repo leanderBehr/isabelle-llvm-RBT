@@ -7,7 +7,7 @@ abbreviation "rbt_balance_left \<equiv> RBT_Impl.balance_left"
 abbreviation "rbt_balance_right \<equiv> RBT_Impl.balance_right"
 abbreviation "rbt_combine \<equiv> RBT_Impl.combine"
 
-abbreviation "rbt_update t k v \<equiv> rbt_map_entry k (\<lambda>_. v) t"
+abbreviation "rbt_update k v t \<equiv> rbt_map_entry k (\<lambda>_. v) t"
 
 hide_const (open) balance
 hide_const (open) balance_left

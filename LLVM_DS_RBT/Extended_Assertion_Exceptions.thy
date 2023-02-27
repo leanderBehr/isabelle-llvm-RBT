@@ -155,7 +155,7 @@ lemma value_ex_join_ent':
     rbt_assn_ext t ex ti ** \<upharpoonleft>value_assn v vi \<turnstile> 
     (EXS t_res.
       rbt_assn_ext t_res (ex - {kn}) ti **
-      \<up>(rbt_of t_res = rbt_update (rbt_of t) kn v) **
+      \<up>(rbt_of t_res = rbt_update kn v (rbt_of t)) **
       ctx(rbt_sorted (rbt_of t_res)) **
       \<up>(ptr_of_key t_res ti = ptr_of_key t ti) **
       \<up>(value_of_key t_res = value_of_key t)
@@ -226,7 +226,7 @@ lemmas value_ex_join_ent = value_ex_join_ent'[simplified ctx_def]
 lemma value_ex_join_red:
   "rbt_sorted (rbt_of t1) \<Longrightarrow> k \<in> ex \<Longrightarrow> k \<notin> ex' \<Longrightarrow> value_of_key t1 k = Some vi \<Longrightarrow>
   is_sep_red
-  (EXS t2. rbt_assn_ext t2 (ex - {k}) ti ** \<up>(rbt_of t2 = rbt_update (rbt_of t1) k v))
+  (EXS t2. rbt_assn_ext t2 (ex - {k}) ti ** \<up>(rbt_of t2 = rbt_update k v (rbt_of t1)))
   (EXS t3. rbt_assn_ext t3 ex' ti)
   (rbt_assn_ext t1 ex ti ** \<upharpoonleft>value_assn v vi)
   (EXS t3. rbt_assn_ext t3 ex' ti)

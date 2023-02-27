@@ -52,7 +52,7 @@ lemma lookup_map_rule:
   "
     llvm_htriple
     (rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
-    (lookup value_copy ti ki)
+    (lookup value_copy ki ti)
     (\<lambda>opt. \<upharpoonleft>value_option_assn (m k) opt ** rbt_map_assn m ti ** \<upharpoonleft>key_assn k ki)
   " by vcg
 

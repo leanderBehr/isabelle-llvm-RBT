@@ -23,7 +23,7 @@ lemma lookup_correct_ext [vcg_rules]:
     "
       llvm_htriple
       (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn kn ki)
-      (lookup value_copy ti ki)
+      (lookup value_copy ki ti)
       (\<lambda>opt.
         \<upharpoonleft>value_option_assn (rbt_lookup (rbt_of t) kn) opt **
         rbt_assn_ext t {} ti **
@@ -53,7 +53,7 @@ lemma lookup_ptr_corrext_ext [vcg_rules]:
   "
     llvm_htriple
     (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn kn ki ** \<up>(rbt_sorted (rbt_of t)))
-    (lookup_ptr ti ki)
+    (lookup_ptr ki ti)
     (\<lambda>ptr. rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn kn ki **
       \<up>(if rbt_lookup (rbt_of t) kn = None then ptr = null else ptr_of_key t ti kn = Some ptr))
   "
