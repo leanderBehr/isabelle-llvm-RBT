@@ -234,9 +234,6 @@ lemmas value_of_key_simps =
   (*step3*)   
   graph_value_of_key_eq
 
-abbreviation "empty_set \<equiv> {}" notation "\<emptyset>"
-
-
 lemma "graph (m(k \<mapsto> v)) = {(k, v)} \<union> graph (m(k := None))"
   using graph_map_upd by simp  
 
