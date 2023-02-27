@@ -361,8 +361,6 @@ named_theorems isep_red
 
 locale separation_logic_solver
 begin
-method backtrackable_plus methods m = m, (append \<open>(backtrackable_plus m)?\<close> \<open>is_non_sep_goal\<close>)
-
 definition "TAG x = x"
 
 lemma entails_TAGG: 
@@ -407,26 +405,6 @@ method sep_step =
     )
   )
 
-method sep_fast_step =
-  is_sep_goal,
-  (
-    isep_extract_pure |
-    isep_normalize |
-    entails_box_solver |
-    (isep_elim_ex, isep_extract_pure) |
-    isep_assumption | 
-    (
-      first_partition
-      \<open>
-        determ \<open>match fri_red_rules isep_red in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: r\<close>\<close> |
-        determ \<open>match isep_intro in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: intro_red_rule[OF r]\<close>\<close> |
-        determ \<open>match isep_dest in r: _ \<Rightarrow> \<open>sep_red_rule_must_succeed red_rule: dest_red_rule[OF r]\<close>\<close>
-      \<close>    
-    )
-  )
-
-method sep_fast = (sep_fast_step+)[]
-
 method sep_step_filter methods filter declares isep_red isep_intro isep_dest =
   sep_step;(is_sep_goal | filter)
 
@@ -457,7 +435,6 @@ lemma
     d1: "A \<turnstile> B" and d2: "B \<turnstile> C" and d3: "C \<turnstile> D" and trap1: "T \<turnstile> D" and trap2: "T \<turnstile> C" and trap3: "T \<turnstile> B"
   shows "A \<turnstile> D"
   apply (sep isep_intro: trap1 trap2 trap3 d1 d2 d3; fail) done
-
 
 
 lemma 
