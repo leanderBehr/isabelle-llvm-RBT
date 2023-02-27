@@ -51,12 +51,11 @@ qed
 
 lemma lookup_ptr_corrext_ext [vcg_rules]:
   "
-    rbt_sorted (rbt_of t) \<Longrightarrow>
     llvm_htriple
-    (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn kn ki)
+    (rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn kn ki ** \<up>(rbt_sorted (rbt_of t)))
     (lookup_ptr ti ki)
     (\<lambda>ptr. rbt_assn_ext t {} ti ** \<upharpoonleft>key_assn kn ki **
-      \<up>(case rbt_lookup (rbt_of t) kn of None \<Rightarrow> ptr = null | _ \<Rightarrow> ptr_of_key t ti kn = Some ptr))
+      \<up>(if rbt_lookup (rbt_of t) kn = None then ptr = null else ptr_of_key t ti kn = Some ptr))
   "
 proof(induction t arbitrary: ti)
   case ATEmpty
@@ -69,7 +68,7 @@ next
   
   note ATBranch[vcg_rules]
 
-  from ATBranch(3) show ?case
+  show ?case
     apply(subst lookup_ptr.simps)
     apply vcg
     subgoal
