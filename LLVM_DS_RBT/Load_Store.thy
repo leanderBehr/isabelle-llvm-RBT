@@ -14,16 +14,15 @@ definition "load p \<equiv> do { n \<leftarrow> ll_load p; return rbt_node.val n
 
 lemma rbt_ptr_load_correct [vcg_rules]:
   assumes
-    "rbt_sorted (rbt_of t)" and
-    "kn \<notin> ex"
+    "rbt_sorted (rbt_of t)"
   shows
     "
     llvm_htriple
     (rbt_assn_ext t ex ti ** \<up>(ptr_of_key t ti kn = Some p))
     (load p)
-    (\<lambda>res_v.
+    (\<lambda>vi_res.
         rbt_assn_ext t ex ti **
-        \<up>(value_of_key t kn = Some res_v)
+        \<up>(value_of_key t kn = Some vi_res)
     )
     "
   using assms
@@ -40,13 +39,13 @@ next
     moreover from less ATBranch have "kn \<guillemotleft>| rbt_of ar" by (auto intro: rbt_greater_trans)
     moreover from less have "k \<noteq> kn" by blast
 
-    ultimately show ?thesis using ATBranch(3-4)
+    ultimately show ?thesis using ATBranch(3)
       supply ptr_of_key.simps[simp]
       apply vcg
       done
   next
     case equal
-    with ATBranch(3-4) show ?thesis
+    with ATBranch(3) show ?thesis
       unfolding load_def
       supply ptr_of_key.simps[simp]
       unfolding rbt_assn_ext_unfold
@@ -56,7 +55,7 @@ next
     case greater
     moreover from greater ATBranch have "rbt_of al |\<guillemotleft> kn" by (auto intro: rbt_less_trans)
     moreover from greater have "k \<noteq> kn" by blast
-    ultimately show ?thesis using ATBranch(3-4)
+    ultimately show ?thesis using ATBranch(3)
       supply ptr_of_key.simps[simp] order_less_not_sym[simp] 
       apply vcg
       done
@@ -83,9 +82,9 @@ lemma Hy: "(k, v) \<in> graph (value_of_key t) \<Longrightarrow> k \<guillemotle
 
 lemma store_correct:
   assumes
-    "rbt_sorted (rbt_of t)" and
     "ptr_of_key t ti kn = Some p" and
-    "kn \<in> ex"
+    "kn \<in> ex" and
+    "rbt_sorted (rbt_of t)"
   shows
     "
     llvm_htriple
@@ -107,7 +106,7 @@ next
   proof(cases k kn rule: linorder_cases)
     case less
     note ATBranch(2)[vcg_rules]
-    from less ATBranch(4) have "ptr_of_key r ri kn = Some p"
+    from less ATBranch(3) have "ptr_of_key r ri kn = Some p"
       by (simp add: order_less_not_sym ptr_of_key.simps)
     with less ATBranch(3-5) show ?thesis
       apply vcg
@@ -120,7 +119,7 @@ next
       by (fast intro: rbt_less_trans elim: Hx)
   next
     case equal
-    with ATBranch(4) have "p = ti" by (simp add: ptr_of_key.simps) 
+    with ATBranch(3) have "p = ti" by (simp add: ptr_of_key.simps) 
     with ATBranch(3-5) equal show ?thesis
       unfolding store_def
       unfolding rbt_assn_ext_unfold
@@ -134,7 +133,7 @@ next
   next
     case greater
     note ATBranch(1)[vcg_rules]
-    from greater ATBranch(4) have "ptr_of_key l li kn = Some p"
+    from greater ATBranch(3) have "ptr_of_key l li kn = Some p"
       by (auto simp add: ptr_of_key.simps)
     with greater ATBranch(3-5) show ?thesis
       apply vcg
@@ -150,9 +149,9 @@ qed
 
 lemma store_correct_no_ex:
   assumes
-    "rbt_sorted (rbt_of t)" and
+    "ptr_of_key t ti kn = Some p" and
     "kn \<notin> ex" and
-    "ptr_of_key t ti kn = Some p"
+    "rbt_sorted (rbt_of t)"
   shows
     "
     llvm_htriple
@@ -174,12 +173,12 @@ next
   proof(cases k kn rule: linorder_cases)
     case less
     note ATBranch(2)[vcg_rules]
-    from less ATBranch(5) have "ptr_of_key r ri kn = Some p"
+    from less ATBranch(3) have "ptr_of_key r ri kn = Some p"
       by (simp add: order_less_not_sym ptr_of_key.simps)
 
 
 
-    then show ?thesis using less ATBranch(3-4)
+    then show ?thesis using less ATBranch(3-5)
       apply vcg
       apply vcg_compat
       apply (sepEwith simp)
@@ -194,8 +193,8 @@ next
       done
   next
     case equal
-    with ATBranch(5) have "p = ti" by (simp add: ptr_of_key.simps) 
-    with ATBranch(3-4) equal show ?thesis
+    with ATBranch(3) have "p = ti" by (simp add: ptr_of_key.simps) 
+    with ATBranch(3-5) equal show ?thesis
       unfolding store_def
       unfolding rbt_assn_ext_unfold
       apply vcg
@@ -210,12 +209,12 @@ next
   next
     case greater
     note ATBranch(1)[vcg_rules]
-    from greater ATBranch(5) have "Some p = ptr_of_key l li kn"
+    from greater ATBranch(3) have "Some p = ptr_of_key l li kn"
       by (auto simp add: ptr_of_key.simps)
 
     moreover from greater have "k \<noteq> kn" by simp 
 
-    ultimately show ?thesis using greater ATBranch(3-4)
+    ultimately show ?thesis using greater ATBranch(3-5)
       apply vcg
       apply vcg_compat
       apply (sepEwith simp)
