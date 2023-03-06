@@ -109,6 +109,12 @@ lemma rbt_update_comp_comm:
   apply (induction t) by auto
 
 
+method catch_sep_prop = match conclusion in "ENTAILS _ _" \<Rightarrow> vcg_compat 
+  \<bar> "FRAME _ _ _" \<Rightarrow> vcg_compat 
+  \<bar> "PRECOND (FRAME _ _ _)" \<Rightarrow> vcg_compat
+
+method vcg_sep = (catch_sep_prop | vcg_step | vcg_rl | vcg_solve | sepEwith \<open>solves auto\<close> isep_dest: value_ex_join_ent)+
+
 lemma example2_correct:
   assumes
     [vcg_rules]: "\<And>v vi. llvm_htriple (\<upharpoonleft>value_assn v vi) (f1i vi) (\<lambda>v_res. \<upharpoonleft>value_assn (f1 v) v_res)" and
@@ -137,18 +143,21 @@ lemma example2_correct:
     map_leD[elim!]
     is_rbt_def[simp]
   supply value_ex_split_red[fri_red_rules]
+  apply (timeit vcg_sep) 
+
+  (*
   apply vcg
   apply vcg_rl
 
    apply vcg_compat
-   apply (sepwith auto) 
+    apply (sepEwith \<open>solves auto\<close> isep_dest: value_ex_join_ent)
 
   apply vcg_solve
   apply vcg
   apply vcg_rl
 
    apply vcg_compat
-   apply (sepwith \<open>solves auto\<close>)
+    apply (sepEwith \<open>solves auto\<close> isep_dest: value_ex_join_ent)
 
   term "inv1"
   apply vcg_solve
@@ -156,13 +165,12 @@ lemma example2_correct:
 
 
   apply vcg_compat
+  *)  
   subgoal 
-    apply (sepEwith \<open>solves auto\<close> isep_dest: value_ex_join_ent) 
-
     apply sep 
 
     apply (simp_all add: rbt_update_comp_comm rbt_lookup_delete inv_12_def rbt_lookup_rbt_insert)
-
+    
     subgoal premises
       apply sep
       done
