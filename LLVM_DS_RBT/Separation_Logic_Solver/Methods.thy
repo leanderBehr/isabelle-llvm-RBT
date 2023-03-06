@@ -389,29 +389,31 @@ lemma "P -- Pr \<tturnstile> A ** B ** C ** D -- Qr"
 method sep_step =
   is_sep_goal,
   (
-    isep_extract_pure |
     isep_normalize |
+    isep_extract_pure |
     entails_box_solver |
-    (isep_elim_ex, isep_extract_pure) |
+    isep_elim_ex |
     (
       first_partition
       \<open>
-        isep_assumption |
         append
-        \<open>changed \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>\<close> 
-        \<open>changed \<open>isep_backtracking_rule rule: isep_intro\<close>\<close>       
-        \<open>changed \<open>isep_backtracking_drule drule: isep_dest\<close>\<close>
+          isep_assumption
+          \<open>isep_backtracking_red_rule red_rule: fri_red_rules isep_red\<close>
+          \<open>isep_backtracking_rule rule: isep_intro\<close>
+          \<open>isep_backtracking_drule drule: isep_dest\<close>
       \<close>      
     )
   )
 
+method sepE_step declares isep_red isep_intro isep_dest = append sep_step \<open>(is_sep_goal, isep_intro_ex)\<close> 
+
+
 method sep_step_filter methods filter declares isep_red isep_intro isep_dest =
-  sep_step;(is_sep_goal | filter)
+  sep_step;(is_sep_goal | filter)[1]
 
 method sepE_step_filter methods filter declares isep_red isep_intro isep_dest = 
-  (sep_step_filter filter | (is_sep_goal, isep_intro_ex))[1]
+  sepE_step;(is_sep_goal | filter)[1]
 
-method sepE_step declares isep_red isep_intro isep_dest = sepE_step_filter succeed
 
 method sep declares isep_red isep_intro isep_dest = (sep_step+)[1]
 method sepE declares isep_red isep_intro isep_dest = (sepE_step+)[1]
