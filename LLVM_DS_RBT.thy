@@ -3,6 +3,7 @@ theory LLVM_DS_RBT
   "LLVM_DS_RBT/Load_Store_Example"
   "LLVM_DS_RBT/Example/Export"
   "LLVM_DS_RBT/Bench_Export"
+  "LLVM_DS_RBT/Balanced_Properties"
 begin
 context rbt_impl
 begin
